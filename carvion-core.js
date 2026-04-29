@@ -2,7 +2,7 @@
   const KEY = 'carvion.admin.v1';
   const CURRENT_SESSION = 'carvion.currentSessionId';
   const RESET_KEY = 'carvion.admin.reset.version';
-  const RESET_VERSION = '2026-04-29-total-zero-v1';
+  const RESET_VERSION = '2026-04-29-products-nfe-v1';
   const SESSION_TTL = 1000 * 60 * 45;
 
   const permissionsByRole = {

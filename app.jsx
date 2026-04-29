@@ -18,7 +18,7 @@ const ACCENT_MAP = {
 
 const STORAGE_KEY = 'carvion.factory.v1';
 const APP_RESET_KEY = 'carvion.app.reset.version';
-const APP_RESET_VERSION = '2026-04-29-total-zero-v1';
+const APP_RESET_VERSION = '2026-04-29-products-nfe-v1';
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const defaultState = () => ({
   transactions: clone(TRANSACTIONS),
@@ -27,6 +27,8 @@ const defaultState = () => ({
   representatives: clone(REPRESENTATIVES),
   products: clone(PRODUCTS),
   clients: clone(CLIENTS),
+  suppliers: [],
+  invoices: [],
 });
 const loadAppState = () => {
   if (localStorage.getItem(APP_RESET_KEY) !== APP_RESET_VERSION) {
@@ -41,8 +43,44 @@ const loadAppState = () => {
   }
 };
 const parseMoney = (value) => Number(String(value).replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.')) || 0;
+const parseNfeXml = (xmlText) => {
+  const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+  if (doc.querySelector('parsererror')) throw new Error('XML inválido.');
+  const pick = (...selectors) => {
+    for (const selector of selectors) {
+      const value = doc.querySelector(selector)?.textContent?.trim();
+      if (value) return value;
+    }
+    return '';
+  };
+  const emitName = pick('emit xNome', 'NFe emit xNome');
+  const destName = pick('dest xNome', 'NFe dest xNome');
+  const number = pick('ide nNF', 'NFe ide nNF');
+  const series = pick('ide serie', 'NFe ide serie');
+  const issueDate = pick('ide dhEmi', 'ide dEmi');
+  const total = Number(pick('ICMSTot vNF', 'total ICMSTot vNF') || 0);
+  const items = Array.from(doc.querySelectorAll('det')).map((det) => ({
+    product: det.querySelector('prod xProd')?.textContent?.trim() || 'Item da NF-e',
+    quantity: Number(det.querySelector('prod qCom')?.textContent || 0),
+    unitValue: Number(det.querySelector('prod vUnCom')?.textContent || 0),
+    total: Number(det.querySelector('prod vProd')?.textContent || 0),
+    ncm: det.querySelector('prod NCM')?.textContent?.trim() || '',
+    cfop: det.querySelector('prod CFOP')?.textContent?.trim() || '',
+  }));
+  if (!number && !total && !items.length) throw new Error('Não encontrei dados de NF-e nesse XML.');
+  return {
+    number,
+    series,
+    issueDate: issueDate ? issueDate.slice(0, 10) : '',
+    emitName,
+    destName,
+    total,
+    items,
+  };
+};
 const todayLabel = () => new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(new Date()).replace('.', '');
 const productByName = (products, name) => products.find((p) => p.name === name) || products[0];
+const nfeItemKey = (item, index) => (item.ncm || item.product || `item-${index + 1}`).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 28) || `item-${index + 1}`;
 const buildKpis = (state) => {
   const produced = state.productionOrders.reduce((sum, order) => sum + Number(order.qty || 0), 0);
   const realCost = state.productionOrders.reduce((sum, order) => sum + Number(order.real || order.estimated || 0), 0);
@@ -56,9 +94,24 @@ const buildKpis = (state) => {
     return k;
   });
 };
+const buildSecondaryKpis = (state) => {
+  const openOrders = state.transactions.filter((t) => t.type === 'in').length;
+  const reps = state.representatives.length;
+  const commission = state.representatives.reduce((sum, r) => sum + Number(r.commission || 0), 0);
+  const finishedStock = state.products.reduce((sum, p) => sum + Number(p.stock || 0), 0);
+  const lowMaterials = state.materials.filter((m) => Number(m.stock || 0) <= Number(m.min || 0)).length;
+  return [
+    { id: 'waste', label: 'Perda de Matéria-prima', value: '0%', delta: 0, sub: 'sem perdas registradas', good: true },
+    { id: 'orders', label: 'Pedidos em Aberto', value: String(openOrders), delta: 0, sub: openOrders ? 'pedidos lançados' : 'nenhum pedido cadastrado' },
+    { id: 'reps', label: 'Representantes Ativos', value: String(reps), delta: 0, sub: reps ? 'representantes cadastrados' : 'nenhum representante cadastrado' },
+    { id: 'commission', label: 'Comissões do Mês', value: fmtBRL(commission), delta: 0, sub: 'comissões calculadas' },
+    { id: 'stock', label: 'Produto Final', value: `${fmtNum(finishedStock)} un.`, delta: 0, sub: finishedStock ? 'estoque de bolas cadastrado' : 'sem estoque final' },
+    { id: 'materials', label: 'Alertas de Insumo', value: String(lowMaterials), delta: 0, sub: lowMaterials ? 'itens abaixo do mínimo' : 'sem alertas', good: true },
+  ];
+};
 
 /* ===== DASHBOARD PAGE ===== */
-const DashboardPage = ({ state, kpis, onAdd, period, showSecondary = true }) => {
+const DashboardPage = ({ state, kpis, secondaryKpis, onAdd, period, showSecondary = true }) => {
   return (
     <>
       <div className="kpi-grid">
@@ -221,9 +274,9 @@ const DashboardPage = ({ state, kpis, onAdd, period, showSecondary = true }) => 
         </div>
       </div>
 
-      {SECONDARY_KPIS && showSecondary && (
+      {secondaryKpis && showSecondary && (
         <div className="row-3" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-          {SECONDARY_KPIS.map((k) => (
+          {secondaryKpis.map((k) => (
             <div key={k.id} className="card" style={{ padding: 14, gap: 6 }}>
               <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>{k.label}</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, justifyContent: 'space-between' }}>
@@ -348,6 +401,36 @@ const MaterialsTable = ({ rows }) => (
   </div>
 );
 
+const InvoicesTable = ({ rows }) => (
+  <div className="table-wrap">
+    <table className="table">
+      <thead>
+        <tr>
+          <th>Nota</th>
+          <th>Fornecedor / Cliente</th>
+          <th>Emissão</th>
+          <th>Itens</th>
+          <th>Status</th>
+          <th className="text-right">Valor</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((nfe) => (
+          <tr key={nfe.id}>
+            <td className="muted mono">NF-e {nfe.number || 's/n'}<div className="muted">Série {nfe.series || '-'}</div></td>
+            <td>{nfe.party}<div className="muted">{nfe.type === 'in' ? 'Receita / cliente' : 'Compra / fornecedor'}</div></td>
+            <td className="muted">{nfe.issueDate || '-'}</td>
+            <td>{nfe.items?.length || 0} itens</td>
+            <td><span className={'status-pill status-' + (nfe.type === 'in' ? 'pending' : 'overdue')}>{nfe.type === 'in' ? 'A receber' : 'A pagar'}</span></td>
+            <td className="num">{fmtBRL(nfe.total || 0)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+    {!rows.length && <EmptyState text="Nenhuma NF-e XML importada." />}
+  </div>
+);
+
 const RepresentativesList = ({ rows }) => (
   <div className="rep-list">
     {rows.map((r) => {
@@ -371,13 +454,15 @@ const ProductsGrid = ({ rows }) => (
   <div className="product-grid">
     {rows.map((p) => (
       <div className="product-card" key={p.name}>
-        <img src={p.image} alt={p.name} />
+        {p.image ? <img src={p.image} alt={p.name} /> : <div className="product-empty-img">{(p.name || 'PR').slice(0, 2)}</div>}
         <div className="product-meta">
-          <div className="product-title">{p.name}<span>{p.type}</span></div>
+          <div className="product-title">{p.name}<span>{p.brand || p.type} · {p.line || 'Linha'} · {p.modality || p.type}</span></div>
           <div className="product-bom">{p.bom}</div>
           <div className="product-stats">
-            <span>Preço {fmtBRL(p.price)}</span>
             <span>Custo {fmtBRL(p.cost)}</span>
+            <span>Lojista {fmtBRL(p.dealerPrice || p.price)}</span>
+            <span>Parceiro {fmtBRL(p.partnerPrice || p.price)}</span>
+            <span>Final {fmtBRL(p.price)}</span>
             <span>Margem {p.margin.toFixed(1).replace('.', ',')}%</span>
             <span>Estoque {fmtNum(p.stock)}</span>
           </div>
@@ -609,6 +694,33 @@ const AddTxModal = ({ onClose, onSave, state }) => {
   const [owner, setOwner] = useState(state.representatives[0]?.name || 'Corte');
   const [qty, setQty] = useState('0');
   const [notes, setNotes] = useState('');
+  const [nfe, setNfe] = useState(null);
+  const [xmlError, setXmlError] = useState('');
+  const handleXmlUpload = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setXmlError('');
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = parseNfeXml(String(reader.result || ''));
+        const totalQty = parsed.items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+        const firstItem = parsed.items[0];
+        setType('out');
+        setAmount(String(parsed.total || parsed.items.reduce((sum, item) => sum + Number(item.total || 0), 0)));
+        setQty(String(totalQty || 0));
+        setClient(parsed.emitName || 'Fornecedor da NF-e');
+        setProduct(firstItem?.product || 'Itens da NF-e');
+        setOwner('NF-e XML');
+        setNotes(`NF-e ${parsed.number || 's/n'}${parsed.series ? ` série ${parsed.series}` : ''} importada via XML. ${parsed.items.length} item(ns).`);
+        setNfe({ ...parsed, fileName: file.name });
+      } catch (error) {
+        setXmlError(error.message || 'Não foi possível ler a NF-e XML.');
+        setNfe(null);
+      }
+    };
+    reader.readAsText(file);
+  };
   const handleSave = () => {
     onSave({
       type,
@@ -618,6 +730,7 @@ const AddTxModal = ({ onClose, onSave, state }) => {
       owner,
       qty: Number(qty) || 0,
       notes,
+      nfe,
     });
     onClose();
   };
@@ -638,6 +751,23 @@ const AddTxModal = ({ onClose, onSave, state }) => {
               <Icon name="arrow-up-right" size={14} /> Custo
             </button>
           </div>
+          <div className="xml-import">
+            <div>
+              <div className="xml-title"><Icon name="file" size={14} /> Importar NF-e XML</div>
+              <div className="xml-sub">Lê a nota, abastece estoque, cria lançamento financeiro e registra a conta a pagar.</div>
+            </div>
+            <label className="btn">
+              <Icon name="download" size={13} /> Selecionar XML
+              <input type="file" accept=".xml,text/xml,application/xml" onChange={handleXmlUpload} hidden />
+            </label>
+          </div>
+          {nfe && (
+            <div className="xml-summary">
+              <strong>NF-e {nfe.number || 's/n'}</strong>
+              <span>{nfe.emitName || 'Fornecedor'} · {nfe.items.length} item(ns) · {fmtBRL(nfe.total || 0)}</span>
+            </div>
+          )}
+          {xmlError && <div className="xml-error">{xmlError}</div>}
           <div className="field">
             <label>{type === 'in' ? 'Valor do pedido' : 'Custo real apontado'}</label>
             <input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="R$ 0,00" />
@@ -702,6 +832,7 @@ const App = () => {
   const [toast, setToast] = useState('');
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const kpis = useMemo(() => buildKpis(appState), [appState]);
+  const secondaryKpis = useMemo(() => buildSecondaryKpis(appState), [appState]);
   const sessionInfo = Carvion.validateSession();
   const currentUser = sessionInfo.user;
   const moduleTabs = NAV.flatMap((group) => group.items.map((item) => ({ ...item, group: group.group })))
@@ -734,17 +865,99 @@ const App = () => {
       const isSale = entry.type === 'in';
       const date = todayLabel();
       const idSuffix = String(Date.now()).slice(-4);
+      const hasNfe = !!entry.nfe;
+      const nfeNumber = entry.nfe?.number || idSuffix;
+      const partyName = entry.client || (isSale ? 'Cliente não informado' : 'Fornecedor não informado');
 
       next.transactions.unshift({
-        id: (isSale ? 'PED-' : 'CST-') + idSuffix,
-        date,
-        client: entry.client || (isSale ? 'Cliente não informado' : 'Centro de custo'),
-        plan: entry.product,
+        id: hasNfe ? `NFE-${nfeNumber}` : (isSale ? 'PED-' : 'CST-') + idSuffix,
+        date: entry.nfe?.issueDate ? new Date(entry.nfe.issueDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '') : date,
+        client: partyName,
+        plan: hasNfe ? `NF-e XML ${nfeNumber}` : entry.product,
         amount: entry.amount,
         type: isSale ? 'in' : 'out',
-        status: isSale ? 'pending' : 'paid',
-        method: isSale ? `Rep. ${entry.owner}` : entry.owner,
+        status: isSale ? 'pending' : (hasNfe ? 'pending' : 'paid'),
+        method: hasNfe ? `XML · ${entry.nfe?.fileName || 'NF-e'}` : (isSale ? `Rep. ${entry.owner}` : entry.owner),
       });
+
+      if (hasNfe) {
+        next.invoices.unshift({
+          id: `nfe-${nfeNumber}-${idSuffix}`,
+          number: entry.nfe.number,
+          series: entry.nfe.series,
+          issueDate: entry.nfe.issueDate,
+          party: partyName,
+          type: isSale ? 'in' : 'out',
+          total: entry.amount,
+          fileName: entry.nfe.fileName,
+          items: entry.nfe.items,
+        });
+      }
+
+      if (hasNfe && !isSale) {
+        if (partyName && !next.suppliers.some((supplier) => supplier.name.toLowerCase() === partyName.toLowerCase())) {
+          next.suppliers.unshift({
+            name: partyName,
+            document: '',
+            segment: 'Fornecedor via NF-e',
+            total: entry.amount,
+            lastInvoice: entry.nfe.number || '',
+          });
+        } else {
+          next.suppliers = next.suppliers.map((supplier) => supplier.name.toLowerCase() === partyName.toLowerCase()
+            ? { ...supplier, total: Number(supplier.total || 0) + entry.amount, lastInvoice: entry.nfe.number || supplier.lastInvoice }
+            : supplier);
+        }
+        entry.nfe.items.forEach((item, index) => {
+          const key = nfeItemKey(item, index);
+          const existing = next.materials.find((material) => material.sku === `XML-${key}` || material.name.toLowerCase() === item.product.toLowerCase());
+          if (existing) {
+            existing.stock = Number(existing.stock || 0) + Number(item.quantity || 0);
+            existing.cost = Number(item.unitValue || existing.cost || 0);
+            existing.status = existing.stock <= existing.min ? 'pending' : 'paid';
+          } else {
+            next.materials.unshift({
+              sku: `XML-${key}`,
+              name: item.product,
+              unit: 'un.',
+              stock: Number(item.quantity || 0),
+              min: 0,
+              cost: Number(item.unitValue || 0),
+              status: 'paid',
+              ncm: item.ncm,
+              cfop: item.cfop,
+            });
+          }
+        });
+      }
+
+      if (hasNfe && isSale) {
+        if (partyName && !next.clients.some((c) => c.name.toLowerCase() === partyName.toLowerCase())) {
+          next.clients.unshift({ name: partyName, city: 'A definir', segment: 'Cliente via NF-e', revenue: entry.amount, rep: entry.owner });
+        }
+        entry.nfe.items.forEach((item, index) => {
+          const existing = next.products.find((p) => p.name.toLowerCase() === item.product.toLowerCase());
+          if (existing) {
+            existing.stock = Math.max(0, Number(existing.stock || 0) - Number(item.quantity || 0));
+            existing.price = Number(item.unitValue || existing.price || 0);
+          } else {
+            next.products.unshift({
+              name: item.product,
+              type: 'Produto NF-e',
+              image: '',
+              price: Number(item.unitValue || 0),
+              cost: 0,
+              stock: 0,
+              margin: 0,
+              bom: `NCM ${item.ncm || '-'}`,
+            });
+          }
+        });
+      }
+
+      if (hasNfe) {
+        return next;
+      }
 
       if (isSale) {
         const repIndex = next.representatives.findIndex((r) => r.name === entry.owner);
@@ -959,7 +1172,7 @@ const App = () => {
           </div>
           {toast && <div className="chip" style={{ color: toast.includes('negado') || toast.includes('não') ? 'var(--danger)' : 'var(--accent)', borderColor: 'var(--border)' }}>{toast}</div>}
 
-          {active === 'dashboard' && <DashboardPage state={appState} kpis={kpis} onAdd={() => setShowModal(true)} period={period} showSecondary={tweaks.showSecondaryKpis} />}
+          {active === 'dashboard' && <DashboardPage state={appState} kpis={kpis} secondaryKpis={secondaryKpis} onAdd={() => setShowModal(true)} period={period} showSecondary={tweaks.showSecondaryKpis} />}
           {active !== 'dashboard' && (
             <div className="card" style={{ minHeight: 400, padding: 32 }}>
               <div className="card-head">
@@ -1046,6 +1259,7 @@ const PlaceholderForSection = ({ id, state, adminData, onAction }) => {
   if (id === 'sales' || id === 'cashflow' || id === 'payables' || id === 'receivables' || id === 'finished-stock') {
     return (
       <>
+        {(id === 'payables' || id === 'receivables') && <InvoicesTable rows={state.invoices.filter((nfe) => id === 'receivables' ? nfe.type === 'in' : nfe.type === 'out')} />}
         <RevenueExpenseChart data={REV_EXP} height={300} />
         <div style={{ marginTop: 16 }}>
           <TransactionsTable rows={state.transactions.filter(t => id === 'cashflow' || id === 'sales' || id === 'finished-stock' || (id === 'receivables' ? t.type === 'in' : t.type === 'out'))} />
@@ -1070,7 +1284,20 @@ const PlaceholderForSection = ({ id, state, adminData, onAction }) => {
       </div>
     );
   }
-  if (id === 'suppliers' || id === 'settings') {
+  if (id === 'suppliers') {
+    return (
+      <div className="table-wrap">
+        <table className="table">
+          <thead><tr><th>Fornecedor</th><th>Origem</th><th>Última NF-e</th><th className="text-right">Total importado</th></tr></thead>
+          <tbody>{state.suppliers.map((supplier) => (
+            <tr key={supplier.name}><td>{supplier.name}</td><td><span className="tag">{supplier.segment}</span></td><td className="muted mono">{supplier.lastInvoice || '-'}</td><td className="num">{fmtBRL(supplier.total || 0)}</td></tr>
+          ))}</tbody>
+        </table>
+        {!state.suppliers.length && <EmptyState text="Nenhum fornecedor cadastrado por NF-e XML." />}
+      </div>
+    );
+  }
+  if (id === 'settings') {
     return (
       <div className="row-3" style={{ marginTop: 12 }}>
         {ACCOUNTS.map((a, i) => (

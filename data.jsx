@@ -123,7 +123,38 @@ const PRODUCTION_ORDERS = [];
 
 const REPRESENTATIVES = [];
 
-const PRODUCTS = [];
+const PRODUCTS = [
+  {
+    name: 'SAMBA PRO',
+    brand: 'Topper',
+    line: 'Pro',
+    modality: 'Campo',
+    type: 'Campo',
+    image: 'uploads/WhatsApp Image 2026-04-28 at 17.18.38.jpeg',
+    cost: 118.00,
+    dealerPrice: 214.00,
+    partnerPrice: 188.00,
+    price: 320.00,
+    stock: 120,
+    margin: 63.13,
+    bom: 'PU premium, câmara butílica, linha reforçada, válvula campo',
+  },
+  {
+    name: 'FUTSAL EXTREME',
+    brand: 'Kagiva',
+    line: 'Pro',
+    modality: 'Futsal',
+    type: 'Futsal',
+    image: 'uploads/WhatsApp Image 2026-04-28 at 17.18.39.jpeg',
+    cost: 104.00,
+    dealerPrice: 196.00,
+    partnerPrice: 174.00,
+    price: 289.00,
+    stock: 80,
+    margin: 64.01,
+    bom: 'PU soft, câmara futsal, camada de amortecimento, válvula futsal',
+  },
+];
 
 const CLIENTS = [];
 
