@@ -697,6 +697,8 @@ const App = () => {
   const kpis = useMemo(() => buildKpis(appState), [appState]);
   const sessionInfo = Carvion.validateSession();
   const currentUser = sessionInfo.user;
+  const moduleTabs = NAV.flatMap((group) => group.items.map((item) => ({ ...item, group: group.group })))
+    .filter((item) => Carvion.canAccessModule(item.id, currentUser));
 
   useEffect(() => {
     Carvion.requireAuth();
@@ -798,8 +800,18 @@ const App = () => {
   };
 
   const resetDemo = () => {
-    localStorage.removeItem(STORAGE_KEY);
+    if (!confirm('Resetar todos os dados e recarregar a apresentação DEMO?')) return;
+    const result = Carvion.resetDemoData({ loginAdmin: true });
+    if (!result.ok) {
+      setToast(result.message || 'Não foi possível resetar a demo.');
+      setTimeout(() => setToast(''), 3500);
+      return;
+    }
     setAppState(defaultState());
+    setAdminData(Carvion.load());
+    setActive('dashboard');
+    setToast('DEMO resetada e pronta para apresentação.');
+    setTimeout(() => setToast(''), 3500);
   };
 
   const handleAdminAction = (result, successMessage) => {
@@ -903,11 +915,26 @@ const App = () => {
             <Icon name={tweaks.theme === 'dark' ? 'sun' : 'moon'} size={15} />
           </button>
           <button className="icon-btn"><Icon name="bell" size={15} /><span className="dot" /></button>
-          <button className="btn" onClick={resetDemo}><Icon name="shuffle" size={13} /><span>Resetar demo</span></button>
+          <button className="btn demo-action" onClick={resetDemo}><Icon name="shuffle" size={13} /><span className="always">DEMO</span></button>
           <button className="btn btn-primary" onClick={() => setShowModal(true)}>
             <Icon name="plus" size={13} /><span>Novo Pedido</span>
           </button>
         </header>
+
+        <nav className="module-tabs" aria-label="Áreas do sistema">
+          {moduleTabs.map((item) => (
+            <button
+              key={item.id}
+              className={active === item.id ? 'active' : ''}
+              onClick={() => setActive(item.id)}
+              title={item.group}
+            >
+              <Icon name={item.icon} size={14} />
+              <span>{item.label}</span>
+              {item.badge && <small>{item.badge}</small>}
+            </button>
+          ))}
+        </nav>
 
         <div className="content">
           <div className="filterbar">

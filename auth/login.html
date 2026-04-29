@@ -29,6 +29,9 @@
     <button class="auth-btn" type="submit">Entrar →</button>
   </form>
 
+  <button id="demo-button" class="auth-btn" type="button" style="margin-top:10px;background:linear-gradient(135deg,var(--accent),oklch(0.72 0.13 230));box-shadow:0 16px 34px var(--accent-soft);">DEMO</button>
+  <div class="field-help" style="text-align:center;margin-top:8px">Recria os dados e entra como administrador para apresentação.</div>
+
   <div class="auth-foot">Não tem uma conta? <a href="signup.html">Criar conta gratuita</a></div>
 </div>
 <script src="../carvion-core.js"></script>
@@ -37,6 +40,18 @@
   const reason = params.get('reason');
   const message = document.getElementById('login-message');
   if (reason) message.textContent = `Sessão inválida: ${reason}. Faça login novamente.`;
+  document.getElementById('demo-button').addEventListener('click', () => {
+    const button = document.getElementById('demo-button');
+    button.textContent = 'Preparando demo...';
+    const result = Carvion.resetDemoData({ loginAdmin: true });
+    if (!result.ok) {
+      message.textContent = result.message || 'Não foi possível iniciar a demo.';
+      button.textContent = 'DEMO';
+      return;
+    }
+    location.href = '../dashboard';
+  });
+
   document.getElementById('login-form').addEventListener('submit', (event) => {
     event.preventDefault();
     const button = event.currentTarget.querySelector('button');

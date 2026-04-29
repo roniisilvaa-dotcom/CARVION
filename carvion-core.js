@@ -90,6 +90,28 @@
 
   const save = (data) => localStorage.setItem(KEY, JSON.stringify(data));
 
+  const resetDemoData = (options = {}) => {
+    localStorage.removeItem(KEY);
+    localStorage.removeItem(CURRENT_SESSION);
+    localStorage.removeItem('carvion.factory.v1');
+    localStorage.removeItem('carvion.tweaks.v1');
+    const data = seed();
+    data.logs.unshift({
+      id: uid('log'),
+      at: now(),
+      actor: 'Sistema',
+      action: 'demo resetada',
+      module: 'demonstração',
+      description: 'Base de demonstração recriada para apresentação.',
+      ref: 'demo',
+      origin: 'local',
+      status: 'sucesso',
+    });
+    save(data);
+    if (options.loginAdmin) return login('admin', 'Admin@123', true);
+    return { ok: true, data };
+  };
+
   const audit = (action, module, description, ref, status = 'sucesso', actorName) => {
     const data = load();
     const session = getCurrentSession(data);
@@ -535,6 +557,7 @@
     audit,
     login,
     logout,
+    resetDemoData,
     requireAuth,
     validateSession,
     refreshSession: validateSession,
