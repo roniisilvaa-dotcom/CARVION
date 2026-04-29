@@ -303,7 +303,17 @@
     return { ok: true };
   };
 
-  const deleteUser = (id) => updateUser(id, { status: 'inativo', deletedAt: now() });
+  const deleteUser = (id) => {
+    const data = load();
+    if (!hasPermission('users:edit')) return { ok: false, message: 'Acesso negado.' };
+    const user = data.users.find((u) => u.id === id && !u.deletedAt);
+    if (!user) return { ok: false, message: 'Usuário não encontrado.' };
+    user.status = 'inativo';
+    user.deletedAt = now();
+    data.sessions.filter((s) => s.userId === user.id && s.status === 'ativa').forEach((s) => { s.status = 'revogada'; s.blockReason = 'Usuário removido'; });
+    saveAndAudit(data, 'exclusão lógica de registro', 'usuários', `Usuário ${user.name} removido logicamente.`, user.id);
+    return { ok: true };
+  };
 
   const blockSession = (id, reason = 'Bloqueio manual') => {
     const data = load();
@@ -329,11 +339,35 @@
 
   const revokeSession = (id) => {
     const data = load();
-    if (!hasPermission('sessions:manage')) return { ok: false, message: 'Acesso negado.' };
+    const current = getCurrentSession(data);
     const session = data.sessions.find((s) => s.id === id);
     if (!session) return { ok: false, message: 'Sessão não encontrada.' };
+    if (session.userId !== current?.userId && !hasPermission('sessions:manage')) return { ok: false, message: 'Acesso negado.' };
     session.status = 'revogada';
     saveAndAudit(data, 'sessão revogada', 'sessões', 'Sessão revogada remotamente.', session.id, 'revogada');
+    if (session.id === current?.id) clearCurrentSession();
+    return { ok: true };
+  };
+
+  const endOtherSessions = () => {
+    const data = load();
+    const current = getCurrentSession(data);
+    if (!current) return { ok: false, message: 'Sessão atual não encontrada.' };
+    data.sessions.filter((s) => s.userId === current.userId && s.id !== current.id && s.status === 'ativa').forEach((session) => {
+      session.status = 'encerrada';
+      session.blockReason = 'Encerrada pelo próprio usuário';
+    });
+    saveAndAudit(data, 'sessões encerradas', 'sessões', 'Outras sessões do usuário foram encerradas.', current.userId);
+    return { ok: true };
+  };
+
+  const endCurrentSession = () => {
+    const data = load();
+    const current = getCurrentSession(data);
+    if (!current) return { ok: false, message: 'Sessão atual não encontrada.' };
+    current.status = 'encerrada';
+    saveAndAudit(data, 'sessão encerrada', 'sessões', 'Sessão atual encerrada.', current.id);
+    clearCurrentSession();
     return { ok: true };
   };
 
@@ -443,6 +477,58 @@
     return createOrder({ ...clone(order), status: 'em aberto', number: undefined, requestDate: now().slice(0, 10) });
   };
 
+  const addOrderItem = (orderId, item) => {
+    const data = load();
+    const order = data.orders.find((o) => o.id === orderId && !o.deletedAt);
+    if (!order) return { ok: false, message: 'Pedido não encontrado.' };
+    if (order.status === 'emitido' && !hasPermission('orders:admin-edit')) return { ok: false, message: 'Pedido emitido não pode ser editado.' };
+    order.items.push({
+      id: uid('item'),
+      product: sanitize(item.product),
+      description: sanitize(item.description),
+      quantity: Number(item.quantity || 0),
+      observation: sanitize(item.observation),
+      unitValue: Number(item.unitValue || 0),
+      stickers: Number(item.stickers || 0),
+      perSheet: Number(item.perSheet || 1),
+    });
+    const errors = validateOrder(order);
+    if (errors.length) return { ok: false, message: errors.join(' ') };
+    order.totals = calculateTotals(order.items);
+    order.history.unshift({ at: now(), user: getCurrentSession(data)?.userName || 'Sistema', action: 'item adicionado' });
+    saveAndAudit(data, 'pedido editado', 'pedido de vendas', `Item adicionado ao pedido ${order.number}.`, order.id);
+    return { ok: true, order };
+  };
+
+  const removeOrderItem = (orderId, itemId) => {
+    const data = load();
+    const order = data.orders.find((o) => o.id === orderId && !o.deletedAt);
+    if (!order) return { ok: false, message: 'Pedido não encontrado.' };
+    if (order.status === 'emitido' && !hasPermission('orders:admin-edit')) return { ok: false, message: 'Pedido emitido não pode ser editado.' };
+    order.items = order.items.filter((item) => item.id !== itemId);
+    const errors = validateOrder(order);
+    if (errors.length) return { ok: false, message: errors.join(' ') };
+    order.totals = calculateTotals(order.items);
+    order.history.unshift({ at: now(), user: getCurrentSession(data)?.userName || 'Sistema', action: 'item removido' });
+    saveAndAudit(data, 'pedido editado', 'pedido de vendas', `Item removido do pedido ${order.number}.`, order.id);
+    return { ok: true, order };
+  };
+
+  const exportData = (module = 'all') => {
+    const data = load();
+    if (!hasPermission('export:data')) return { ok: false, message: 'Acesso negado.' };
+    const payload = module === 'all' ? data : data[module];
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `carvion-${module}-${now().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    audit('exportar dados', module, `Exportação de ${module}.`);
+    return { ok: true };
+  };
+
   window.Carvion = {
     load,
     save,
@@ -465,6 +551,8 @@
     blockSession,
     blockUserSessions,
     revokeSession,
+    endOtherSessions,
+    endCurrentSession,
     calculateTotals,
     createOrder,
     updateOrder,
@@ -472,6 +560,9 @@
     cancelOrder,
     deleteOrder,
     duplicateOrder,
+    addOrderItem,
+    removeOrderItem,
+    exportData,
     permissionsByRole,
     sanitize,
   };

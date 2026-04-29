@@ -434,7 +434,9 @@ const UsersAdmin = ({ data, onAction }) => {
                   if (result.ok && u.status !== 'bloqueado') Carvion.blockUserSessions(u.id, 'Usuário bloqueado pelo administrador');
                   onAction(result, 'Status atualizado.');
                 }}>{u.status === 'bloqueado' ? 'Desbloquear' : 'Bloquear'}</button>
-                <button className="btn btn-ghost" onClick={() => onAction(Carvion.resetPassword(u.id, 'Reset@123'), 'Senha redefinida para Reset@123.')}>Senha</button>
+                <button className="btn btn-ghost" onClick={() => onAction(Carvion.updateUser(u.id, { status: u.status === 'ativo' ? 'inativo' : 'ativo' }), 'Ativação atualizada.')}>{u.status === 'ativo' ? 'Inativar' : 'Ativar'}</button>
+                <button className="btn btn-ghost" onClick={() => onAction(Carvion.resetPassword(u.id, prompt('Nova senha forte', 'Reset@123') || ''), 'Senha redefinida.')}>Senha</button>
+                <button className="btn btn-ghost" onClick={() => confirm('Excluir logicamente este usuário?') && onAction(Carvion.deleteUser(u.id), 'Usuário removido.')}>Excluir</button>
               </td>
             </tr>
           ))}</tbody>
@@ -448,7 +450,11 @@ const SessionsAdmin = ({ data, onAction }) => {
   const current = Carvion.currentSessionId();
   const visible = Carvion.hasPermission('sessions:manage') ? data.sessions : data.sessions.filter((s) => s.id === current);
   return (
-    <div className="table-wrap">
+    <>
+      <div className="card-actions" style={{ marginBottom: 12 }}>
+        <button className="btn" onClick={() => onAction(Carvion.endOtherSessions(), 'Outras sessões encerradas.')}>Encerrar outras sessões</button>
+      </div>
+      <div className="table-wrap">
       <table className="table">
         <thead><tr><th>Sessão</th><th>Usuário</th><th>Login</th><th>Última atividade</th><th>Dispositivo</th><th>Status</th><th>Ações</th></tr></thead>
         <tbody>{visible.map((s) => (
@@ -462,16 +468,22 @@ const SessionsAdmin = ({ data, onAction }) => {
             <td>
               <button className="btn btn-ghost" onClick={() => onAction(Carvion.blockSession(s.id, 'Bloqueio manual'), 'Sessão bloqueada.')}>Bloquear</button>
               <button className="btn btn-ghost" onClick={() => onAction(Carvion.revokeSession(s.id), 'Sessão revogada.')}>Revogar</button>
+              {s.id === current && <button className="btn btn-ghost" onClick={() => { Carvion.endCurrentSession(); location.href = 'auth/login.html'; }}>Encerrar atual</button>}
             </td>
           </tr>
         ))}</tbody>
       </table>
       {!visible.length && <EmptyState text="Nenhuma sessão registrada." />}
     </div>
+    </>
   );
 };
 
-const AuditAdmin = ({ data }) => (
+const AuditAdmin = ({ data, onAction }) => (
+  <>
+  <div className="card-actions" style={{ marginBottom: 12 }}>
+    <button className="btn" onClick={() => onAction(Carvion.exportData('logs'), 'Auditoria exportada.')}>Exportar logs</button>
+  </div>
   <div className="table-wrap">
     <table className="table">
       <thead><tr><th>Data</th><th>Usuário</th><th>Ação</th><th>Módulo</th><th>Descrição</th><th>Status</th></tr></thead>
@@ -488,9 +500,23 @@ const AuditAdmin = ({ data }) => (
     </table>
     {!data.logs.length && <EmptyState text="Nenhum evento de auditoria registrado." />}
   </div>
+  </>
 );
 
-const OrdersAdmin = ({ data, onAction }) => (
+const OrdersAdmin = ({ data, onAction }) => {
+  const [draft, setDraft] = useState({ customer: '', deliveryDate: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10), product: 'Futebol Pró 5', quantity: 100, unitValue: 74.9, observation: '' });
+  const create = () => onAction(Carvion.createOrder({ customer: draft.customer, deliveryDate: draft.deliveryDate, notes: draft.observation, items: [{ id: 'tmp', product: draft.product, description: draft.product, quantity: Number(draft.quantity), observation: draft.observation, unitValue: Number(draft.unitValue), stickers: 0, perSheet: 1 }] }), 'Pedido criado.');
+  return (
+  <>
+  <div className="row-3" style={{ marginBottom: 14 }}>
+    <div className="field"><label>Cliente</label><input value={draft.customer} onChange={(e) => setDraft({ ...draft, customer: e.target.value })} placeholder="Cliente" /></div>
+    <div className="field"><label>Entrega</label><input type="date" value={draft.deliveryDate} onChange={(e) => setDraft({ ...draft, deliveryDate: e.target.value })} /></div>
+    <div className="field"><label>Produto</label><input value={draft.product} onChange={(e) => setDraft({ ...draft, product: e.target.value })} /></div>
+    <div className="field"><label>Quantidade</label><input value={draft.quantity} onChange={(e) => setDraft({ ...draft, quantity: e.target.value })} /></div>
+    <div className="field"><label>Valor unitário</label><input value={draft.unitValue} onChange={(e) => setDraft({ ...draft, unitValue: e.target.value })} /></div>
+    <div className="field"><label>Observação</label><input value={draft.observation} onChange={(e) => setDraft({ ...draft, observation: e.target.value })} /></div>
+  </div>
+  <div className="card-actions" style={{ marginBottom: 12 }}><button className="btn btn-primary" onClick={create}><Icon name="plus" size={13} /> Criar pedido completo</button><button className="btn" onClick={() => onAction(Carvion.exportData('orders'), 'Pedidos exportados.')}>Exportar pedidos</button></div>
   <div className="table-wrap">
     <table className="table">
       <thead><tr><th>Pedido</th><th>Cliente</th><th>Entrega</th><th>Status</th><th>Itens</th><th className="text-right">Total</th><th>Ações</th></tr></thead>
@@ -511,6 +537,8 @@ const OrdersAdmin = ({ data, onAction }) => (
               <button className="btn btn-ghost" onClick={() => onAction(Carvion.duplicateOrder(o.id), 'Pedido duplicado.')}>Duplicar</button>
               <button className="btn btn-ghost" onClick={() => onAction(Carvion.cancelOrder(o.id, prompt('Motivo do cancelamento') || ''), 'Pedido cancelado.')}>Cancelar</button>
               <button className="btn btn-ghost" onClick={() => confirm('Excluir logicamente este pedido?') && onAction(Carvion.deleteOrder(o.id), 'Pedido removido.')}>Excluir</button>
+              <button className="btn btn-ghost" onClick={() => { const product = prompt('Produto do novo item', 'Futebol Pró 5') || ''; const quantity = Number(prompt('Quantidade', '100') || 0); const unitValue = Number(prompt('Valor unitário', '74.9') || 0); onAction(Carvion.addOrderItem(o.id, { product, description: product, quantity, unitValue, observation: '', stickers: 0, perSheet: 1 }), 'Item adicionado.'); }}>+ Item</button>
+              {o.items?.[0] && <button className="btn btn-ghost" onClick={() => onAction(Carvion.removeOrderItem(o.id, o.items[0].id), 'Item removido.')}>- Item</button>}
               <button className="btn btn-ghost" onClick={() => window.print()}>PDF</button>
             </td>
           </tr>
@@ -518,7 +546,9 @@ const OrdersAdmin = ({ data, onAction }) => (
       })}</tbody>
     </table>
   </div>
-);
+  </>
+  );
+};
 
 /* ===== GENERIC PLACEHOLDER PAGE ===== */
 const PlaceholderPage = ({ title, desc, kpis, children }) => (
@@ -950,7 +980,7 @@ const PlaceholderForSection = ({ id, state, adminData, onAction }) => {
     return <SessionsAdmin data={adminData} onAction={onAction} />;
   }
   if (id === 'audit-admin') {
-    return <AuditAdmin data={adminData} />;
+    return <AuditAdmin data={adminData} onAction={onAction} />;
   }
   if (id === 'orders-admin') {
     return <OrdersAdmin data={adminData} onAction={onAction} />;
