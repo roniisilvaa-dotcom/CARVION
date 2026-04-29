@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: carvion-app
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /dashboard
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+
+  - type: web
+    name: carvion-api
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: npm install && npm run db:generate && npm run build
+    preDeployCommand: npm run db:push
+    startCommand: npm start
+    healthCheckPath: /api/analytics/industrial
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: DATABASE_URL
+        fromDatabase:
+          name: carvion-db
+          property: connectionString
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+
+databases:
+  - name: carvion-db
+    plan: free
+    region: oregon
+    databaseName: carvion
+    user: carvion

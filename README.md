@@ -45,3 +45,15 @@ Endpoints iniciais:
 - `GET /api/materials`
 - `GET /api/sales`
 - `GET /api/representatives`
+
+## Publicar no Render
+
+O projeto está pronto para Render Blueprint com [render.yaml](render.yaml).
+
+Resumo:
+
+1. Acesse [Render Blueprints](https://dashboard.render.com/blueprints).
+2. Conecte `roniisilvaa-dotcom/CARVION`.
+3. Aplique o Blueprint.
+
+Mais detalhes em [docs/render.md](docs/render.md).

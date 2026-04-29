@@ -5,14 +5,17 @@
   "description": "CARVION, plataforma inteligente de gestão empresarial.",
   "scripts": {
     "dev:prototype": "serve -l 3000 .",
+    "start": "serve -l $PORT .",
     "dev:api": "npm run dev --prefix backend",
     "db:generate": "npm run db:generate --prefix backend",
     "db:migrate": "npm run db:migrate --prefix backend",
     "db:seed": "npm run db:seed --prefix backend"
   },
+  "dependencies": {
+    "serve": "^14.2.5"
+  },
   "devDependencies": {
     "@babel/core": "^7.29.0",
-    "@babel/preset-react": "^7.28.5",
-    "serve": "^14.2.5"
+    "@babel/preset-react": "^7.28.5"
   }
 }

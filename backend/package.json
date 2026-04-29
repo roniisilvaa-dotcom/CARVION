@@ -5,8 +5,10 @@
   "scripts": {
     "dev": "nest start --watch",
     "build": "nest build",
+    "start": "node dist/src/main.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev --name init",
+    "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
