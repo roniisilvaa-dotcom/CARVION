@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CA.RO — A gestão da sua empresa, simples como deveria ser</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../shared.css" />
+<style>
+  body {
+    background:
+      radial-gradient(ellipse 1200px 700px at 50% -10%, oklch(0.74 0.17 155 / 0.10), transparent 60%),
+      radial-gradient(ellipse 800px 500px at 90% 30%, oklch(0.72 0.13 230 / 0.05), transparent 60%),
+      var(--bg);
+    overflow-x: hidden;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+  /* NAV */
+  nav.top {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(20px);
+    background: oklch(0.16 0.012 240 / 0.6);
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .nav-inner {
+    display: flex; align-items: center; gap: 32px;
+    height: 64px;
+  }
+  .nav-brand { display: flex; align-items: center; gap: 10px; }
+  .nav-brand-name { font-weight: 700; letter-spacing: -0.01em; font-size: 15px; }
+  .nav-links { display: flex; gap: 6px; flex: 1; }
+  .nav-links a {
+    padding: 7px 12px; border-radius: 8px;
+    font-size: 13.5px; color: var(--text-dim);
+  }
+  .nav-links a:hover { color: var(--text); background: var(--surface); }
+  @media (max-width: 800px) { .nav-links { display: none; } }
+
+  /* HERO */
+  .hero { padding: 80px 0 60px; text-align: center; }
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 12px; border-radius: 999px;
+    background: var(--accent-soft); border: 1px solid oklch(0.74 0.17 155 / 0.25);
+    font-size: 12.5px; color: var(--accent); font-weight: 500;
+    margin-bottom: 24px;
+  }
+  .hero h1 {
+    font-size: clamp(40px, 6vw, 72px);
+    line-height: 1.05; letter-spacing: -0.03em;
+    font-weight: 700; max-width: 920px; margin: 0 auto 22px;
+    text-wrap: balance;
+  }
+  .hero h1 .accent {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p.lead {
+    font-size: clamp(16px, 2vw, 19px); color: var(--text-dim);
+    max-width: 640px; margin: 0 auto 36px; line-height: 1.55;
+    text-wrap: pretty;
+  }
+  .hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
+  .hero-meta { font-size: 12.5px; color: var(--text-faint); }
+
+  /* HERO MOCKUP */
+  .hero-mockup {
+    margin: 60px auto 0; max-width: 1100px;
+    border-radius: 20px; overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--bg-elev);
+    box-shadow: 0 30px 80px oklch(0 0 0 / 0.5), 0 0 0 1px oklch(1 0 0 / 0.04) inset;
+    position: relative;
+  }
+  .mockup-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 16px; border-bottom: 1px solid var(--border-soft);
+    background: var(--surface);
+  }
+  .mockup-bar .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--border); }
+  .mockup-bar .dot:nth-child(1) { background: oklch(0.65 0.18 25); }
+  .mockup-bar .dot:nth-child(2) { background: oklch(0.78 0.16 75); }
+  .mockup-bar .dot:nth-child(3) { background: oklch(0.74 0.17 155); }
+  .mockup-bar .url {
+    margin-left: 16px; padding: 4px 12px; border-radius: 6px;
+    background: var(--bg); color: var(--text-faint);
+    font-family: var(--font-mono); font-size: 11.5px;
+  }
+  .mockup-body { padding: 0; }
+  .mockup-img {
+    display: grid; grid-template-columns: 200px 1fr;
+    min-height: 480px;
+  }
+  .mockup-side {
+    background: var(--bg);
+    border-right: 1px solid var(--border-soft);
+    padding: 16px 12px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .mockup-side .item {
+    padding: 7px 10px; border-radius: 7px; font-size: 12px;
+    color: var(--text-dim); display: flex; align-items: center; gap: 8px;
+  }
+  .mockup-side .item.active { background: var(--accent-soft); color: var(--accent); }
+  .mockup-side .item .ic { width: 14px; height: 2px; background: currentColor; border-radius: 2px; opacity: 0.6; }
+  .mockup-content { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+  .mockup-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .mockup-kpi {
+    padding: 12px; border-radius: 10px;
+    background: linear-gradient(180deg, var(--surface), var(--bg-elev));
+    border: 1px solid var(--border-soft);
+  }
+  .mockup-kpi .lab { font-size: 10.5px; color: var(--text-faint); margin-bottom: 6px; }
+  .mockup-kpi .val { font-family: var(--font-mono); font-size: 16px; font-weight: 600; }
+  .mockup-kpi .delta { font-size: 10.5px; color: var(--accent); margin-top: 4px; font-family: var(--font-mono); }
+  .mockup-chart {
+    flex: 1; min-height: 200px;
+    border-radius: 10px; border: 1px solid var(--border-soft);
+    background: var(--surface); padding: 16px;
+    display: flex; align-items: flex-end;
+  }
+
+  /* LOGOS */
+  .logos { padding: 60px 0 30px; text-align: center; border-bottom: 1px solid var(--border-soft); }
+  .logos-label { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 24px; }
+  .logo-row {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 24px; align-items: center;
+    opacity: 0.7;
+  }
+  @media (max-width: 800px) { .logo-row { grid-template-columns: repeat(3, 1fr); } }
+  .logo-item {
+    height: 28px; display: grid; place-items: center;
+    color: var(--text-dim); font-weight: 700; letter-spacing: -0.01em;
+    font-size: 16px;
+  }
+
+  /* SECTION */
+  section.feature { padding: 100px 0; border-bottom: 1px solid var(--border-soft); }
+  .section-tag {
+    font-size: 12.5px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin-bottom: 14px;
+  }
+  .section-title {
+    font-size: clamp(32px, 4vw, 44px); letter-spacing: -0.02em; font-weight: 700;
+    line-height: 1.1; max-width: 760px; margin-bottom: 16px; text-wrap: balance;
+  }
+  .section-lead {
+    font-size: 17px; color: var(--text-dim); max-width: 600px; line-height: 1.55; text-wrap: pretty;
+  }
+
+  /* FEATURE GRID */
+  .feature-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    margin-top: 48px;
+  }
+  @media (max-width: 900px) { .feature-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 600px) { .feature-grid { grid-template-columns: 1fr; } }
+  .feature-card {
+    padding: 24px; border-radius: var(--r-lg);
+    background: linear-gradient(180deg, var(--surface), var(--bg-elev));
+    border: 1px solid var(--border-soft);
+    display: flex; flex-direction: column; gap: 12px;
+    transition: border-color 0.2s;
+  }
+  .feature-card:hover { border-color: var(--border); }
+  .feature-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: var(--accent-soft); color: var(--accent);
+    display: grid; place-items: center;
+  }
+  .feature-icon.info { background: var(--info-soft); color: var(--info); }
+  .feature-icon.purple { background: var(--purple-soft); color: var(--purple); }
+  .feature-icon.warn { background: var(--warn-soft); color: var(--warn); }
+  .feature-card h3 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+  .feature-card p { font-size: 13.5px; color: var(--text-dim); line-height: 1.55; }
+
+  /* AUTOMATION SECTION */
+  .auto-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
+    margin-top: 48px;
+  }
+  @media (max-width: 900px) { .auto-row { grid-template-columns: 1fr; gap: 32px; } }
+  .auto-card {
+    background: linear-gradient(180deg, var(--surface), var(--bg-elev));
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-lg); padding: 18px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .auto-suggestion {
+    display: flex; gap: 10px; padding: 12px;
+    border-radius: 10px; border: 1px solid oklch(0.74 0.17 155 / 0.25);
+    background: oklch(0.74 0.17 155 / 0.06);
+  }
+  .auto-suggestion .ai-mark {
+    width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid; place-items: center; color: oklch(0.15 0.01 240);
+    font-weight: 700; font-size: 11px;
+  }
+  .auto-suggestion .body { flex: 1; font-size: 13px; }
+  .auto-suggestion .body b { color: var(--accent); font-weight: 600; }
+  .auto-actions { display: flex; gap: 6px; margin-top: 8px; }
+  .auto-actions button {
+    padding: 4px 10px; border-radius: 6px; font-size: 11.5px;
+    background: var(--surface-2); color: var(--text-dim); font-weight: 500;
+  }
+  .auto-actions button.primary { background: var(--accent); color: oklch(0.15 0.01 240); }
+  .auto-alert {
+    display: flex; gap: 10px; padding: 12px;
+    border-radius: 10px; border-left: 2px solid var(--danger);
+    background: var(--danger-soft);
+  }
+  .auto-alert .body { font-size: 13px; }
+  .auto-alert .body b { color: var(--danger); }
+
+  /* TESTIMONIALS */
+  .testi-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    margin-top: 48px;
+  }
+  @media (max-width: 900px) { .testi-grid { grid-template-columns: 1fr; } }
+  .testi-card {
+    padding: 24px; border-radius: var(--r-lg);
+    background: var(--surface); border: 1px solid var(--border-soft);
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .testi-quote { font-size: 15px; line-height: 1.55; color: var(--text); text-wrap: pretty; }
+  .testi-author { display: flex; align-items: center; gap: 10px; }
+  .testi-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: grid; place-items: center; color: white; font-weight: 600; font-size: 12px;
+  }
+  .testi-name { font-size: 13.5px; font-weight: 500; }
+  .testi-role { font-size: 12px; color: var(--text-faint); }
+
+  /* CTA FINAL */
+  .cta-final {
+    padding: 100px 0; text-align: center;
+    background:
+      radial-gradient(ellipse 800px 400px at 50% 50%, oklch(0.74 0.17 155 / 0.10), transparent 60%);
+  }
+  .cta-final h2 {
+    font-size: clamp(32px, 4vw, 48px);
+    letter-spacing: -0.02em; font-weight: 700; margin-bottom: 16px;
+    text-wrap: balance;
+  }
+  .cta-final p { font-size: 17px; color: var(--text-dim); margin-bottom: 28px; }
+
+  /* FOOTER */
+  footer {
+    padding: 60px 0 40px; border-top: 1px solid var(--border-soft);
+  }
+  .foot-grid {
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 32px;
+    margin-bottom: 40px;
+  }
+  @media (max-width: 800px) { .foot-grid { grid-template-columns: 1fr 1fr; gap: 24px; } }
+  .foot-col h4 {
+    font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--text-faint); font-weight: 500; margin-bottom: 14px;
+  }
+  .foot-col a {
+    display: block; padding: 4px 0; font-size: 13.5px; color: var(--text-dim);
+  }
+  .foot-col a:hover { color: var(--text); }
+  .foot-tagline { font-size: 13px; color: var(--text-faint); margin-top: 12px; max-width: 280px; }
+  .foot-base {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 24px; border-top: 1px solid var(--border-soft);
+    font-size: 12.5px; color: var(--text-faint); flex-wrap: wrap; gap: 12px;
+  }
+</style>
+</head>
+<body>
+
+<nav class="top">
+  <div class="container nav-inner">
+    <a class="nav-brand" href="../index.html">
+      <div class="brand-mark">CR</div>
+      <span class="nav-brand-name">GRUPO CA.RO</span>
+    </a>
+    <div class="nav-links">
+      <a href="#produto">Produto</a>
+      <a href="pricing.html">Preços</a>
+      <a href="integrations.html">Integrações</a>
+      <a href="about.html">Sobre</a>
+      <a href="help.html">Ajuda</a>
+    </div>
+    <a class="btn btn-ghost" href="../auth/login.html">Entrar</a>
+    <a class="btn btn-primary" href="../auth/signup.html">Começar grátis</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <span class="hero-tag tag-dot">Open Finance · IA · NF-e em um só lugar</span>
+    <h1>A gestão da sua empresa,<br /><span class="accent">simples como deveria ser.</span></h1>
+    <p class="lead">Banco, fluxo de caixa, NF-e e relatórios contábeis automáticos. O CA.RO conecta seus bancos via Open Finance, concilia tudo com IA e te avisa antes do problema acontecer.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary btn-lg" href="../auth/signup.html">Testar grátis por 14 dias →</a>
+      <a class="btn btn-lg" href="pricing.html">Ver planos</a>
+    </div>
+    <div class="hero-meta">Sem cartão de crédito · Cancele quando quiser · Suporte em português</div>
+
+    <div class="hero-mockup">
+      <div class="mockup-bar">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="url">app.caro.com.br/dashboard</span>
+      </div>
+      <div class="mockup-img">
+        <div class="mockup-side">
+          <div class="item active"><span class="ic"></span>Dashboard</div>
+          <div class="item"><span class="ic"></span>Receitas</div>
+          <div class="item"><span class="ic"></span>Despesas</div>
+          <div class="item"><span class="ic"></span>Fluxo de Caixa</div>
+          <div class="item"><span class="ic"></span>Contas a Pagar</div>
+          <div class="item"><span class="ic"></span>Conciliação</div>
+          <div class="item"><span class="ic"></span>Relatórios</div>
+        </div>
+        <div class="mockup-content">
+          <div class="mockup-kpis">
+            <div class="mockup-kpi"><div class="lab">Receita</div><div class="val">R$ 4,82M</div><div class="delta">+18,4%</div></div>
+            <div class="mockup-kpi"><div class="lab">Despesas</div><div class="val">R$ 2,14M</div><div class="delta" style="color: var(--danger)">+3,2%</div></div>
+            <div class="mockup-kpi"><div class="lab">Lucro</div><div class="val">R$ 2,67M</div><div class="delta">+24,7%</div></div>
+            <div class="mockup-kpi"><div class="lab">Margem</div><div class="val">55,4%</div><div class="delta">+4,1%</div></div>
+          </div>
+          <div class="mockup-chart">
+            <svg viewBox="0 0 600 200" width="100%" height="200" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="hg" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="oklch(0.74 0.17 155)" stop-opacity="0.5" />
+                  <stop offset="100%" stop-color="oklch(0.74 0.17 155)" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+              <path d="M0 150 L60 130 L120 140 L180 110 L240 95 L300 105 L360 80 L420 70 L480 50 L540 40 L600 30 L600 200 L0 200Z" fill="url(#hg)" />
+              <path d="M0 150 L60 130 L120 140 L180 110 L240 95 L300 105 L360 80 L420 70 L480 50 L540 40 L600 30" stroke="oklch(0.74 0.17 155)" stroke-width="2" fill="none" stroke-linecap="round" />
+              <path d="M0 170 L60 165 L120 168 L180 155 L240 158 L300 150 L360 152 L420 145 L480 142 L540 138 L600 135" stroke="oklch(0.68 0.20 25)" stroke-width="2" fill="none" stroke-linecap="round" stroke-dasharray="0" opacity="0.7"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="logos">
+  <div class="container">
+    <div class="logos-label">Mais de 1.200 empresas já confiam no CA.RO</div>
+    <div class="logo-row">
+      <div class="logo-item">VETRA</div>
+      <div class="logo-item">Aurora.</div>
+      <div class="logo-item">helix/</div>
+      <div class="logo-item">PÓLEN</div>
+      <div class="logo-item">núvio</div>
+      <div class="logo-item">LUMEN◇</div>
+    </div>
+  </div>
+</section>
+
+<section class="feature" id="produto">
+  <div class="container">
+    <div class="section-tag">PRODUTO</div>
+    <h2 class="section-title">Tudo que sua empresa precisa, sem o trabalho que ninguém quer fazer.</h2>
+    <p class="section-lead">8 módulos integrados que conversam entre si. Você lança uma vez, o CA.RO atualiza tudo.</p>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 11h20"/></svg>
+        </div>
+        <h3>Open Finance</h3>
+        <p>Conecte Itaú, Bradesco, BTG, Mercado Pago e mais 30 bancos. Saldos e extratos sincronizados em tempo real, sem CSV.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon info">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V6Z"/><path d="m9 12 2 2 4-4"/></svg>
+        </div>
+        <h3>Conciliação por IA</h3>
+        <p>Nossa IA categoriza, identifica duplicidades e bate extratos com lançamentos. Você só revisa o que importa.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon purple">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6"/></svg>
+        </div>
+        <h3>NF-e em 1 clique</h3>
+        <p>Emita, cancele e envie por e-mail direto do CA.RO. Compatível com qualquer prefeitura e Receita Federal.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon warn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 17 6-6 4 4 7-7"/><path d="M14 8h6v6"/></svg>
+        </div>
+        <h3>Dashboard Executivo</h3>
+        <p>Receita, despesas, lucro, margem e fluxo em tempo real. Compartilhe com sócios e investidores em 1 link.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v8l-9 5-9-5V8l9-5 9 5Z"/></svg>
+        </div>
+        <h3>Multi-empresa</h3>
+        <p>Gerencie holding e filiais em uma única conta. Visão consolidada ou por CNPJ, com permissões separadas.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon info">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/></svg>
+        </div>
+        <h3>Integração com ERP</h3>
+        <p>Bling, Tiny, Omie, Conta Azul, SAP. Importação de notas, produtos e pedidos automaticamente.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon purple">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>
+        </div>
+        <h3>App Mobile</h3>
+        <p>iOS e Android nativos. Aprovações, alertas, lançamentos rápidos e dashboard no bolso.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon warn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6"/><path d="M9 13h6M9 17h4"/></svg>
+        </div>
+        <h3>Relatórios Contábeis</h3>
+        <p>DRE, balancete, fluxo de caixa e razão prontos para o contador. Export em PDF, Excel ou XML.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>
+        </div>
+        <h3>Alertas Inteligentes</h3>
+        <p>Fluxo negativo previsto? Vencimento amanhã? Inadimplência crescendo? O CA.RO te avisa antes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="feature" style="background: oklch(0.18 0.014 240 / 0.4);">
+  <div class="container">
+    <div class="section-tag">AUTOMAÇÃO MÁXIMA</div>
+    <h2 class="section-title">Pense menos. Decida melhor.</h2>
+    <p class="section-lead">O CA.RO trabalha enquanto você toca o negócio. Categoriza, prevê, alerta e sugere — você só aprova.</p>
+
+    <div class="auto-row">
+      <div>
+        <h3 style="font-size: 22px; margin-bottom: 12px; letter-spacing: -0.01em;">Sugestões automáticas com base nos seus dados</h3>
+        <p style="color: var(--text-dim); font-size: 15px; line-height: 1.6; margin-bottom: 24px; text-wrap: pretty;">
+          Nossa IA aprende com seus lançamentos e sugere categorias, fornecedores recorrentes, melhor data para pagar e até quanto separar de impostos. Tudo em segundos.
+        </p>
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 14px; color: var(--text-dim);">
+          <li style="display: flex; gap: 10px;"><span style="color: var(--accent)">✓</span> Categorização automática de 90%+ das transações</li>
+          <li style="display: flex; gap: 10px;"><span style="color: var(--accent)">✓</span> Detecção de cobranças duplicadas e suspeitas</li>
+          <li style="display: flex; gap: 10px;"><span style="color: var(--accent)">✓</span> Previsão de fluxo de caixa para próximos 90 dias</li>
+          <li style="display: flex; gap: 10px;"><span style="color: var(--accent)">✓</span> Sugestão do melhor dia para pagar e cobrar</li>
+        </ul>
+      </div>
+      <div class="auto-card">
+        <div style="font-size: 11.5px; color: var(--text-faint); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px;">CARO Assistant</div>
+        <div class="auto-suggestion">
+          <div class="ai-mark">✦</div>
+          <div class="body">
+            <b>Categoria sugerida</b><br />
+            "AWS Brasil — R$ 41.280" parece ser <b>Infra & Cloud</b>. Aplicar essa categoria automaticamente para próximos lançamentos do mesmo fornecedor?
+            <div class="auto-actions">
+              <button class="primary">Aplicar sempre</button>
+              <button>Só esta vez</button>
+            </div>
+          </div>
+        </div>
+        <div class="auto-alert">
+          <span style="color: var(--danger); font-size: 18px; line-height: 1;">⚠</span>
+          <div class="body">
+            <b>Alerta de fluxo de caixa</b><br />
+            Em 18 dias seu saldo pode ficar negativo em <b>R$ 142k</b>. Revisar contas a pagar ou antecipar recebíveis?
+            <div class="auto-actions">
+              <button class="primary">Ver projeção</button>
+              <button>Dispensar</button>
+            </div>
+          </div>
+        </div>
+        <div class="auto-suggestion" style="border-color: oklch(0.78 0.16 75 / 0.3); background: oklch(0.78 0.16 75 / 0.05);">
+          <div class="ai-mark" style="background: oklch(0.78 0.16 75)">✦</div>
+          <div class="body">
+            <b style="color: var(--warn)">Imposto separado</b><br />
+            Sugiro reservar <b>R$ 184.000</b> para o DAS de Maio. Criar provisão automática?
+            <div class="auto-actions">
+              <button class="primary">Criar provisão</button>
+              <button>Depois</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="feature">
+  <div class="container">
+    <div class="section-tag">DEPOIMENTOS</div>
+    <h2 class="section-title">Empresas que ganharam horas de volta.</h2>
+    <p class="section-lead">De startups a indústrias, mais de 1.200 empresas brasileiras usam o CA.RO no dia a dia.</p>
+
+    <div class="testi-grid">
+      <div class="testi-card">
+        <div class="testi-quote">"Antes do CA.RO, fechávamos o mês em 4 dias. Hoje fecha em 4 horas. A conciliação por IA é cirúrgica."</div>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background: oklch(0.65 0.18 25)">MR</div>
+          <div>
+            <div class="testi-name">Mariana Rocha</div>
+            <div class="testi-role">CFO · Aurora Tech</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-quote">"O alerta de fluxo de caixa salvou nossa operação em janeiro. A gente não tinha visto que dois grandes pagamentos caíam na mesma semana."</div>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background: oklch(0.70 0.15 295)">RC</div>
+          <div>
+            <div class="testi-name">Rafael Carvalho</div>
+            <div class="testi-role">Sócio · Pólen Agência</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-quote">"Migrei do meu antigo sistema em uma tarde. A integração com Open Finance puxou 18 meses de histórico sozinha."</div>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background: oklch(0.72 0.13 230)">JS</div>
+          <div>
+            <div class="testi-name">Julia Santos</div>
+            <div class="testi-role">Diretora Financeira · Helix Digital</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-final">
+  <div class="container">
+    <h2>Comece a usar em 5 minutos.</h2>
+    <p>14 dias grátis · Sem cartão de crédito · Migração assistida</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary btn-lg" href="../auth/signup.html">Criar conta gratuita →</a>
+      <a class="btn btn-lg" href="pricing.html">Ver planos e preços</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div class="foot-col">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="brand-mark">CR</div>
+          <strong style="font-size: 15px;">GRUPO CA.RO</strong>
+        </div>
+        <p class="foot-tagline">A gestão da sua empresa, simples como deveria ser.</p>
+      </div>
+      <div class="foot-col">
+        <h4>Produto</h4>
+        <a href="#produto">Funcionalidades</a>
+        <a href="pricing.html">Preços</a>
+        <a href="integrations.html">Integrações</a>
+        <a href="../auth/signup.html">Testar grátis</a>
+      </div>
+      <div class="foot-col">
+        <h4>Empresa</h4>
+        <a href="about.html">Sobre</a>
+        <a href="#">Carreiras</a>
+        <a href="#">Blog</a>
+        <a href="#">Contato</a>
+      </div>
+      <div class="foot-col">
+        <h4>Suporte</h4>
+        <a href="help.html">Central de ajuda</a>
+        <a href="#">Status</a>
+        <a href="#">API & Docs</a>
+        <a href="#">Comunidade</a>
+      </div>
+      <div class="foot-col">
+        <h4>Legal</h4>
+        <a href="privacy.html">Privacidade</a>
+        <a href="privacy.html">Termos</a>
+        <a href="privacy.html">LGPD</a>
+        <a href="#">Segurança</a>
+      </div>
+    </div>
+    <div class="foot-base">
+      <span>© 2026 Grupo CA.RO Tecnologia Ltda · CNPJ 00.000.000/0001-00</span>
+      <span>Feito no Brasil 🇧🇷</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "carvion-prototipo",
+  "version": "0.2.0",
+  "private": true,
+  "description": "CARVION, plataforma inteligente de gestão empresarial.",
+  "scripts": {
+    "dev:prototype": "serve -l 3000 .",
+    "dev:api": "npm run dev --prefix backend",
+    "db:generate": "npm run db:generate --prefix backend",
+    "db:migrate": "npm run db:migrate --prefix backend",
+    "db:seed": "npm run db:seed --prefix backend"
+  },
+  "devDependencies": {
+    "serve": "^14.2.5"
+  }
+}
