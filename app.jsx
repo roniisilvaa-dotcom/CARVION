@@ -17,6 +17,8 @@ const ACCENT_MAP = {
 };
 
 const STORAGE_KEY = 'carvion.factory.v1';
+const APP_RESET_KEY = 'carvion.demo.reset.version';
+const APP_RESET_VERSION = '2026-04-29-demo-ready-v1';
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const defaultState = () => ({
   transactions: clone(TRANSACTIONS),
@@ -27,6 +29,10 @@ const defaultState = () => ({
   clients: clone(CLIENTS),
 });
 const loadAppState = () => {
+  if (localStorage.getItem(APP_RESET_KEY) !== APP_RESET_VERSION) {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.setItem(APP_RESET_KEY, APP_RESET_VERSION);
+  }
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     return saved ? { ...defaultState(), ...JSON.parse(saved) } : defaultState();

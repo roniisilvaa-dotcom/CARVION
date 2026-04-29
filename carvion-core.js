@@ -1,6 +1,8 @@
 (function () {
   const KEY = 'carvion.admin.v1';
   const CURRENT_SESSION = 'carvion.currentSessionId';
+  const RESET_KEY = 'carvion.demo.reset.version';
+  const RESET_VERSION = '2026-04-29-demo-ready-v1';
   const SESSION_TTL = 1000 * 60 * 45;
 
   const permissionsByRole = {
@@ -79,7 +81,17 @@
     preferences: {},
   });
 
+  const ensureDemoReset = () => {
+    if (localStorage.getItem(RESET_KEY) === RESET_VERSION) return;
+    localStorage.removeItem(KEY);
+    localStorage.removeItem(CURRENT_SESSION);
+    localStorage.removeItem('carvion.factory.v1');
+    localStorage.removeItem('carvion.tweaks.v1');
+    localStorage.setItem(RESET_KEY, RESET_VERSION);
+  };
+
   const load = () => {
+    ensureDemoReset();
     try {
       const data = JSON.parse(localStorage.getItem(KEY));
       return data ? { ...seed(), ...data } : seed();
@@ -95,6 +107,7 @@
     localStorage.removeItem(CURRENT_SESSION);
     localStorage.removeItem('carvion.factory.v1');
     localStorage.removeItem('carvion.tweaks.v1');
+    localStorage.setItem(RESET_KEY, RESET_VERSION);
     const data = seed();
     data.logs.unshift({
       id: uid('log'),
