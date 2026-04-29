@@ -18,7 +18,7 @@ const ACCENT_MAP = {
 
 const STORAGE_KEY = 'carvion.factory.v1';
 const APP_RESET_KEY = 'carvion.app.reset.version';
-const APP_RESET_VERSION = '2026-04-29-demo-ready-v2';
+const APP_RESET_VERSION = '2026-04-29-total-zero-v1';
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const defaultState = () => ({
   transactions: clone(TRANSACTIONS),
@@ -50,9 +50,9 @@ const buildKpis = (state) => {
   const costOut = state.transactions.filter((t) => t.type === 'out').reduce((sum, t) => sum + Number(t.amount || 0), 0);
   return KPIS.map((k) => {
     if (k.id === 'daily-production') return { ...k, value: produced };
-    if (k.id === 'unit-cost') return { ...k, value: produced ? realCost / produced : k.value };
+    if (k.id === 'unit-cost') return { ...k, value: produced ? realCost / produced : 0 };
     if (k.id === 'lot-profit') return { ...k, value: salesRevenue - costOut };
-    if (k.id === 'efficiency') return { ...k, value: Math.min(98, 78 + state.productionOrders.filter((o) => o.status === 'Finalizado').length * 2.4) };
+    if (k.id === 'efficiency') return { ...k, value: state.productionOrders.length ? Math.min(98, 78 + state.productionOrders.filter((o) => o.status === 'Finalizado').length * 2.4) : 0 };
     return k;
   });
 };
@@ -510,7 +510,7 @@ const AuditAdmin = ({ data, onAction }) => (
 );
 
 const OrdersAdmin = ({ data, onAction }) => {
-  const [draft, setDraft] = useState({ customer: '', deliveryDate: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10), product: 'Futebol Pró 5', quantity: 100, unitValue: 74.9, observation: '' });
+  const [draft, setDraft] = useState({ customer: '', deliveryDate: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10), product: '', quantity: 0, unitValue: 0, observation: '' });
   const create = () => onAction(Carvion.createOrder({ customer: draft.customer, deliveryDate: draft.deliveryDate, notes: draft.observation, items: [{ id: 'tmp', product: draft.product, description: draft.product, quantity: Number(draft.quantity), observation: draft.observation, unitValue: Number(draft.unitValue), stickers: 0, perSheet: 1 }] }), 'Pedido criado.');
   return (
   <>
@@ -543,7 +543,7 @@ const OrdersAdmin = ({ data, onAction }) => {
               <button className="btn btn-ghost" onClick={() => onAction(Carvion.duplicateOrder(o.id), 'Pedido duplicado.')}>Duplicar</button>
               <button className="btn btn-ghost" onClick={() => onAction(Carvion.cancelOrder(o.id, prompt('Motivo do cancelamento') || ''), 'Pedido cancelado.')}>Cancelar</button>
               <button className="btn btn-ghost" onClick={() => confirm('Excluir logicamente este pedido?') && onAction(Carvion.deleteOrder(o.id), 'Pedido removido.')}>Excluir</button>
-              <button className="btn btn-ghost" onClick={() => { const product = prompt('Produto do novo item', 'Futebol Pró 5') || ''; const quantity = Number(prompt('Quantidade', '100') || 0); const unitValue = Number(prompt('Valor unitário', '74.9') || 0); onAction(Carvion.addOrderItem(o.id, { product, description: product, quantity, unitValue, observation: '', stickers: 0, perSheet: 1 }), 'Item adicionado.'); }}>+ Item</button>
+              <button className="btn btn-ghost" onClick={() => { const product = prompt('Produto do novo item', '') || ''; const quantity = Number(prompt('Quantidade', '0') || 0); const unitValue = Number(prompt('Valor unitário', '0') || 0); onAction(Carvion.addOrderItem(o.id, { product, description: product, quantity, unitValue, observation: '', stickers: 0, perSheet: 1 }), 'Item adicionado.'); }}>+ Item</button>
               {o.items?.[0] && <button className="btn btn-ghost" onClick={() => onAction(Carvion.removeOrderItem(o.id, o.items[0].id), 'Item removido.')}>- Item</button>}
               <button className="btn btn-ghost" onClick={() => window.print()}>PDF</button>
             </td>
@@ -603,11 +603,11 @@ const MobileTab = ({ active, onChange, onAdd }) => (
 /* ===== ADD ORDER / COST MODAL ===== */
 const AddTxModal = ({ onClose, onSave, state }) => {
   const [type, setType] = useState('in');
-  const [amount, setAmount] = useState('184000');
+  const [amount, setAmount] = useState('0');
   const [client, setClient] = useState(state.clients[0]?.name || '');
-  const [product, setProduct] = useState(state.products[0]?.name || 'Futebol Pró 5');
-  const [owner, setOwner] = useState(state.representatives[0]?.name || 'Marcos Almeida');
-  const [qty, setQty] = useState('1200');
+  const [product, setProduct] = useState(state.products[0]?.name || state.materials[0]?.name || '');
+  const [owner, setOwner] = useState(state.representatives[0]?.name || 'Corte');
+  const [qty, setQty] = useState('0');
   const [notes, setNotes] = useState('');
   const handleSave = () => {
     onSave({
@@ -644,16 +644,16 @@ const AddTxModal = ({ onClose, onSave, state }) => {
           </div>
           <div className="field">
             <label>Quantidade</label>
-            <input value={qty} onChange={(e) => setQty(e.target.value)} placeholder="1200" />
+            <input value={qty} onChange={(e) => setQty(e.target.value)} placeholder="0" />
           </div>
           <div className="field-row">
             <div className="field">
               <label>Data</label>
-              <input type="date" defaultValue="2026-04-28" />
+              <input type="date" defaultValue={new Date().toISOString().slice(0, 10)} />
             </div>
             <div className="field">
               <label>Entrega prevista</label>
-              <input type="date" defaultValue="2026-05-15" />
+              <input type="date" defaultValue={new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)} />
             </div>
           </div>
           <div className="field">
@@ -666,6 +666,7 @@ const AddTxModal = ({ onClose, onSave, state }) => {
               <select value={product} onChange={(e) => setProduct(e.target.value)}>
                 {state.products.map((p) => <option key={p.name}>{p.name}</option>)}
                 {state.materials.map((m) => <option key={m.sku}>{m.name}</option>)}
+                {!state.products.length && !state.materials.length && <option value="">Nenhum produto/material cadastrado</option>}
               </select>
             </div>
             <div className="field">
@@ -1056,9 +1057,9 @@ const PlaceholderForSection = ({ id, state, adminData, onAction }) => {
     return (
       <div className="row-3" style={{ marginTop: 12 }}>
         {[
-          ['Custo total', 'matéria-prima + mão de obra + fixo rateado', 'R$ 428.000'],
-          ['Lucro projetado', 'pedidos fechados contra custo real', 'R$ 384.900'],
-          ['Previsão IA', 'capacidade restante para 7 dias', '6.400 bolas'],
+          ['Custo total', 'matéria-prima + mão de obra + fixo rateado', 'R$ 0'],
+          ['Lucro projetado', 'pedidos fechados contra custo real', 'R$ 0'],
+          ['Previsão IA', 'capacidade restante para 7 dias', '0 bolas'],
         ].map(([title, sub, value]) => (
           <div key={title} className="insight-card">
             <div className="card-title">{title}</div>

@@ -27,21 +27,21 @@ const KPIS = [
     id: 'daily-production',
     label: 'Bolas Produzidas',
     icon: 'box',
-    value: 18_740,
-    delta: 14.8,
+    value: 0,
+    delta: 0,
     period: 'mês atual',
     color: 'var(--accent)',
-    spark: sparkline(1, 2),
+    spark: Array(12).fill(0),
   },
   {
     id: 'unit-cost',
     label: 'Custo Médio / Bola',
     icon: 'banknote',
-    value: 22.84,
-    delta: -6.3,
+    value: 0,
+    delta: 0,
     period: 'vs. mês anterior',
     color: 'var(--info)',
-    spark: sparkline(2, -0.5),
+    spark: Array(12).fill(0),
     moneyPlain: true,
     inverted: true,
   },
@@ -49,149 +49,97 @@ const KPIS = [
     id: 'lot-profit',
     label: 'Lucro por Lote',
     icon: 'trending-up',
-    value: 384_900,
-    delta: 21.7,
+    value: 0,
+    delta: 0,
     period: 'lotes finalizados',
     color: 'var(--purple)',
-    spark: sparkline(3, 2.5),
+    spark: Array(12).fill(0),
   },
   {
     id: 'efficiency',
     label: 'Eficiência da Fábrica',
     icon: 'percent',
-    value: 87.6,
+    value: 0,
     isPct: true,
-    delta: 5.4,
+    delta: 0,
     period: 'corte · costura · montagem',
     color: 'var(--warn)',
-    spark: sparkline(4, 1.2),
+    spark: Array(12).fill(0),
   },
 ];
 
 const SECONDARY_KPIS = [
-  { id: 'waste', label: 'Perda de Matéria-prima', value: '3,8%', delta: -1.6, sub: 'meta máxima 5%', good: true },
-  { id: 'orders', label: 'Pedidos em Aberto', value: '42', delta: 9.3, sub: '18 com OP vinculada' },
-  { id: 'reps', label: 'Representantes Ativos', value: '16', delta: 12.5, sub: '4 regiões comerciais' },
-  { id: 'commission', label: 'Comissões do Mês', value: 'R$ 74.280', delta: 8.4, sub: 'média 4,2% por pedido' },
-  { id: 'stock', label: 'Produto Final', value: '8.420 un.', delta: 6.8, sub: 'por lote e modelo' },
-  { id: 'materials', label: 'Alertas de Insumo', value: '7', delta: -2.1, sub: 'couro, válvula e linha', good: true },
+  { id: 'waste', label: 'Perda de Matéria-prima', value: '0%', delta: 0, sub: 'sem perdas registradas', good: true },
+  { id: 'orders', label: 'Pedidos em Aberto', value: '0', delta: 0, sub: 'nenhum pedido cadastrado' },
+  { id: 'reps', label: 'Representantes Ativos', value: '0', delta: 0, sub: 'nenhum representante cadastrado' },
+  { id: 'commission', label: 'Comissões do Mês', value: 'R$ 0', delta: 0, sub: 'sem comissões' },
+  { id: 'stock', label: 'Produto Final', value: '0 un.', delta: 0, sub: 'sem estoque final' },
+  { id: 'materials', label: 'Alertas de Insumo', value: '0', delta: 0, sub: 'sem alertas', good: true },
 ];
 
 /* produção vs custo — 12 meses */
 const REV_EXP = [
-  { m: 'Mai/25', rev: 9_800, exp: 238_000 },
-  { m: 'Jun/25', rev: 10_600, exp: 246_000 },
-  { m: 'Jul/25', rev: 9_920, exp: 232_000 },
-  { m: 'Ago/25', rev: 12_400, exp: 274_000 },
-  { m: 'Set/25', rev: 13_200, exp: 288_000 },
-  { m: 'Out/25', rev: 14_800, exp: 321_000 },
-  { m: 'Nov/25', rev: 16_100, exp: 346_000 },
-  { m: 'Dez/25', rev: 15_400, exp: 338_000 },
-  { m: 'Jan/26', rev: 13_900, exp: 302_000 },
-  { m: 'Fev/26', rev: 15_700, exp: 334_000 },
-  { m: 'Mar/26', rev: 17_850, exp: 392_000 },
-  { m: 'Abr/26', rev: 18_740, exp: 428_000 },
+  { m: 'Mai/25', rev: 0, exp: 0 },
+  { m: 'Jun/25', rev: 0, exp: 0 },
+  { m: 'Jul/25', rev: 0, exp: 0 },
+  { m: 'Ago/25', rev: 0, exp: 0 },
+  { m: 'Set/25', rev: 0, exp: 0 },
+  { m: 'Out/25', rev: 0, exp: 0 },
+  { m: 'Nov/25', rev: 0, exp: 0 },
+  { m: 'Dez/25', rev: 0, exp: 0 },
+  { m: 'Jan/26', rev: 0, exp: 0 },
+  { m: 'Fev/26', rev: 0, exp: 0 },
+  { m: 'Mar/26', rev: 0, exp: 0 },
+  { m: 'Abr/26', rev: 0, exp: 0 }
 ];
 
 /* consumo de matéria-prima */
 const EXPENSE_CATS = [
-  { name: 'Couro sintético', value: 184_000, color: 'var(--accent)' },
-  { name: 'Borracha', value: 96_000, color: 'var(--info)' },
-  { name: 'Linha', value: 38_000, color: 'var(--purple)' },
-  { name: 'Válvulas', value: 52_000, color: 'var(--warn)' },
-  { name: 'Cola & acabamento', value: 34_000, color: 'oklch(0.65 0.14 340)' },
-  { name: 'Perdas', value: 24_000, color: 'oklch(0.55 0.02 240)' },
+  { name: 'Couro sintético', value: 0, color: 'var(--accent)' },
+  { name: 'Borracha', value: 0, color: 'var(--info)' },
+  { name: 'Linha', value: 0, color: 'var(--purple)' },
+  { name: 'Válvulas', value: 0, color: 'var(--warn)' },
+  { name: 'Cola & acabamento', value: 0, color: 'oklch(0.65 0.14 340)' },
+  { name: 'Perdas', value: 0, color: 'oklch(0.55 0.02 240)' },
 ];
 
 /* produção por tipo de bola */
 const REV_BY_PLAN = [
-  { m: 'Nov', enterprise: 6_200, business: 3_850, starter: 2_400 },
-  { m: 'Dez', enterprise: 5_900, business: 4_100, starter: 2_650 },
-  { m: 'Jan', enterprise: 5_100, business: 3_600, starter: 2_200 },
-  { m: 'Fev', enterprise: 6_450, business: 4_200, starter: 2_880 },
-  { m: 'Mar', enterprise: 7_300, business: 4_950, starter: 3_100 },
-  { m: 'Abr', enterprise: 7_850, business: 5_240, starter: 3_420 },
+  { m: 'Nov', enterprise: 0, business: 0, starter: 0 },
+  { m: 'Dez', enterprise: 0, business: 0, starter: 0 },
+  { m: 'Jan', enterprise: 0, business: 0, starter: 0 },
+  { m: 'Fev', enterprise: 0, business: 0, starter: 0 },
+  { m: 'Mar', enterprise: 0, business: 0, starter: 0 },
+  { m: 'Abr', enterprise: 0, business: 0, starter: 0 }
 ];
 
-const TRANSACTIONS = [
-  { id: 'PED-8421', date: '28 Abr', client: 'Esporte Mania Atacado', plan: 'Futebol Pró 5', amount: 184_000, type: 'in', status: 'paid', method: 'Rep. Marcos · SP' },
-  { id: 'PED-8420', date: '28 Abr', client: 'Arena Sul Distribuidora', plan: 'Vôlei Indoor', amount: 92_400, type: 'in', status: 'pending', method: 'Rep. Camila · Sul' },
-  { id: 'MP-2839', date: '28 Abr', client: 'Couro sintético premium', plan: 'Matéria-prima', amount: 41_280, type: 'out', status: 'paid', method: 'Fornecedor TexBall' },
-  { id: 'PED-8418', date: '27 Abr', client: 'Rede Gol de Placa', plan: 'Futebol Society', amount: 126_100, type: 'in', status: 'pending', method: 'Rep. Diego · NE' },
-  { id: 'OP-7712', date: '27 Abr', client: 'Folha produção costura', plan: 'Mão de obra', amount: 58_000, type: 'out', status: 'paid', method: 'Peça produzida' },
-  { id: 'PED-8416', date: '26 Abr', client: 'Quadra Livre Ltda', plan: 'Basquete Street', amount: 76_500, type: 'in', status: 'paid', method: 'Rep. Renata · CO' },
-  { id: 'COM-0931', date: '26 Abr', client: 'Comissões comerciais', plan: 'Representantes', amount: 19_740, type: 'out', status: 'pending', method: 'Fechamento mensal' },
-  { id: 'FIX-0412', date: '25 Abr', client: 'Energia + manutenção', plan: 'Custo fixo', amount: 37_820, type: 'out', status: 'paid', method: 'Rateio industrial' },
-  { id: 'PED-8412', date: '25 Abr', client: 'Viva Sport Center', plan: 'Futsal Pro', amount: 48_900, type: 'in', status: 'paid', method: 'Rep. Luana · MG' },
-];
+const TRANSACTIONS = [];
 
-const ACCOUNTS = [
-  { name: 'Linha Futebol Pró 5', branch: 'OPs 7701-7718 · 7.850 un.', balance: 384_900, color: 'oklch(0.78 0.16 75)', logo: 'FP' },
-  { name: 'Linha Vôlei Indoor', branch: 'OPs 7682-7700 · 5.240 un.', balance: 186_400, color: 'oklch(0.65 0.20 25)', logo: 'VI' },
-  { name: 'Linha Basquete Street', branch: 'OPs 7650-7681 · 3.420 un.', balance: 148_300, color: 'oklch(0.30 0.02 240)', logo: 'BS' },
-  { name: 'Linha Futsal Pro', balance: 92_980, branch: 'OPs 7620-7649 · 2.230 un.', color: 'oklch(0.72 0.13 230)', logo: 'FS' },
-];
+const ACCOUNTS = [];
 
-const MATERIALS = [
-  { sku: 'MAT-001', name: 'Couro sintético PU 1.4mm', unit: 'm²', stock: 1280, min: 1500, cost: 28.4, status: 'overdue' },
-  { sku: 'MAT-002', name: 'Borracha butílica câmara', unit: 'kg', stock: 840, min: 600, cost: 16.9, status: 'paid' },
-  { sku: 'MAT-003', name: 'Linha poliéster alta resistência', unit: 'rolo', stock: 74, min: 90, cost: 42.5, status: 'pending' },
-  { sku: 'MAT-004', name: 'Válvula esportiva universal', unit: 'un.', stock: 4200, min: 5000, cost: 0.82, status: 'overdue' },
-  { sku: 'MAT-005', name: 'Cola PU acabamento', unit: 'kg', stock: 210, min: 120, cost: 31.7, status: 'paid' },
-];
+const MATERIALS = [];
 
-const PRODUCTION_ORDERS = [
-  { id: 'OP-7718', product: 'Futebol Pró 5', qty: 1200, status: 'Em produção', stage: 'Costura', estimated: 27_800, real: 28_460, margin: 38.4 },
-  { id: 'OP-7717', product: 'Vôlei Indoor', qty: 800, status: 'Planejado', stage: 'Corte', estimated: 18_900, real: 0, margin: 34.2 },
-  { id: 'OP-7716', product: 'Basquete Street', qty: 650, status: 'Finalizado', stage: 'Acabamento', estimated: 21_100, real: 20_780, margin: 41.8 },
-  { id: 'OP-7715', product: 'Futsal Pro', qty: 500, status: 'Em produção', stage: 'Montagem', estimated: 11_400, real: 12_020, margin: 29.6 },
-];
+const PRODUCTION_ORDERS = [];
 
-const REPRESENTATIVES = [
-  { id: 'REP-01', name: 'Marcos Almeida', region: 'São Paulo', sales: 428_000, goal: 500_000, commission: 17_120, orders: 14, status: 'paid' },
-  { id: 'REP-02', name: 'Camila Torres', region: 'Sul', sales: 312_400, goal: 360_000, commission: 12_496, orders: 11, status: 'pending' },
-  { id: 'REP-03', name: 'Diego Barros', region: 'Nordeste', sales: 286_100, goal: 300_000, commission: 11_444, orders: 9, status: 'paid' },
-  { id: 'REP-04', name: 'Renata Nunes', region: 'Centro-Oeste', sales: 176_500, goal: 240_000, commission: 7_060, orders: 6, status: 'overdue' },
-  { id: 'REP-05', name: 'Luana Prado', region: 'Minas Gerais', sales: 148_900, goal: 180_000, commission: 5_956, orders: 5, status: 'pending' },
-];
+const REPRESENTATIVES = [];
 
-const PRODUCTS = [
-  { name: 'Futebol Pró 5', type: 'Futebol', image: 'uploads/WhatsApp Image 2026-04-28 at 17.18.38.jpeg', price: 74.9, cost: 22.6, stock: 3420, margin: 69.8, bom: 'PU, câmara, linha, válvula' },
-  { name: 'Vôlei Indoor', type: 'Vôlei', image: 'uploads/WhatsApp Image 2026-04-28 at 17.18.39.jpeg', price: 69.9, cost: 24.1, stock: 2180, margin: 65.5, bom: 'PU soft, câmara leve, cola, válvula' },
-  { name: 'Basquete Street', type: 'Basquete', image: 'uploads/WhatsApp Image 2026-04-28 at 17.18.39 (1).jpeg', price: 89.9, cost: 31.4, stock: 1640, margin: 65.1, bom: 'Borracha texturizada, câmara, válvula' },
-];
+const PRODUCTS = [];
 
-const CLIENTS = [
-  { name: 'Esporte Mania Atacado', city: 'São Paulo/SP', segment: 'Atacado', revenue: 684_000, rep: 'Marcos Almeida' },
-  { name: 'Arena Sul Distribuidora', city: 'Curitiba/PR', segment: 'Distribuidor', revenue: 392_400, rep: 'Camila Torres' },
-  { name: 'Rede Gol de Placa', city: 'Recife/PE', segment: 'Varejo regional', revenue: 326_100, rep: 'Diego Barros' },
-  { name: 'Quadra Livre Ltda', city: 'Campo Grande/MS', segment: 'Escolas', revenue: 176_500, rep: 'Renata Nunes' },
-];
+const CLIENTS = [];
 
 /* heatmap fluxo de caixa — 7 colunas (semanas), 7 linhas (dias) */
-const HEATMAP = (() => {
-  const grid = [];
-  for (let r = 0; r < 7; r++) {
-    const row = [];
-    for (let c = 0; c < 14; c++) {
-      const v = Math.sin(r * 0.6 + c * 0.4) * 0.5 + 0.5 + (Math.random() * 0.3);
-      row.push(Math.max(0, Math.min(1, v)));
-    }
-    grid.push(row);
-  }
-  return grid;
-})();
+const HEATMAP = Array.from({ length: 7 }, () => Array(14).fill(0));
 
 const NAV = [
   { group: 'INDÚSTRIA', items: [
     { id: 'dashboard', label: 'Dashboard Industrial', icon: 'home' },
-    { id: 'production', label: 'Ordens de Produção', icon: 'activity', badge: '18' },
-    { id: 'materials', label: 'Matéria-prima', icon: 'box', badge: '7' },
+    { id: 'production', label: 'Ordens de Produção', icon: 'activity', badge: '0' },
+    { id: 'materials', label: 'Matéria-prima', icon: 'box', badge: '0' },
     { id: 'costing', label: 'Custo por Bola', icon: 'percent' },
   ]},
   { group: 'COMERCIAL', items: [
-    { id: 'sales', label: 'Vendas & Pedidos', icon: 'arrow-down-left', badge: '42' },
-    { id: 'representatives', label: 'Representantes', icon: 'users', badge: '16' },
+    { id: 'sales', label: 'Vendas & Pedidos', icon: 'arrow-down-left', badge: '0' },
+    { id: 'representatives', label: 'Representantes', icon: 'users', badge: '0' },
     { id: 'clients', label: 'Clientes', icon: 'briefcase' },
     { id: 'commissions', label: 'Comissões', icon: 'banknote' },
   ]},
@@ -202,8 +150,8 @@ const NAV = [
   ]},
   { group: 'FINANCEIRO & IA', items: [
     { id: 'cashflow', label: 'Fluxo de Caixa', icon: 'activity' },
-    { id: 'payables', label: 'Contas a Pagar', icon: 'send', badge: '23' },
-    { id: 'receivables', label: 'Contas a Receber', icon: 'inbox', badge: '47' },
+    { id: 'payables', label: 'Contas a Pagar', icon: 'send', badge: '0' },
+    { id: 'receivables', label: 'Contas a Receber', icon: 'inbox', badge: '0' },
     { id: 'analytics', label: 'Analytics Industrial', icon: 'pie' },
     { id: 'reports', label: 'Relatórios', icon: 'file' },
     { id: 'settings', label: 'Multiempresa', icon: 'settings' },

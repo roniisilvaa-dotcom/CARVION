@@ -2,7 +2,7 @@
   const KEY = 'carvion.admin.v1';
   const CURRENT_SESSION = 'carvion.currentSessionId';
   const RESET_KEY = 'carvion.admin.reset.version';
-  const RESET_VERSION = '2026-04-29-demo-ready-v2';
+  const RESET_VERSION = '2026-04-29-total-zero-v1';
   const SESSION_TTL = 1000 * 60 * 45;
 
   const permissionsByRole = {
@@ -39,44 +39,9 @@
         notes: 'Usuário administrador inicial.',
         permissions: permissionsByRole.administrador,
         deletedAt: null,
-      },
-      {
-        id: 'usr-comercial',
-        name: 'Marcos Almeida',
-        email: 'marcos@carvion.com',
-        login: 'marcos',
-        phone: '(11) 98888-1000',
-        position: 'Representante comercial',
-        role: 'comercial',
-        status: 'ativo',
-        password: 'Comercial@123',
-        createdAt: now(),
-        lastAccess: null,
-        notes: 'Acesso comercial.',
-        permissions: permissionsByRole.comercial,
-        deletedAt: null,
-      },
-    ],
+      },    ],
     sessions: [],
-    orders: [
-      {
-        id: 'so-1001',
-        number: 'PV-1001',
-        requestDate: now().slice(0, 10),
-        requester: 'Roni Silva',
-        company: 'CARVION Demo',
-        customer: 'Esporte Mania Atacado',
-        deliveryDate: '2026-05-15',
-        notes: 'Pedido inicial de demonstração.',
-        status: 'em aberto',
-        deletedAt: null,
-        history: [{ at: now(), user: 'Sistema', action: 'pedido criado' }],
-        items: [
-          { id: 'item-1', product: 'Futebol Pró 5', description: 'Bola oficial costurada', quantity: 1200, observation: '32 gomos', unitValue: 74.9, stickers: 0, perSheet: 1 },
-        ],
-        totals: {},
-      },
-    ],
+    orders: [],
     logs: [],
     preferences: {},
   });
@@ -111,17 +76,6 @@
     localStorage.setItem(RESET_KEY, RESET_VERSION);
     localStorage.setItem('carvion.app.reset.version', RESET_VERSION);
     const data = seed();
-    data.logs.unshift({
-      id: uid('log'),
-      at: now(),
-      actor: 'Sistema',
-      action: 'demo resetada',
-      module: 'demonstração',
-      description: 'Base de demonstração recriada para apresentação.',
-      ref: 'demo',
-      origin: 'local',
-      status: 'sucesso',
-    });
     save(data);
     if (options.loginAdmin) return login('admin', 'Admin@123', true);
     return { ok: true, data };
