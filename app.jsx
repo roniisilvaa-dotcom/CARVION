@@ -381,6 +381,145 @@ const ProductsGrid = ({ rows }) => (
   </div>
 );
 
+const EmptyState = ({ text }) => (
+  <div style={{ display: 'grid', placeItems: 'center', minHeight: 180, color: 'var(--text-faint)', textAlign: 'center' }}>
+    <div>
+      <Icon name="file" size={26} />
+      <div style={{ marginTop: 8, fontSize: 13 }}>{text}</div>
+    </div>
+  </div>
+);
+
+const AccessDenied = () => (
+  <div style={{ display: 'grid', placeItems: 'center', minHeight: 260, color: 'var(--text-faint)', textAlign: 'center' }}>
+    <div>
+      <Icon name="x" size={28} />
+      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-dim)', marginTop: 8 }}>Acesso negado</div>
+      <div style={{ fontSize: 12.5, maxWidth: 360 }}>Seu perfil não possui permissão para acessar este módulo.</div>
+    </div>
+  </div>
+);
+
+const UsersAdmin = ({ data, onAction }) => {
+  const [form, setForm] = useState({ name: '', email: '', login: '', phone: '', position: '', role: 'operador', status: 'ativo', password: 'Usuario@123', notes: '' });
+  const submit = () => {
+    const result = Carvion.createUser(form);
+    onAction(result, result.ok ? 'Usuário criado.' : result.message);
+    if (result.ok) setForm({ ...form, name: '', email: '', login: '' });
+  };
+  return (
+    <>
+      <div className="row-3">
+        <div className="field"><label>Nome</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nome completo" /></div>
+        <div className="field"><label>E-mail</label><input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="usuario@empresa.com" /></div>
+        <div className="field"><label>Login</label><input value={form.login} onChange={(e) => setForm({ ...form, login: e.target.value })} placeholder="usuario" /></div>
+        <div className="field"><label>Telefone</label><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(00) 00000-0000" /></div>
+        <div className="field"><label>Cargo</label><input value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} placeholder="Cargo" /></div>
+        <div className="field"><label>Perfil</label><select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>{Object.keys(Carvion.permissionsByRole).map((r) => <option key={r}>{r}</option>)}</select></div>
+      </div>
+      <button className="btn btn-primary" onClick={submit}><Icon name="plus" size={13} /> Criar usuário</button>
+      <div style={{ marginTop: 16 }} className="table-wrap">
+        <table className="table">
+          <thead><tr><th>Usuário</th><th>Login</th><th>Perfil</th><th>Status</th><th>Último acesso</th><th>Ações</th></tr></thead>
+          <tbody>{data.users.filter((u) => !u.deletedAt).map((u) => (
+            <tr key={u.id}>
+              <td>{u.name}<div className="muted" style={{ fontSize: 11 }}>{u.email}</div></td>
+              <td className="mono">{u.login}</td>
+              <td><span className="tag">{u.role}</span></td>
+              <td><span className={'status-pill ' + (u.status === 'ativo' ? 'status-paid' : u.status === 'bloqueado' ? 'status-overdue' : 'status-pending')}>{u.status}</span></td>
+              <td className="muted">{u.lastAccess ? new Date(u.lastAccess).toLocaleString('pt-BR') : 'Nunca'}</td>
+              <td>
+                <button className="btn btn-ghost" onClick={() => {
+                  const result = Carvion.updateUser(u.id, { status: u.status === 'bloqueado' ? 'ativo' : 'bloqueado' });
+                  if (result.ok && u.status !== 'bloqueado') Carvion.blockUserSessions(u.id, 'Usuário bloqueado pelo administrador');
+                  onAction(result, 'Status atualizado.');
+                }}>{u.status === 'bloqueado' ? 'Desbloquear' : 'Bloquear'}</button>
+                <button className="btn btn-ghost" onClick={() => onAction(Carvion.resetPassword(u.id, 'Reset@123'), 'Senha redefinida para Reset@123.')}>Senha</button>
+              </td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>
+    </>
+  );
+};
+
+const SessionsAdmin = ({ data, onAction }) => {
+  const current = Carvion.currentSessionId();
+  const visible = Carvion.hasPermission('sessions:manage') ? data.sessions : data.sessions.filter((s) => s.id === current);
+  return (
+    <div className="table-wrap">
+      <table className="table">
+        <thead><tr><th>Sessão</th><th>Usuário</th><th>Login</th><th>Última atividade</th><th>Dispositivo</th><th>Status</th><th>Ações</th></tr></thead>
+        <tbody>{visible.map((s) => (
+          <tr key={s.id}>
+            <td className="mono">{s.id}{s.id === current && <div className="muted">sessão atual</div>}</td>
+            <td>{s.userName}</td>
+            <td>{new Date(s.loginAt).toLocaleString('pt-BR')}</td>
+            <td>{new Date(s.lastActivity).toLocaleString('pt-BR')}</td>
+            <td className="muted">{s.ip}<div>{s.device}</div></td>
+            <td><span className={'status-pill ' + (s.status === 'ativa' ? 'status-paid' : s.status === 'bloqueada' ? 'status-overdue' : 'status-pending')}>{s.status}</span></td>
+            <td>
+              <button className="btn btn-ghost" onClick={() => onAction(Carvion.blockSession(s.id, 'Bloqueio manual'), 'Sessão bloqueada.')}>Bloquear</button>
+              <button className="btn btn-ghost" onClick={() => onAction(Carvion.revokeSession(s.id), 'Sessão revogada.')}>Revogar</button>
+            </td>
+          </tr>
+        ))}</tbody>
+      </table>
+      {!visible.length && <EmptyState text="Nenhuma sessão registrada." />}
+    </div>
+  );
+};
+
+const AuditAdmin = ({ data }) => (
+  <div className="table-wrap">
+    <table className="table">
+      <thead><tr><th>Data</th><th>Usuário</th><th>Ação</th><th>Módulo</th><th>Descrição</th><th>Status</th></tr></thead>
+      <tbody>{data.logs.map((log) => (
+        <tr key={log.id}>
+          <td className="muted">{new Date(log.at).toLocaleString('pt-BR')}</td>
+          <td>{log.actor}</td>
+          <td><span className="tag">{log.action}</span></td>
+          <td>{log.module}</td>
+          <td>{log.description}</td>
+          <td><span className="status-pill status-paid">{log.status}</span></td>
+        </tr>
+      ))}</tbody>
+    </table>
+    {!data.logs.length && <EmptyState text="Nenhum evento de auditoria registrado." />}
+  </div>
+);
+
+const OrdersAdmin = ({ data, onAction }) => (
+  <div className="table-wrap">
+    <table className="table">
+      <thead><tr><th>Pedido</th><th>Cliente</th><th>Entrega</th><th>Status</th><th>Itens</th><th className="text-right">Total</th><th>Ações</th></tr></thead>
+      <tbody>{data.orders.filter((o) => !o.deletedAt).map((o) => {
+        const totals = Carvion.calculateTotals(o.items);
+        return (
+          <tr key={o.id}>
+            <td className="mono">{o.number}<div className="muted">{o.requestDate}</div></td>
+            <td>{o.customer}<div className="muted">{o.company}</div></td>
+            <td>{o.deliveryDate}</td>
+            <td><span className={'status-pill ' + (o.status === 'emitido' ? 'status-paid' : o.status === 'cancelado' ? 'status-overdue' : 'status-pending')}>{o.status}</span></td>
+            <td>{totals.totalItems} un.<div className="muted">{totals.totalSheets} folhas</div></td>
+            <td className="num">{fmtBRL(totals.total)}</td>
+            <td>
+              <button className="btn btn-ghost" onClick={() => onAction(Carvion.emitOrder(o.id), 'Pedido emitido.')}>Emitir</button>
+              <button className="btn btn-ghost" onClick={() => onAction(Carvion.updateOrder(o.id, { status: 'em análise' }), 'Pedido enviado para análise.')}>Analisar</button>
+              <button className="btn btn-ghost" onClick={() => onAction(Carvion.updateOrder(o.id, { customer: prompt('Cliente', o.customer) || o.customer, deliveryDate: prompt('Prazo de entrega', o.deliveryDate) || o.deliveryDate }), 'Pedido editado.')}>Editar</button>
+              <button className="btn btn-ghost" onClick={() => onAction(Carvion.duplicateOrder(o.id), 'Pedido duplicado.')}>Duplicar</button>
+              <button className="btn btn-ghost" onClick={() => onAction(Carvion.cancelOrder(o.id, prompt('Motivo do cancelamento') || ''), 'Pedido cancelado.')}>Cancelar</button>
+              <button className="btn btn-ghost" onClick={() => confirm('Excluir logicamente este pedido?') && onAction(Carvion.deleteOrder(o.id), 'Pedido removido.')}>Excluir</button>
+              <button className="btn btn-ghost" onClick={() => window.print()}>PDF</button>
+            </td>
+          </tr>
+        );
+      })}</tbody>
+    </table>
+  </div>
+);
+
 /* ===== GENERIC PLACEHOLDER PAGE ===== */
 const PlaceholderPage = ({ title, desc, kpis, children }) => (
   <>
@@ -522,8 +661,26 @@ const App = () => {
   const [showModal, setShowModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [appState, setAppState] = useState(loadAppState);
+  const [adminData, setAdminData] = useState(() => Carvion.load());
+  const [toast, setToast] = useState('');
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const kpis = useMemo(() => buildKpis(appState), [appState]);
+  const sessionInfo = Carvion.validateSession();
+  const currentUser = sessionInfo.user;
+
+  useEffect(() => {
+    Carvion.requireAuth();
+    const timer = setInterval(() => {
+      const result = Carvion.validateSession();
+      if (!result.ok) {
+        alert(`Sessão ${result.reason}. Faça login novamente.`);
+        Carvion.logout();
+        location.href = 'auth/login.html';
+      }
+      setAdminData(Carvion.load());
+    }, 30000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
@@ -576,6 +733,21 @@ const App = () => {
           real: 0,
           margin: entry.amount ? ((entry.amount - estimated) / entry.amount) * 100 : 0,
         });
+        Carvion.createOrder({
+          customer: entry.client,
+          deliveryDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+          notes: entry.notes,
+          items: [{
+            id: 'item-' + Date.now(),
+            product: entry.product,
+            description: entry.product,
+            quantity: entry.qty,
+            observation: entry.notes,
+            unitValue: entry.qty ? entry.amount / entry.qty : entry.amount,
+            stickers: 0,
+            perSheet: 1,
+          }],
+        });
       }
 
       if (!isSale) {
@@ -590,11 +762,25 @@ const App = () => {
 
       return next;
     });
+    setAdminData(Carvion.load());
+    setToast('Lançamento salvo com sucesso.');
+    setTimeout(() => setToast(''), 3500);
   };
 
   const resetDemo = () => {
     localStorage.removeItem(STORAGE_KEY);
     setAppState(defaultState());
+  };
+
+  const handleAdminAction = (result, successMessage) => {
+    setToast(result?.ok ? successMessage : (result?.message || 'Ação não concluída.'));
+    setAdminData(Carvion.load());
+    setTimeout(() => setToast(''), 3500);
+  };
+
+  const logout = () => {
+    Carvion.logout();
+    location.href = 'auth/login.html';
   };
 
   useEffect(() => {
@@ -642,7 +828,15 @@ const App = () => {
             {g.items.map((it) => (
               <button key={it.id}
                 className={'nav-item' + (active === it.id ? ' active' : '')}
-                onClick={() => { setActive(it.id); setSidebarOpen(false); }}>
+                onClick={() => {
+                  if (!Carvion.canAccessModule(it.id, currentUser)) {
+                    setToast('Acesso negado para este módulo.');
+                    setActive(it.id);
+                    setSidebarOpen(false);
+                    return;
+                  }
+                  setActive(it.id); setSidebarOpen(false);
+                }}>
                 <Icon name={it.icon} />
                 <span>{it.label}</span>
                 {it.badge && <span className="nav-badge">{it.badge}</span>}
@@ -651,11 +845,11 @@ const App = () => {
           </div>
         ))}
         <div className="sidebar-foot">
-          <div className="user-card">
+          <div className="user-card" onClick={logout} title="Sair com segurança">
             <div className="avatar">CV</div>
             <div className="user-meta">
-              <div className="user-name">Roni Silva</div>
-              <div className="user-role">Diretor industrial</div>
+              <div className="user-name">{currentUser?.name || 'Usuário'}</div>
+              <div className="user-role">{currentUser?.role || 'sessão'}</div>
             </div>
             <Icon name="chevron-down" size={14} />
           </div>
@@ -696,9 +890,10 @@ const App = () => {
             <span className="chip">Todas as fábricas <Icon name="chevron-down" size={12} /></span>
             <div className="spacer" />
             <span className="chip" style={{ color: 'var(--accent)', borderColor: 'oklch(0.74 0.17 155 / 0.4)' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)' }} /> Chão de fábrica sincronizado · há 2 min
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)' }} /> Sessão {sessionInfo.session?.status || 'ativa'}
             </span>
           </div>
+          {toast && <div className="chip" style={{ color: toast.includes('negado') || toast.includes('não') ? 'var(--danger)' : 'var(--accent)', borderColor: 'var(--border)' }}>{toast}</div>}
 
           {active === 'dashboard' && <DashboardPage state={appState} kpis={kpis} onAdd={() => setShowModal(true)} period={period} showSecondary={tweaks.showSecondaryKpis} />}
           {active !== 'dashboard' && (
@@ -715,7 +910,9 @@ const App = () => {
                   </button>
                 </div>
               </div>
-              <PlaceholderForSection id={active} state={appState} />
+              {Carvion.canAccessModule(active, currentUser)
+                ? <PlaceholderForSection id={active} state={appState} adminData={adminData} onAction={handleAdminAction} />
+                : <AccessDenied />}
             </div>
           )}
         </div>
@@ -745,7 +942,19 @@ const App = () => {
 };
 
 /* contextual content for each section */
-const PlaceholderForSection = ({ id, state }) => {
+const PlaceholderForSection = ({ id, state, adminData, onAction }) => {
+  if (id === 'users-admin') {
+    return <UsersAdmin data={adminData} onAction={onAction} />;
+  }
+  if (id === 'sessions-admin') {
+    return <SessionsAdmin data={adminData} onAction={onAction} />;
+  }
+  if (id === 'audit-admin') {
+    return <AuditAdmin data={adminData} />;
+  }
+  if (id === 'orders-admin') {
+    return <OrdersAdmin data={adminData} onAction={onAction} />;
+  }
   if (id === 'production') {
     return <ProductionTable rows={state.productionOrders} />;
   }

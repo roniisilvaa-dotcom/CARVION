@@ -207,6 +207,10 @@ const NAV = [
     { id: 'analytics', label: 'Analytics Industrial', icon: 'pie' },
     { id: 'reports', label: 'Relatórios', icon: 'file' },
     { id: 'settings', label: 'Multiempresa', icon: 'settings' },
+    { id: 'users-admin', label: 'Usuários', icon: 'users' },
+    { id: 'sessions-admin', label: 'Sessões', icon: 'shuffle' },
+    { id: 'orders-admin', label: 'Pedidos Admin', icon: 'file' },
+    { id: 'audit-admin', label: 'Auditoria', icon: 'landmark' },
   ]},
 ];
 
