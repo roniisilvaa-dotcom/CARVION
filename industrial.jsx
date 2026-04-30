@@ -116,6 +116,133 @@ const industrialCsvRows = (text) => {
     return headers.reduce((row, header, index) => ({ ...row, [header]: cells[index] || '' }), {});
   });
 };
+const csvEscape = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+const rowsToCsv = (rows) => {
+  if (!rows.length) return '';
+  const headers = Object.keys(rows[0]);
+  return [headers.join(';'), ...rows.map((row) => headers.map((header) => csvEscape(row[header])).join(';'))].join('\n');
+};
+const downloadIndustrialFile = (fileName, content, type) => {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};
+const industrialDatasets = (state, metrics) => {
+  const employees = enrichEmployees(state);
+  const orders = (state.orders || []).map((op) => ({
+    opId: op.id,
+    nomeOp: op.name || op.id,
+    tipo: op.type || 'Catálogo',
+    produto: op.product,
+    codigoProduto: op.productCode || '',
+    modelo: op.model || '',
+    cliente: op.customer || '',
+    status: op.status,
+    etapaAtual: FLOW_STEPS.find((step) => step.id === op.current)?.name || op.current,
+    setorAtual: FLOW_STEPS.find((step) => step.id === op.current)?.sector || '',
+    progressoPercentual: opProgress(op),
+    quantidadeTotal: Number(op.totalQty || 0),
+    quantidadeInterna: Number(op.internalQty || 0),
+    quantidadeExterna: Number(op.externalQty || 0),
+    prazo: op.dueAt || op.dueDate || '',
+    atrasada: isOpLate(op) ? 'Sim' : 'Não',
+    prioridade: op.priority || '',
+    lote: op.lot || '',
+    terceiro: op.externalPartner || '',
+  }));
+  const lots = (state.lots || []).map((lot) => ({
+    loteId: lot.id,
+    opId: lot.opId,
+    tipo: lot.type,
+    quantidade: Number(lot.qty || 0),
+    localizacao: lot.location,
+    etapa: FLOW_STEPS.find((step) => step.id === lot.step)?.name || lot.step,
+    status: lot.status,
+  }));
+  const records = (state.records || []).map((record) => ({
+    apontamentoId: record.id,
+    opId: record.opId,
+    etapa: FLOW_STEPS.find((step) => step.id === record.step)?.name || record.step,
+    setor: record.sector,
+    responsavel: record.employee,
+    inicio: record.startedAt,
+    fim: record.endedAt,
+    quantidade: Number(record.qty || 0),
+    perdas: Number(record.losses || 0),
+    status: record.status,
+  }));
+  const sectors = (state.sectors || []).map((sector) => {
+    const people = employees.filter((employee) => employee.sector === sector.name);
+    const produced = people.reduce((sum, employee) => sum + Number(employee.produced || 0), 0);
+    const hours = people.reduce((sum, employee) => sum + Number(employee.hours || 0), 0);
+    const bonus = people.reduce((sum, employee) => sum + Number(employee.bonus || 0), 0);
+    const step = metrics.sectorMap.find((item) => item.sector === sector.name || item.name === sector.name);
+    return {
+      setorId: sector.id,
+      setor: sector.name,
+      lider: sector.leader,
+      meta: Number(sector.goal || 0),
+      produzido: produced,
+      horas: hours,
+      pecasPorHora: hours ? produced / hours : 0,
+      eficiencia: step?.efficiency || (produced ? Math.min(100, produced / Math.max(Number(sector.goal || 1), 1) * 100) : 0),
+      bonusCalculado: bonus,
+      tetoBonificacao: Number(sector.bonusCap || 0),
+      colaboradores: people.length,
+      status: sector.status || 'Ativo',
+    };
+  });
+  const products = (state.products || []).map((product) => ({
+    codigo: product.code,
+    produto: product.name,
+    modelo: product.model,
+    marca: product.brand,
+    linha: product.line,
+    modalidade: product.modality,
+    custo: Number(product.cost || 0),
+    precoLojista: Number(product.dealerPrice || 0),
+    precoParceiro: Number(product.partnerPrice || 0),
+    precoFinal: Number(product.price || 0),
+    estoque: Number(product.stock || 0),
+    fichaTecnica: product.bom,
+  }));
+  const employeeRows = employees.map((employee) => ({
+    colaboradorId: employee.id,
+    nome: employee.name,
+    cargo: employee.role,
+    setor: employee.sector,
+    produzido: Number(employee.produced || 0),
+    horas: Number(employee.hours || 0),
+    pecasPorHora: employee.pph,
+    meta: employee.goal,
+    valorPecaExtra: employee.rate,
+    bonusBruto: employee.rawBonus,
+    bonusPago: employee.bonus,
+    tetoAplicado: employee.capApplied ? 'Sim' : 'Não',
+    salarioBase: Number(employee.baseSalary || 0),
+    status: employee.status,
+  }));
+  const kpis = [{
+    atualizadoEm: state.updatedAt || stamp(),
+    producaoTotal: metrics.totalProduced,
+    perdas: metrics.losses,
+    eficienciaGeral: metrics.efficiency,
+    opsAtivas: metrics.activeOps,
+    lotesAtivos: metrics.activeLots,
+    producaoInterna: metrics.internal,
+    producaoExterna: metrics.external,
+    bonusPrevisto: metrics.bonusTotal,
+    gargaloAtual: metrics.slowest.name,
+    eficienciaGargalo: metrics.slowest.efficiency,
+  }];
+  return { kpis, orders, lots, records, sectors, employees: employeeRows, products };
+};
 const industrialProductFromRow = (row, index) => {
   const code = String(pickIndustrialValue(row, ['codigo', 'código', 'cod', 'sku', 'referencia', 'referência']) || '').trim();
   const model = String(pickIndustrialValue(row, ['modelo', 'model', 'arte']) || '').trim();
@@ -209,12 +336,12 @@ const useIndustrialRealtime = () => {
 
 const IndustrialSidebar = ({ current }) => {
   const links = [
-    ['/dashboard', 'Dashboard'], ['/producao', 'Produção'], ['/produtos', 'Produtos'], ['/eficiencia', 'Eficiência'], ['/relatorios', 'Relatórios']
+    ['/dashboard', 'Dashboard'], ['/producao', 'Produção'], ['/produtos', 'Produtos'], ['/eficiencia', 'Eficiência'], ['/relatorios', 'Relatórios'], ['/integracoes', 'Integrações']
   ];
   return <aside className="sidebar">
     <div className="brand"><div className="industrial-logo">CI</div><div><div className="brand-name">CARVION</div><div className="brand-sub">Industrial</div></div></div>
     <div className="nav-label">MÓDULO INDUSTRIAL</div>
-    {links.map(([href, label]) => <a key={href} className={'nav-item' + (current === href.replace('/', '') ? ' active' : '')} href={`/industrial${href}`}><Icon name={label === 'Dashboard' ? 'home' : label === 'Produção' ? 'activity' : label === 'Produtos' ? 'box' : label === 'Eficiência' ? 'percent' : 'file'} />{label}</a>)}
+    {links.map(([href, label]) => <a key={href} className={'nav-item' + (current === href.replace('/', '') ? ' active' : '')} href={`/industrial${href}`}><Icon name={label === 'Dashboard' ? 'home' : label === 'Produção' ? 'activity' : label === 'Produtos' ? 'box' : label === 'Eficiência' ? 'percent' : label === 'Integrações' ? 'inbox' : 'file'} />{label}</a>)}
     <div className="nav-label">SISTEMA</div>
     <a className="nav-item" href="/dashboard"><Icon name="chevron-down" />Voltar ao ERP</a>
   </aside>;
@@ -234,6 +361,7 @@ const IndustrialTabs = ({ current }) => <nav className="industrial-tabs">
   <a className={current === 'produtos' ? 'active' : ''} href="/industrial/produtos"><Icon name="box" />Produtos</a>
   <a className={current === 'eficiencia' ? 'active' : ''} href="/industrial/eficiencia"><Icon name="percent" />Eficiência</a>
   <a className={current === 'relatorios' ? 'active' : ''} href="/industrial/relatorios"><Icon name="file" />Relatórios</a>
+  <a className={current === 'integracoes' ? 'active' : ''} href="/industrial/integracoes"><Icon name="inbox" />Integrações</a>
 </nav>;
 
 const IndustrialKpis = ({ metrics }) => <div className="kpi-grid">
@@ -845,16 +973,101 @@ const EfficiencyView = ({ state, metrics, update }) => {
 
 const ReportsView = ({ state, metrics }) => <><div className="print-only"><h1>CARVION Industrial — Relatório</h1></div><IndustrialKpis metrics={metrics} /><ReportsDashboard state={state} metrics={metrics} /><div className="row-3"><div className="insight-card"><div className="card-title">Produção por período</div><div className="kpi-value">{iFmt(metrics.totalProduced)}</div><div className="card-sub">peças registradas</div></div><div className="insight-card"><div className="card-title">Comissões e bônus</div><div className="kpi-value">{iMoney(metrics.bonusTotal)}</div><div className="card-sub">bônus automático com teto por setor</div></div><div className="insight-card"><div className="card-title">Gargalo</div><div className="kpi-value">{metrics.slowest.name}</div><div className="card-sub">menor eficiência atual</div></div></div><div className="card"><div className="card-head"><div><div className="card-title">Rastreabilidade completa</div><div className="card-sub">Início, fim, responsável, quantidade e perdas por etapa</div></div><button className="btn" onClick={() => window.print()}><Icon name="file" /> Imprimir / Exportar PDF</button></div><div className="table-wrap"><table className="table"><thead><tr><th>OP</th><th>Etapa</th><th>Responsável</th><th>Início</th><th>Fim</th><th>Qtd.</th><th>Perdas</th><th>Status</th></tr></thead><tbody>{state.records.map((r) => <tr key={r.id}><td className="mono">{r.opId}</td><td>{FLOW_STEPS.find((s) => s.id === r.step)?.name}</td><td>{r.employee}</td><td className="muted">{r.startedAt ? new Date(r.startedAt).toLocaleString('pt-BR') : '-'}</td><td className="muted">{r.endedAt ? new Date(r.endedAt).toLocaleString('pt-BR') : '-'}</td><td>{iFmt(r.qty)}</td><td>{iFmt(r.losses)}</td><td><span className="status-pill status-draft">{r.status}</span></td></tr>)}</tbody></table></div></div></>;
 
+const IntegrationsView = ({ state, metrics }) => {
+  const datasets = industrialDatasets(state, metrics);
+  const [config, setConfig] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('carvion.industrial.integrations')) || { endpoint: '', apiKey: '', format: 'json' }; }
+    catch { return { endpoint: '', apiKey: '', format: 'json' }; }
+  });
+  const [message, setMessage] = useState('');
+  const saveConfig = (nextConfig) => {
+    setConfig(nextConfig);
+    localStorage.setItem('carvion.industrial.integrations', JSON.stringify(nextConfig));
+  };
+  const exportJson = () => downloadIndustrialFile('carvion-industrial-powerbi.json', JSON.stringify({ generatedAt: stamp(), datasets }, null, 2), 'application/json;charset=utf-8');
+  const exportCsv = (name) => downloadIndustrialFile(`carvion-${name}.csv`, rowsToCsv(datasets[name] || []), 'text/csv;charset=utf-8');
+  const sendWebhook = async () => {
+    if (!config.endpoint) { setMessage('Informe a URL do webhook/API antes de enviar.'); return; }
+    try {
+      setMessage('Enviando dados para integração...');
+      const response = await fetch(config.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}) },
+        body: JSON.stringify({ source: 'CARVION Industrial', generatedAt: stamp(), datasets }),
+      });
+      setMessage(response.ok ? 'Dados enviados com sucesso.' : `Integração respondeu com status ${response.status}.`);
+    } catch (error) {
+      setMessage(error.message || 'Não foi possível enviar para a integração.');
+    }
+  };
+  const connectorCards = [
+    ['Power BI', 'CSV/JSON normalizado para dashboards, refresh manual e futuro endpoint REST.'],
+    ['Excel / Google Sheets', 'Arquivos CSV por tabela para análise, conciliação e importação.'],
+    ['ERP / PCP / MRP', 'Webhook JSON com OPs, lotes, etapas, produtos, colaboradores e custos.'],
+    ['Make / Zapier / n8n', 'POST único para automações, alertas, WhatsApp, e-mail e tarefas.'],
+    ['Banco de dados / API', 'Formato pronto para PostgreSQL, BI, data lake ou backend NestJS.'],
+    ['Power Automate', 'Payload JSON compatível com fluxos corporativos Microsoft.'],
+  ];
+  return <><div className="card industrial-command-card">
+    <div className="card-head">
+      <div><div className="card-title">Integrações e Power BI</div><div className="card-sub">CARVION Industrial conversando com BI, ERP, automações e qualquer sistema via CSV, JSON ou webhook</div></div>
+      <button className="btn btn-primary" onClick={exportJson}><Icon name="inbox" /> Exportar pacote Power BI</button>
+    </div>
+    <div className="industrial-command-kpis report-kpis">
+      <div><span>Datasets</span><strong>{Object.keys(datasets).length}</strong><small>tabelas prontas</small></div>
+      <div><span>OPs</span><strong>{datasets.orders.length}</strong><small>ordens exportáveis</small></div>
+      <div><span>Apontamentos</span><strong>{datasets.records.length}</strong><small>produção e perdas</small></div>
+      <div><span>Produtos</span><strong>{datasets.products.length}</strong><small>catálogo e custos</small></div>
+    </div>
+    <div className="industrial-command-note">{message || 'Para Power BI: exporte o pacote JSON ou os CSVs abaixo. Quando o backend estiver publicado, este mesmo formato vira endpoint REST para atualização automática.'}</div>
+  </div>
+
+  <div className="integration-grid">
+    {connectorCards.map(([name, description]) => <div className="integration-card" key={name}><strong>{name}</strong><span>{description}</span></div>)}
+  </div>
+
+  <div className="row-21">
+    <div className="card">
+      <div className="card-head"><div><div className="card-title">Datasets para BI</div><div className="card-sub">Baixe por tabela para Power BI, Excel ou importação em outro sistema</div></div></div>
+      <div className="dataset-actions">
+        {Object.keys(datasets).map((name) => <button className="btn" key={name} onClick={() => exportCsv(name)}>{name}.csv</button>)}
+        <button className="btn btn-primary" onClick={exportJson}>pacote completo .json</button>
+      </div>
+    </div>
+    <div className="card">
+      <div className="card-head"><div><div className="card-title">Webhook / API externa</div><div className="card-sub">Envie o pacote completo para ERP, n8n, Make, Zapier, Power Automate ou backend próprio</div></div><button className="btn btn-primary" onClick={sendWebhook}>Enviar agora</button></div>
+      <div className="row-3">
+        <div className="field wide"><label>URL do webhook/API</label><input value={config.endpoint} onChange={(e) => saveConfig({ ...config, endpoint: e.target.value })} placeholder="https://sua-api.com/webhooks/carvion" /></div>
+        <div className="field"><label>Token/API key</label><input value={config.apiKey} onChange={(e) => saveConfig({ ...config, apiKey: e.target.value })} placeholder="opcional" /></div>
+        <div className="field"><label>Formato</label><select value={config.format} onChange={(e) => saveConfig({ ...config, format: e.target.value })}><option value="json">JSON</option><option value="csv">CSV por dataset</option></select></div>
+      </div>
+    </div>
+  </div>
+
+  <div className="card">
+    <div className="card-head"><div><div className="card-title">Mapa de dados exportado</div><div className="card-sub">Tabelas que alimentam relatórios e integrações corporativas</div></div></div>
+    <div className="table-wrap"><table className="table"><thead><tr><th>Dataset</th><th>Uso</th><th className="text-right">Registros</th></tr></thead><tbody>
+      <tr><td className="mono">kpis</td><td>Indicadores executivos do painel industrial</td><td className="num">{datasets.kpis.length}</td></tr>
+      <tr><td className="mono">orders</td><td>OPs, prazos, etapa atual, progresso e atraso</td><td className="num">{datasets.orders.length}</td></tr>
+      <tr><td className="mono">lots</td><td>Rastreio de lote interno, externo e localização</td><td className="num">{datasets.lots.length}</td></tr>
+      <tr><td className="mono">records</td><td>Apontamentos por etapa, responsável, perdas e horários</td><td className="num">{datasets.records.length}</td></tr>
+      <tr><td className="mono">sectors</td><td>Eficiência, metas, bônus e teto por setor</td><td className="num">{datasets.sectors.length}</td></tr>
+      <tr><td className="mono">employees</td><td>Produtividade, bônus, salário base e performance</td><td className="num">{datasets.employees.length}</td></tr>
+      <tr><td className="mono">products</td><td>Produtos, modelos, custos, preços, estoque e BOM</td><td className="num">{datasets.products.length}</td></tr>
+    </tbody></table></div>
+  </div></>;
+};
+
 const DashboardView = ({ state, update, metrics, profile, sector }) => <><IndustrialKpis metrics={metrics} /><IndustrialHomeDashboard state={state} metrics={metrics} /><ProcessControlDashboard state={state} metrics={metrics} sector={sector} /><FlowBoard state={state} metrics={metrics} /><LotTracking state={state} /><OperatorPanel state={state} update={update} profile={profile} sector={sector} /></>;
 
 const IndustrialApp = () => {
   const [state, update] = useIndustrialRealtime();
   const metrics = useMemo(() => calcMetrics(state), [state]);
   const route = location.pathname.split('/').filter(Boolean)[1] || 'dashboard';
-  const titleMap = { dashboard: ['Dashboard Industrial', 'Power BI industrial em tempo real'], producao: ['Produção', 'Fluxo operacional, lote e operador'], produtos: ['Produtos Industriais', 'Importação de Excel, modelos e precificação'], eficiencia: ['Eficiência', 'Setores, funcionários, ranking e bônus'], relatorios: ['Relatórios', 'PDFs de produção, eficiência e comissões'] };
+  const titleMap = { dashboard: ['Dashboard Industrial', 'Power BI industrial em tempo real'], producao: ['Produção', 'Fluxo operacional, lote e operador'], produtos: ['Produtos Industriais', 'Importação de Excel, modelos e precificação'], eficiencia: ['Eficiência', 'Setores, funcionários, ranking e bônus'], relatorios: ['Relatórios', 'PDFs de produção, eficiência e comissões'], integracoes: ['Integrações', 'Power BI, APIs, webhooks e exportações corporativas'] };
   const setProfile = (profile) => update((next) => { next.activeProfile = profile; return next; });
   const setSector = (sector) => update((next) => { next.selectedSector = sector; return next; });
-  return <div className="industrial-shell"><div className="industrial-layout"><IndustrialSidebar current={route} /><main className="main"><IndustrialTopbar title={titleMap[route]?.[0] || 'CARVION Industrial'} subtitle={titleMap[route]?.[1] || 'Controle industrial'} profile={state.activeProfile} setProfile={setProfile} sector={state.selectedSector} setSector={setSector} sectors={state.sectors} /><IndustrialTabs current={route} /><div className="content">{route === 'producao' ? <><ProcessControlDashboard state={state} metrics={metrics} sector={state.selectedSector} /><FlowBoard state={state} metrics={metrics} /><ProductionOrderCreator state={state} update={update} /><LotTracking state={state} /><OperatorPanel state={state} update={update} profile={state.activeProfile} sector={state.selectedSector} /></> : route === 'produtos' ? <IndustrialProductsTable state={state} update={update} /> : route === 'eficiencia' ? <EfficiencyView state={state} metrics={metrics} update={update} /> : route === 'relatorios' ? <ReportsView state={state} metrics={metrics} /> : <DashboardView state={state} update={update} metrics={metrics} profile={state.activeProfile} sector={state.selectedSector} />}</div></main></div></div>;
+  return <div className="industrial-shell"><div className="industrial-layout"><IndustrialSidebar current={route} /><main className="main"><IndustrialTopbar title={titleMap[route]?.[0] || 'CARVION Industrial'} subtitle={titleMap[route]?.[1] || 'Controle industrial'} profile={state.activeProfile} setProfile={setProfile} sector={state.selectedSector} setSector={setSector} sectors={state.sectors} /><IndustrialTabs current={route} /><div className="content">{route === 'producao' ? <><ProcessControlDashboard state={state} metrics={metrics} sector={state.selectedSector} /><FlowBoard state={state} metrics={metrics} /><ProductionOrderCreator state={state} update={update} /><LotTracking state={state} /><OperatorPanel state={state} update={update} profile={state.activeProfile} sector={state.selectedSector} /></> : route === 'produtos' ? <IndustrialProductsTable state={state} update={update} /> : route === 'eficiencia' ? <EfficiencyView state={state} metrics={metrics} update={update} /> : route === 'relatorios' ? <ReportsView state={state} metrics={metrics} /> : route === 'integracoes' ? <IntegrationsView state={state} metrics={metrics} /> : <DashboardView state={state} update={update} metrics={metrics} profile={state.activeProfile} sector={state.selectedSector} />}</div></main></div></div>;
 };
 
 ReactDOM.createRoot(document.getElementById('root')).render(<IndustrialApp />);
