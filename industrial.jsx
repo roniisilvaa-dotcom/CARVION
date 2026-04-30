@@ -1,7 +1,7 @@
 /* CARVION Industrial — produção em tempo real */
 const { useEffect, useMemo, useState } = React;
 
-const INDUSTRIAL_KEY = 'carvion.industrial.v2';
+const INDUSTRIAL_KEY = 'carvion.industrial.v3';
 const INDUSTRIAL_CHANNEL = 'carvion-industrial-realtime';
 
 const FLOW_STEPS = [
@@ -84,7 +84,9 @@ const calcMetrics = (state) => {
     return { ...step, produced, loss, efficiency, open, avgTime: rows.length ? (1.4 + rows.length * .35) : 0 };
   });
   const slowest = sectorMap.filter((s) => s.produced).sort((a, b) => a.efficiency - b.efficiency)[0] || sectorMap[0];
-  return { totalProduced, losses, activeOps, internal, external, sectorMap, slowest, efficiency: totalProduced ? ((totalProduced - losses) / totalProduced) * 100 : 0 };
+  const bonusTotal = state.employees.reduce((s, e) => s + Math.max(0, e.produced - e.goal) * e.rate, 0);
+  const activeLots = state.lots.filter((l) => !l.status.includes('Finalizado')).length;
+  return { totalProduced, losses, activeOps, activeLots, internal, external, bonusTotal, sectorMap, slowest, efficiency: totalProduced ? ((totalProduced - losses) / totalProduced) * 100 : 0 };
 };
 
 const useIndustrialRealtime = () => {
@@ -135,6 +137,102 @@ const IndustrialKpis = ({ metrics }) => <div className="kpi-grid">
   {[['Produção em tempo real', `${iFmt(metrics.totalProduced)} un.`, '+18,4%', 'mês atual'], ['Eficiência geral', `${metrics.efficiency.toFixed(1).replace('.', ',')}%`, '+6,2%', 'setores ativos'], ['Gargalo atual', metrics.slowest.name, `${metrics.slowest.efficiency.toFixed(1).replace('.', ',')}%`, 'menor eficiência'], ['Externa vs interna', `${iFmt(metrics.external)} / ${iFmt(metrics.internal)}`, 'lotes', 'terceiros / interno']].map(([label, value, delta, sub], i) => <div className="kpi" key={label}><div className="kpi-head"><Icon name={i === 1 ? 'percent' : i === 2 ? 'trending-down' : 'activity'} /><span>{label}</span></div><div className="kpi-value">{value}</div><div className="kpi-foot"><span className={'kpi-delta ' + (i === 2 ? 'down' : 'up')}>{delta}</span><span className="kpi-period">{sub}</span></div></div>)}
 </div>;
 
+const IndustrialOverviewChart = ({ metrics }) => {
+  const max = Math.max(...metrics.sectorMap.map((s) => s.produced), 1);
+  return <div className="industrial-bars">
+    {metrics.sectorMap.map((s) => <div className="industrial-bar-row" key={s.id}>
+      <span>{s.name}</span>
+      <div className="industrial-bar-track">
+        <span className="bar-production" style={{ width: `${Math.max(4, s.produced / max * 100)}%` }} />
+        <span className="bar-efficiency" style={{ width: `${Math.max(3, s.efficiency)}%` }} />
+      </div>
+      <strong>{iFmt(s.produced)}</strong>
+    </div>)}
+  </div>;
+};
+
+const IndustrialMixDonut = ({ metrics }) => {
+  const total = Math.max(1, metrics.internal + metrics.external + metrics.losses);
+  const internalDeg = metrics.internal / total * 360;
+  const externalDeg = metrics.external / total * 360;
+  return <div className="industrial-donut-wrap">
+    <div className="industrial-donut" style={{ background: `conic-gradient(var(--accent) 0deg ${internalDeg}deg, var(--info) ${internalDeg}deg ${internalDeg + externalDeg}deg, var(--danger) ${internalDeg + externalDeg}deg 360deg)` }}>
+      <div><span>TOTAL</span><strong>{iFmt(total)}</strong><small>unidades</small></div>
+    </div>
+    <div className="industrial-donut-legend">
+      <div><span className="legend-dot" style={{ background: 'var(--accent)' }} />Interno <strong>{iFmt(metrics.internal)}</strong></div>
+      <div><span className="legend-dot" style={{ background: 'var(--info)' }} />Externo <strong>{iFmt(metrics.external)}</strong></div>
+      <div><span className="legend-dot" style={{ background: 'var(--danger)' }} />Perdas <strong>{iFmt(metrics.losses)}</strong></div>
+    </div>
+  </div>;
+};
+
+const ActiveOrdersTable = ({ state }) => <div className="table-wrap">
+  <table className="table">
+    <thead><tr><th>OP</th><th>Produto</th><th>Lote</th><th>Etapa atual</th><th>Cliente</th><th>Prazo</th><th className="text-right">Qtd.</th></tr></thead>
+    <tbody>{state.orders.map((op) => <tr key={op.id}>
+      <td className="mono muted">{op.id}</td>
+      <td><span className="tag">{op.product}</span></td>
+      <td className="mono">{op.lot}</td>
+      <td>{FLOW_STEPS.find((s) => s.id === op.current)?.name}</td>
+      <td>{op.customer}</td>
+      <td className="muted">{new Date(op.dueDate).toLocaleDateString('pt-BR')}</td>
+      <td className="num">{iFmt(op.totalQty)}</td>
+    </tr>)}</tbody>
+  </table>
+</div>;
+
+const IndustrialHomeDashboard = ({ state, metrics }) => {
+  const topEmployees = [...state.employees].map((e) => ({ ...e, pph: e.hours ? e.produced / e.hours : 0 })).sort((a, b) => b.pph - a.pph).slice(0, 4);
+  return <><div className="industrial-home-grid">
+    <div className="card industrial-command-card">
+      <div className="card-head">
+        <div><div className="card-title">Painel de controle industrial</div><div className="card-sub">Visão executiva da fábrica em tempo real</div></div>
+        <span className="status-pill status-draft">Online</span>
+      </div>
+      <div className="industrial-command-kpis">
+        <div><span>OPs ativas</span><strong>{metrics.activeOps}</strong></div>
+        <div><span>Lotes rastreados</span><strong>{metrics.activeLots}</strong></div>
+        <div><span>Bônus previsto</span><strong>{iMoney(metrics.bonusTotal)}</strong></div>
+      </div>
+      <div className="industrial-command-note">Gargalo detectado em {metrics.slowest.name}. Priorize responsável, lote e retorno da produção externa.</div>
+    </div>
+    <div className="card">
+      <div className="card-head"><div><div className="card-title">Mix de produção</div><div className="card-sub">Interna, externa e perdas</div></div></div>
+      <IndustrialMixDonut metrics={metrics} />
+    </div>
+  </div>
+
+  <div className="row-21">
+    <div className="card">
+      <div className="card-head">
+        <div><div className="card-title">Produção por etapa</div><div className="card-sub">Volume produzido e eficiência por setor</div></div>
+        <div className="chart-legend"><span className="legend-item"><span className="legend-dot" style={{ background: 'var(--accent)' }} />Produção</span><span className="legend-item"><span className="legend-dot" style={{ background: 'var(--info)' }} />Eficiência</span></div>
+      </div>
+      <IndustrialOverviewChart metrics={metrics} />
+    </div>
+    <div className="card">
+      <div className="card-head"><div><div className="card-title">Ranking operacional</div><div className="card-sub">Peças por hora e meta do turno</div></div></div>
+      <div className="rank-list">{topEmployees.map((e, i) => <div className="rank-row" key={e.id}><div className="rank-pos">#{i + 1}</div><div><strong>{e.name}</strong><div className="muted">{e.sector} · {iFmt(e.produced)} peças · {e.pph.toFixed(1)} p/h</div></div><span className="tag">{Math.round(e.produced / e.goal * 100)}%</span></div>)}</div>
+    </div>
+  </div>
+
+  <div className="row-21">
+    <div className="card">
+      <div className="card-head"><div><div className="card-title">Ordens de Produção em andamento</div><div className="card-sub">Pedidos integrados ao módulo industrial</div></div></div>
+      <ActiveOrdersTable state={state} />
+    </div>
+    <div className="card">
+      <div className="card-head"><div><div className="card-title">Alertas inteligentes</div><div className="card-sub">Atrasos, perdas e gargalos</div></div></div>
+      <div className="rank-list">
+        <div className="rank-row"><div className="rank-pos"><Icon name="trending-down" size={13} /></div><div><strong>Gargalo em {metrics.slowest.name}</strong><div className="muted">Eficiência abaixo do restante da linha</div></div><span className="kpi-delta down">{metrics.slowest.efficiency.toFixed(1)}%</span></div>
+        <div className="rank-row"><div className="rank-pos"><Icon name="activity" size={13} /></div><div><strong>Produção externa em retorno</strong><div className="muted">{iFmt(metrics.external)} unidades fora da linha interna</div></div><span className="tag">Terceiros</span></div>
+        <div className="rank-row"><div className="rank-pos"><Icon name="percent" size={13} /></div><div><strong>Perdas controladas</strong><div className="muted">{iFmt(metrics.losses)} peças registradas no turno</div></div><span className="kpi-delta up">OK</span></div>
+      </div>
+    </div>
+  </div></>;
+};
+
 const FlowBoard = ({ state, metrics }) => <div className="card"><div className="card-head"><div><div className="card-title">Fluxo real da fábrica</div><div className="card-sub">OP → Enrolagem → Cola / Marcação → Serigrafia paralelo → Dublagem → Selador → Externa → Montagem → Formas → Qualidade → Expedição</div></div></div><div className="flow-board">
   {metrics.sectorMap.map((step, i) => <div key={step.id} className={'flow-step ' + (step.open ? 'active ' : '') + (step.mode === 'paralelo' ? 'parallel ' : '') + (metrics.slowest.id === step.id && step.produced ? 'bottleneck' : '')}><div className="row"><span className="flow-index">{i + 1}</span><span className="tag">{step.mode}</span></div><div className="flow-title">{step.name}</div><div className="flow-meta">Setor: {step.sector}<br />Produzido: {iFmt(step.produced)} un.<br />Perdas: {iFmt(step.loss)} un.</div><div className="progress-rail"><span style={{ width: `${step.efficiency || 4}%` }} /></div><div className="flow-meta">Eficiência {step.efficiency.toFixed(1).replace('.', ',')}%</div></div>)}
 </div></div>;
@@ -158,7 +256,7 @@ const EfficiencyView = ({ state, metrics }) => {
 
 const ReportsView = ({ state, metrics }) => <><div className="print-only"><h1>CARVION Industrial — Relatório</h1></div><div className="row-3"><div className="insight-card"><div className="card-title">Produção por período</div><div className="kpi-value">{iFmt(metrics.totalProduced)}</div><div className="card-sub">peças registradas</div></div><div className="insight-card"><div className="card-title">Comissões e bônus</div><div className="kpi-value">{iMoney(state.employees.reduce((s, e) => s + Math.max(0, e.produced - e.goal) * e.rate, 0))}</div><div className="card-sub">bônus automático por desempenho</div></div><div className="insight-card"><div className="card-title">Gargalo</div><div className="kpi-value">{metrics.slowest.name}</div><div className="card-sub">menor eficiência atual</div></div></div><div className="card"><div className="card-head"><div><div className="card-title">Rastreabilidade completa</div><div className="card-sub">Início, fim, responsável, quantidade e perdas por etapa</div></div><button className="btn" onClick={() => window.print()}><Icon name="file" /> Imprimir / Exportar PDF</button></div><div className="table-wrap"><table className="table"><thead><tr><th>OP</th><th>Etapa</th><th>Responsável</th><th>Início</th><th>Fim</th><th>Qtd.</th><th>Perdas</th><th>Status</th></tr></thead><tbody>{state.records.map((r) => <tr key={r.id}><td className="mono">{r.opId}</td><td>{FLOW_STEPS.find((s) => s.id === r.step)?.name}</td><td>{r.employee}</td><td className="muted">{r.startedAt ? new Date(r.startedAt).toLocaleString('pt-BR') : '-'}</td><td className="muted">{r.endedAt ? new Date(r.endedAt).toLocaleString('pt-BR') : '-'}</td><td>{iFmt(r.qty)}</td><td>{iFmt(r.losses)}</td><td><span className="status-pill status-draft">{r.status}</span></td></tr>)}</tbody></table></div></div></>;
 
-const DashboardView = ({ state, update, metrics, profile, sector }) => <><IndustrialKpis metrics={metrics} /><div className="card industrial-hero-card"><div className="card-head"><div><div className="card-title">CARVION Industrial</div><div className="card-sub">Controle completo da produção e eficiência em tempo real</div></div><div className="card-actions"><button className="btn" onClick={() => window.print()}><Icon name="file" /> Imprimir / Exportar PDF</button></div></div></div><FlowBoard state={state} metrics={metrics} /><LotTracking state={state} /><OperatorPanel state={state} update={update} profile={profile} sector={sector} /></>;
+const DashboardView = ({ state, update, metrics, profile, sector }) => <><IndustrialKpis metrics={metrics} /><IndustrialHomeDashboard state={state} metrics={metrics} /><FlowBoard state={state} metrics={metrics} /><LotTracking state={state} /><OperatorPanel state={state} update={update} profile={profile} sector={sector} /></>;
 
 const IndustrialApp = () => {
   const [state, update] = useIndustrialRealtime();
