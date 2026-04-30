@@ -399,6 +399,57 @@ const EfficiencyDashboard = ({ state, metrics, ranked }) => {
   </div></>;
 };
 
+const SectorDashboards = ({ state, metrics, ranked }) => {
+  const dashboards = (state.sectors || []).map((sector) => {
+    const people = ranked.filter((employee) => employee.sector === sector.name);
+    const produced = people.reduce((sum, employee) => sum + Number(employee.produced || 0), 0);
+    const hours = people.reduce((sum, employee) => sum + Number(employee.hours || 0), 0);
+    const bonus = people.reduce((sum, employee) => sum + Number(employee.bonus || 0), 0);
+    const rawBonus = people.reduce((sum, employee) => sum + Number(employee.rawBonus || 0), 0);
+    const step = metrics.sectorMap.find((item) => item.sector === sector.name || item.name === sector.name);
+    const efficiency = step?.efficiency || (produced ? Math.min(100, produced / Math.max(Number(sector.goal || 1), 1) * 100) : 0);
+    return { sector, people, produced, hours, bonus, rawBonus, efficiency, pph: hours ? produced / hours : 0 };
+  });
+  return <div className="card">
+    <div className="card-head"><div><div className="card-title">Dashboard de cada setor</div><div className="card-sub">Meta, produção, equipe, bonificação e teto por setor</div></div></div>
+    <div className="sector-dashboard-grid">
+      {dashboards.map(({ sector, people, produced, hours, bonus, rawBonus, efficiency, pph }) => {
+        const capUsage = sector.bonusCap ? Math.min(100, bonus / sector.bonusCap * 100) : 0;
+        const goalUsage = Math.min(100, produced / Math.max(Number(sector.goal || 1), 1) * 100);
+        const status = efficiency >= 90 ? 'Alta eficiência' : efficiency >= 70 ? 'Monitorar' : 'Gargalo';
+        return <div className="sector-card" key={sector.id || sector.name}>
+          <div className="sector-card-head">
+            <div><strong>{sector.name}</strong><span>{sector.leader || 'Sem líder'} · {people.length} colaborador(es)</span></div>
+            <span className={'status-pill ' + (status === 'Gargalo' ? 'status-pending' : 'status-draft')}>{status}</span>
+          </div>
+          <div className="sector-ring-row">
+            <div className="sector-ring" style={{ background: `conic-gradient(var(--accent) 0% ${efficiency}%, var(--surface-2) ${efficiency}% 100%)` }}><div>{efficiency.toFixed(0)}%</div></div>
+            <div className="sector-mini-kpis">
+              <div><span>Produzido</span><strong>{iFmt(produced)}</strong></div>
+              <div><span>Meta</span><strong>{iFmt(sector.goal)}</strong></div>
+              <div><span>p/h</span><strong>{pph.toFixed(1)}</strong></div>
+              <div><span>Horas</span><strong>{hours.toFixed(1)}</strong></div>
+            </div>
+          </div>
+          <div className="sector-progress">
+            <div><span>Meta do setor</span><strong>{goalUsage.toFixed(0)}%</strong></div>
+            <div className="progress-rail"><span style={{ width: `${goalUsage}%` }} /></div>
+          </div>
+          <div className="sector-progress">
+            <div><span>Bônus usado</span><strong>{iMoney(bonus)} / {iMoney(sector.bonusCap)}</strong></div>
+            <div className="progress-rail"><span style={{ width: `${capUsage}%` }} /></div>
+            {rawBonus > bonus && <small>Teto aplicado: bruto {iMoney(rawBonus)}</small>}
+          </div>
+          <div className="rank-list">
+            {people.slice(0, 3).map((employee) => <div className="sector-person" key={employee.id}><span>{employee.name}</span><strong>{iMoney(employee.bonus)}</strong></div>)}
+            {!people.length && <div className="muted">Nenhum colaborador cadastrado neste setor.</div>}
+          </div>
+        </div>;
+      })}
+    </div>
+  </div>;
+};
+
 const PeopleAndSectorsAdmin = ({ state, update }) => {
   const firstSector = state.sectors?.[0] || { name: 'Montagem', goal: 500, rate: 0.2 };
   const [sectorForm, setSectorForm] = useState({ name: '', leader: '', goal: 500, rate: 0.2, bonusCap: 500 });
@@ -506,7 +557,7 @@ const OperatorPanel = ({ state, update, profile, sector }) => {
 
 const EfficiencyView = ({ state, metrics, update }) => {
   const ranked = enrichEmployees(state).sort((a, b) => b.pph - a.pph);
-  return <><IndustrialKpis metrics={metrics} /><EfficiencyDashboard state={state} metrics={metrics} ranked={ranked} /><PeopleAndSectorsAdmin state={state} update={update} /><div className="row-21"><div className="card"><div className="card-title">Eficiência por funcionário</div><div className="rank-list">{ranked.map((e, i) => <div className="rank-row" key={e.id}><div className="rank-pos">#{i + 1}</div><div><strong>{e.name}</strong><div className="muted">{e.role || 'Operador'} · {e.sector} · {iFmt(e.produced)} peças · {e.hours}h · {e.pph.toFixed(1)} p/h</div><div className="progress-rail"><span style={{ width: `${Math.min(100, e.produced / Math.max(e.goal, 1) * 100)}%` }} /></div>{e.capApplied && <div className="muted">Teto do setor aplicado: {iMoney(e.sectorCap)}</div>}</div><div className="num up">{iMoney(e.bonus)}</div></div>)}</div></div><div className="card"><div className="card-title">Eficiência por setor</div><div className="gantt">{metrics.sectorMap.map((s) => <div className="gantt-row" key={s.id}><span>{s.name}</span><div className="gantt-track"><span style={{ width: `${s.efficiency || 3}%` }} /></div><strong>{s.efficiency.toFixed(1)}%</strong></div>)}</div></div></div></>;
+  return <><IndustrialKpis metrics={metrics} /><EfficiencyDashboard state={state} metrics={metrics} ranked={ranked} /><SectorDashboards state={state} metrics={metrics} ranked={ranked} /><PeopleAndSectorsAdmin state={state} update={update} /><div className="row-21"><div className="card"><div className="card-title">Eficiência por funcionário</div><div className="rank-list">{ranked.map((e, i) => <div className="rank-row" key={e.id}><div className="rank-pos">#{i + 1}</div><div><strong>{e.name}</strong><div className="muted">{e.role || 'Operador'} · {e.sector} · {iFmt(e.produced)} peças · {e.hours}h · {e.pph.toFixed(1)} p/h</div><div className="progress-rail"><span style={{ width: `${Math.min(100, e.produced / Math.max(e.goal, 1) * 100)}%` }} /></div>{e.capApplied && <div className="muted">Teto do setor aplicado: {iMoney(e.sectorCap)}</div>}</div><div className="num up">{iMoney(e.bonus)}</div></div>)}</div></div><div className="card"><div className="card-title">Eficiência por setor</div><div className="gantt">{metrics.sectorMap.map((s) => <div className="gantt-row" key={s.id}><span>{s.name}</span><div className="gantt-track"><span style={{ width: `${s.efficiency || 3}%` }} /></div><strong>{s.efficiency.toFixed(1)}%</strong></div>)}</div></div></div></>;
 };
 
 const ReportsView = ({ state, metrics }) => <><div className="print-only"><h1>CARVION Industrial — Relatório</h1></div><IndustrialKpis metrics={metrics} /><ReportsDashboard state={state} metrics={metrics} /><div className="row-3"><div className="insight-card"><div className="card-title">Produção por período</div><div className="kpi-value">{iFmt(metrics.totalProduced)}</div><div className="card-sub">peças registradas</div></div><div className="insight-card"><div className="card-title">Comissões e bônus</div><div className="kpi-value">{iMoney(metrics.bonusTotal)}</div><div className="card-sub">bônus automático com teto por setor</div></div><div className="insight-card"><div className="card-title">Gargalo</div><div className="kpi-value">{metrics.slowest.name}</div><div className="card-sub">menor eficiência atual</div></div></div><div className="card"><div className="card-head"><div><div className="card-title">Rastreabilidade completa</div><div className="card-sub">Início, fim, responsável, quantidade e perdas por etapa</div></div><button className="btn" onClick={() => window.print()}><Icon name="file" /> Imprimir / Exportar PDF</button></div><div className="table-wrap"><table className="table"><thead><tr><th>OP</th><th>Etapa</th><th>Responsável</th><th>Início</th><th>Fim</th><th>Qtd.</th><th>Perdas</th><th>Status</th></tr></thead><tbody>{state.records.map((r) => <tr key={r.id}><td className="mono">{r.opId}</td><td>{FLOW_STEPS.find((s) => s.id === r.step)?.name}</td><td>{r.employee}</td><td className="muted">{r.startedAt ? new Date(r.startedAt).toLocaleString('pt-BR') : '-'}</td><td className="muted">{r.endedAt ? new Date(r.endedAt).toLocaleString('pt-BR') : '-'}</td><td>{iFmt(r.qty)}</td><td>{iFmt(r.losses)}</td><td><span className="status-pill status-draft">{r.status}</span></td></tr>)}</tbody></table></div></div></>;
