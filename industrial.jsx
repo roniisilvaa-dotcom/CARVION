@@ -18,6 +18,20 @@ const FLOW_STEPS = [
   { id: 'expedicao', name: 'Expedição', mode: 'sequencial', sector: 'Expedição' },
 ];
 
+const DEFAULT_SECTOR_CONFIGS = [
+  { id: 'SET-GES', name: 'Gestão', leader: 'PCP Industrial', goal: 18, rate: 1.5, bonusCap: 300, status: 'Ativo' },
+  { id: 'SET-ENR', name: 'Enrolagem', leader: 'João Pereira', goal: 500, rate: 0.18, bonusCap: 420, status: 'Ativo' },
+  { id: 'SET-COL', name: 'Cola', leader: 'Equipe Cola A', goal: 520, rate: 0.17, bonusCap: 410, status: 'Ativo' },
+  { id: 'SET-SER', name: 'Serigrafia', leader: 'Marta Souza', goal: 620, rate: 0.22, bonusCap: 520, status: 'Ativo' },
+  { id: 'SET-DUB', name: 'Dublagem', leader: 'Equipe Dublagem', goal: 540, rate: 0.2, bonusCap: 470, status: 'Ativo' },
+  { id: 'SET-SEL', name: 'Selador', leader: 'Rafael Costa', goal: 500, rate: 0.21, bonusCap: 500, status: 'Ativo' },
+  { id: 'SET-TER', name: 'Terceiros', leader: 'Controle Externo', goal: 350, rate: 0.12, bonusCap: 300, status: 'Ativo' },
+  { id: 'SET-MON', name: 'Montagem', leader: 'Carlos Lima', goal: 500, rate: 0.25, bonusCap: 650, status: 'Ativo' },
+  { id: 'SET-FOR', name: 'Formas', leader: 'Ana Paula', goal: 480, rate: 0.19, bonusCap: 420, status: 'Ativo' },
+  { id: 'SET-QUA', name: 'Qualidade', leader: 'Bianca Alves', goal: 520, rate: 0.2, bonusCap: 380, status: 'Ativo' },
+  { id: 'SET-EXP', name: 'Expedição', leader: 'Lucas Rocha', goal: 450, rate: 0.16, bonusCap: 360, status: 'Ativo' },
+];
+
 const defaultIndustrialState = () => ({
   updatedAt: new Date().toISOString(),
   activeProfile: 'gestor',
@@ -37,17 +51,19 @@ const defaultIndustrialState = () => ({
     { id: 'LT-9101-B', opId: 'OP-9101', type: 'Externo', qty: 300, location: 'Presídio Industrial MS', step: 'externa', status: 'Aguardando retorno' },
     { id: 'LT-9102-A', opId: 'OP-9102', type: 'Interno', qty: 650, location: 'Cola / Dublagem', step: 'cola-dublagem', status: 'Em produção' },
   ],
-  sectors: [
-    { id: 'SET-ENR', name: 'Enrolagem', leader: 'João Pereira', goal: 500, rate: 0.18, bonusCap: 420, status: 'Ativo' },
-    { id: 'SET-SER', name: 'Serigrafia', leader: 'Marta Souza', goal: 620, rate: 0.22, bonusCap: 520, status: 'Ativo' },
-    { id: 'SET-MON', name: 'Montagem', leader: 'Carlos Lima', goal: 500, rate: 0.25, bonusCap: 650, status: 'Ativo' },
-    { id: 'SET-QUA', name: 'Qualidade', leader: 'Bianca Alves', goal: 520, rate: 0.20, bonusCap: 380, status: 'Ativo' },
-  ],
+  sectors: DEFAULT_SECTOR_CONFIGS,
   employees: [
+    { id: 'COL-00', name: 'PCP Industrial', role: 'Planejamento', sector: 'Gestão', produced: 16, hours: 7.5, goal: 18, rate: 1.5, baseSalary: 3200, status: 'Ativo' },
     { id: 'COL-01', name: 'João Pereira', role: 'Operador', sector: 'Enrolagem', produced: 720, hours: 7.2, goal: 500, rate: 0.18, baseSalary: 2200, status: 'Ativo' },
+    { id: 'COL-05', name: 'Equipe Cola A', role: 'Operador', sector: 'Cola', produced: 690, hours: 7.6, goal: 520, rate: 0.17, baseSalary: 2180, status: 'Ativo' },
     { id: 'COL-02', name: 'Marta Souza', role: 'Líder', sector: 'Serigrafia', produced: 840, hours: 8.0, goal: 620, rate: 0.22, baseSalary: 2600, status: 'Ativo' },
+    { id: 'COL-06', name: 'Equipe Dublagem', role: 'Operador', sector: 'Dublagem', produced: 610, hours: 7.9, goal: 540, rate: 0.2, baseSalary: 2250, status: 'Ativo' },
+    { id: 'COL-07', name: 'Rafael Costa', role: 'Operador', sector: 'Selador', produced: 430, hours: 7.4, goal: 500, rate: 0.21, baseSalary: 2320, status: 'Ativo' },
+    { id: 'COL-08', name: 'Controle Externo', role: 'Terceiro', sector: 'Terceiros', produced: 300, hours: 8.0, goal: 350, rate: 0.12, baseSalary: 0, status: 'Ativo' },
     { id: 'COL-03', name: 'Carlos Lima', role: 'Operador', sector: 'Montagem', produced: 650, hours: 7.5, goal: 500, rate: 0.25, baseSalary: 2300, status: 'Ativo' },
+    { id: 'COL-09', name: 'Ana Paula', role: 'Operadora', sector: 'Formas', produced: 520, hours: 7.7, goal: 480, rate: 0.19, baseSalary: 2240, status: 'Ativo' },
     { id: 'COL-04', name: 'Bianca Alves', role: 'Inspetora', sector: 'Qualidade', produced: 590, hours: 7.8, goal: 520, rate: 0.20, baseSalary: 2400, status: 'Ativo' },
+    { id: 'COL-10', name: 'Lucas Rocha', role: 'Expedição', sector: 'Expedição', produced: 470, hours: 7.3, goal: 450, rate: 0.16, baseSalary: 2150, status: 'Ativo' },
   ],
   records: [
     { id: 'REC-1', opId: 'OP-9101', step: 'enrolagem', sector: 'Enrolagem', employee: 'João Pereira', startedAt: '2026-04-30T07:10:00', endedAt: '2026-04-30T09:25:00', qty: 1000, losses: 18, status: 'Finalizado' },
@@ -125,8 +141,27 @@ const industrialProductFromRow = (row, index) => {
   };
 };
 
+const normalizeIndustrialState = (state) => {
+  const base = defaultIndustrialState();
+  const next = { ...base, ...(state || {}) };
+  next.orders = next.orders || [];
+  next.lots = next.lots || [];
+  next.records = next.records || [];
+  next.products = next.products || [];
+  next.sectors = [...DEFAULT_SECTOR_CONFIGS.map((sector) => ({ ...sector }))];
+  (state?.sectors || []).forEach((sector) => {
+    const index = next.sectors.findIndex((item) => item.name === sector.name);
+    if (index >= 0) next.sectors[index] = { ...next.sectors[index], ...sector };
+    else next.sectors.push(sector);
+  });
+  const employeeMap = new Map((base.employees || []).map((employee) => [employee.id, employee]));
+  (state?.employees || []).forEach((employee) => employeeMap.set(employee.id || `${employee.name}-${employee.sector}`, employee));
+  next.employees = Array.from(employeeMap.values());
+  next.selectedSector = next.sectors.some((sector) => sector.name === next.selectedSector) ? next.selectedSector : 'Montagem';
+  return next;
+};
 const loadIndustrial = () => {
-  try { return { ...defaultIndustrialState(), ...JSON.parse(localStorage.getItem(INDUSTRIAL_KEY)) }; }
+  try { return normalizeIndustrialState(JSON.parse(localStorage.getItem(INDUSTRIAL_KEY))); }
   catch { return defaultIndustrialState(); }
 };
 const saveIndustrial = (state) => localStorage.setItem(INDUSTRIAL_KEY, JSON.stringify({ ...state, updatedAt: stamp() }));
@@ -185,11 +220,11 @@ const IndustrialSidebar = ({ current }) => {
   </aside>;
 };
 
-const IndustrialTopbar = ({ title, subtitle, profile, setProfile, sector, setSector }) => <header className="topbar">
+const IndustrialTopbar = ({ title, subtitle, profile, setProfile, sector, setSector, sectors }) => <header className="topbar">
   <div><div className="page-title">{title}</div><div className="page-sub">{subtitle}</div></div>
   <div className="topbar-spacer" />
   <select className="btn" value={profile} onChange={(e) => setProfile(e.target.value)}><option value="gestor">Gestor/Admin</option><option value="operador">Operador de setor</option><option value="financeiro">Financeiro</option></select>
-  <select className="btn" value={sector} onChange={(e) => setSector(e.target.value)}>{FLOW_STEPS.map((s) => <option key={s.sector}>{s.sector}</option>)}</select>
+  <select className="btn" value={sector} onChange={(e) => setSector(e.target.value)}>{(sectors || DEFAULT_SECTOR_CONFIGS).map((s) => <option key={s.id || s.name}>{s.name}</option>)}</select>
   <button className="btn" onClick={() => window.print()}><Icon name="file" /> Imprimir / Exportar PDF</button>
 </header>;
 
@@ -235,16 +270,66 @@ const IndustrialMixDonut = ({ metrics }) => {
   </div>;
 };
 
+const opProgress = (op) => {
+  const index = Math.max(0, flowIndex(op.current));
+  return Math.round(index / Math.max(1, FLOW_STEPS.length - 1) * 100);
+};
+
+const isOpLate = (op) => {
+  const due = new Date(op.dueAt || op.dueDate || Date.now()).getTime();
+  return due < Date.now() && !['Finalizado', 'Concluída', 'Expedido'].includes(op.status);
+};
+
+const ProcessControlDashboard = ({ state, metrics, sector }) => {
+  const selectedStepIds = FLOW_STEPS.filter((step) => step.sector === sector).map((step) => step.id);
+  const sectorOps = state.orders.filter((op) => selectedStepIds.includes(op.current));
+  const lateOps = state.orders.filter(isOpLate);
+  const nextDue = [...state.orders].filter((op) => !['Finalizado', 'Expedido'].includes(op.status)).sort((a, b) => new Date(a.dueAt || a.dueDate) - new Date(b.dueAt || b.dueDate))[0];
+  const inExternal = state.lots.filter((lot) => lot.type === 'Externo' && !lot.status.includes('Retornou'));
+  return <div className="card">
+    <div className="card-head">
+      <div><div className="card-title">Controle interno da produção</div><div className="card-sub">Onde cada OP está agora, próxima ação, atrasos e divisão de lote</div></div>
+      <span className="status-pill status-draft">Tempo real</span>
+    </div>
+    <div className="industrial-command-kpis report-kpis">
+      <div><span>No setor selecionado</span><strong>{sectorOps.length}</strong><small>{sector}</small></div>
+      <div><span>OPs atrasadas</span><strong>{lateOps.length}</strong><small>prazo vencido</small></div>
+      <div><span>Produção externa</span><strong>{iFmt(inExternal.reduce((s, lot) => s + Number(lot.qty || 0), 0))}</strong><small>unidades fora</small></div>
+      <div><span>Próximo prazo</span><strong>{nextDue?.id || '-'}</strong><small>{nextDue ? new Date(nextDue.dueAt || nextDue.dueDate).toLocaleDateString('pt-BR') : 'sem OP'}</small></div>
+    </div>
+    <div className="process-map">
+      {state.orders.map((op) => {
+        const step = FLOW_STEPS.find((item) => item.id === op.current) || FLOW_STEPS[0];
+        const lots = state.lots.filter((lot) => lot.opId === op.id);
+        return <div className="process-card" key={op.id}>
+          <div className="process-card-head">
+            <div><strong>{op.id}</strong><span>{op.name || op.product} · {op.customer}</span></div>
+            <span className={'status-pill ' + (isOpLate(op) ? 'status-pending' : 'status-draft')}>{isOpLate(op) ? 'Atrasada' : op.status}</span>
+          </div>
+          <div className="process-current"><span>{step.name}</span><strong>{opProgress(op)}%</strong></div>
+          <div className="progress-rail"><span style={{ width: `${opProgress(op)}%` }} /></div>
+          <div className="process-timeline">
+            {FLOW_STEPS.map((item) => <span key={item.id} className={flowIndex(item.id) <= flowIndex(op.current) ? 'done' : ''} title={item.name} />)}
+          </div>
+          <div className="process-lots">
+            {lots.map((lot) => <div key={lot.id}><span className="mono">{lot.id}</span><strong>{lot.location}</strong><small>{lot.type} · {iFmt(lot.qty)} un.</small></div>)}
+          </div>
+        </div>;
+      })}
+    </div>
+  </div>;
+};
+
 const ActiveOrdersTable = ({ state }) => <div className="table-wrap">
   <table className="table">
     <thead><tr><th>OP</th><th>Produto</th><th>Lote</th><th>Etapa atual</th><th>Cliente</th><th>Prazo</th><th className="text-right">Qtd.</th></tr></thead>
     <tbody>{state.orders.map((op) => <tr key={op.id}>
-      <td className="mono muted">{op.id}</td>
-      <td><span className="tag">{op.product}</span></td>
+      <td className="mono muted">{op.id}<div className="muted">{op.name || ''}</div></td>
+      <td><span className="tag">{op.product}</span><div className="muted">{op.productCode || op.model || op.type}</div></td>
       <td className="mono">{op.lot}</td>
       <td>{FLOW_STEPS.find((s) => s.id === op.current)?.name}</td>
       <td>{op.customer}</td>
-      <td className="muted">{new Date(op.dueDate).toLocaleDateString('pt-BR')}</td>
+      <td className="muted">{new Date(op.dueAt || op.dueDate).toLocaleString('pt-BR')}</td>
       <td className="num">{iFmt(op.totalQty)}</td>
     </tr>)}</tbody>
   </table>
@@ -252,6 +337,52 @@ const ActiveOrdersTable = ({ state }) => <div className="table-wrap">
 
 const IndustrialProductsTable = ({ state, update }) => {
   const [message, setMessage] = useState('');
+  const [productForm, setProductForm] = useState({ code: '', name: '', model: '', brand: '', line: 'Pro', modality: 'Campo', cost: 0, dealerPrice: 0, partnerPrice: 0, price: 0, stock: 0, bom: '' });
+  const editProduct = (product) => {
+    setProductForm({
+      code: product.code || '',
+      name: product.name || '',
+      model: product.model || '',
+      brand: product.brand || '',
+      line: product.line || '',
+      modality: product.modality || 'Campo',
+      cost: Number(product.cost || 0),
+      dealerPrice: Number(product.dealerPrice || 0),
+      partnerPrice: Number(product.partnerPrice || 0),
+      price: Number(product.price || 0),
+      stock: Number(product.stock || 0),
+      bom: product.bom || '',
+    });
+    setMessage(`${product.name || product.model} carregado para edição.`);
+  };
+  const saveProduct = () => {
+    const name = String(productForm.name || productForm.model || '').trim();
+    if (!name) { setMessage('Informe ao menos nome ou modelo do produto.'); return; }
+    const product = {
+      ...productForm,
+      code: String(productForm.code || opSlug(name)).trim(),
+      name,
+      model: String(productForm.model || name).trim(),
+      brand: String(productForm.brand || 'A definir').trim(),
+      line: String(productForm.line || 'Linha').trim(),
+      modality: String(productForm.modality || 'A definir').trim(),
+      cost: Number(productForm.cost || 0),
+      dealerPrice: Number(productForm.dealerPrice || 0),
+      partnerPrice: Number(productForm.partnerPrice || 0),
+      price: Number(productForm.price || 0),
+      stock: Number(productForm.stock || 0),
+      bom: String(productForm.bom || 'Ficha técnica a completar').trim(),
+    };
+    update((next) => {
+      next.products = next.products || [];
+      const index = next.products.findIndex((item) => item.code === product.code);
+      if (index >= 0) next.products[index] = { ...next.products[index], ...product };
+      else next.products.unshift(product);
+      return next;
+    });
+    setProductForm({ code: '', name: '', model: '', brand: '', line: 'Pro', modality: 'Campo', cost: 0, dealerPrice: 0, partnerPrice: 0, price: 0, stock: 0, bom: '' });
+    setMessage(`${product.name} cadastrado/atualizado manualmente.`);
+  };
   const importFile = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -308,8 +439,25 @@ const IndustrialProductsTable = ({ state, update }) => {
     <div className="industrial-command-note">{message || 'A planilha pode conter código, modelo, produto, marca, linha, modalidade, custo, preço lojista, preço parceiro, preço final, estoque e BOM.'}</div>
   </div>
   <div className="card">
+    <div className="card-head"><div><div className="card-title">Cadastro manual de produto</div><div className="card-sub">Crie ou edite modelos importados para usar em OP, custo, estoque e precificação</div></div><button className="btn btn-primary" onClick={saveProduct}><Icon name="plus" /> Salvar produto</button></div>
+    <div className="op-form-grid">
+      <div className="field"><label>Código/SKU</label><input value={productForm.code} onChange={(e) => setProductForm({ ...productForm, code: e.target.value })} placeholder="TOP-SAMBA-PRO" /></div>
+      <div className="field"><label>Produto</label><input value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.target.value })} placeholder="SAMBA PRO" /></div>
+      <div className="field"><label>Modelo</label><input value={productForm.model} onChange={(e) => setProductForm({ ...productForm, model: e.target.value })} placeholder="Campo oficial" /></div>
+      <div className="field"><label>Marca</label><input value={productForm.brand} onChange={(e) => setProductForm({ ...productForm, brand: e.target.value })} placeholder="Topper, Kagiva..." /></div>
+      <div className="field"><label>Linha</label><input value={productForm.line} onChange={(e) => setProductForm({ ...productForm, line: e.target.value })} /></div>
+      <div className="field"><label>Modalidade</label><select value={productForm.modality} onChange={(e) => setProductForm({ ...productForm, modality: e.target.value })}><option>Campo</option><option>Futsal</option><option>Vôlei</option><option>Basquete</option><option>Society</option><option>Personalizada</option></select></div>
+      <div className="field"><label>Preço custo</label><input type="number" step="0.01" value={productForm.cost} onChange={(e) => setProductForm({ ...productForm, cost: e.target.value })} /></div>
+      <div className="field"><label>Preço final</label><input type="number" step="0.01" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} /></div>
+      <div className="field"><label>Preço lojista</label><input type="number" step="0.01" value={productForm.dealerPrice} onChange={(e) => setProductForm({ ...productForm, dealerPrice: e.target.value })} /></div>
+      <div className="field"><label>Preço parceiro</label><input type="number" step="0.01" value={productForm.partnerPrice} onChange={(e) => setProductForm({ ...productForm, partnerPrice: e.target.value })} /></div>
+      <div className="field"><label>Estoque</label><input type="number" value={productForm.stock} onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })} /></div>
+      <div className="field wide"><label>Ficha técnica / BOM</label><textarea value={productForm.bom} onChange={(e) => setProductForm({ ...productForm, bom: e.target.value })} placeholder="PU, borracha, câmara, válvula, linha, acabamento..." /></div>
+    </div>
+  </div>
+  <div className="card">
     <div className="card-head"><div><div className="card-title">Catálogo para OP e custo industrial</div><div className="card-sub">Produtos amarrados à produção, lote, estoque e precificação</div></div></div>
-    <div className="table-wrap"><table className="table"><thead><tr><th>Código</th><th>Modelo</th><th>Marca</th><th>Linha</th><th>Modalidade</th><th>Estoque</th><th className="text-right">Custo</th><th className="text-right">Final</th></tr></thead><tbody>{(state.products || []).map((p) => <tr key={p.code || p.name}><td className="mono muted">{p.code || '-'}</td><td><span className="tag">{p.name}</span><div className="muted">{p.bom}</div></td><td>{p.brand}</td><td>{p.line}</td><td>{p.modality}</td><td>{iFmt(p.stock)}</td><td className="num">{iMoney(p.cost)}</td><td className="num up">{iMoney(p.price)}</td></tr>)}</tbody></table></div>
+    <div className="table-wrap"><table className="table"><thead><tr><th>Código</th><th>Modelo</th><th>Marca</th><th>Linha</th><th>Modalidade</th><th>Estoque</th><th className="text-right">Custo</th><th className="text-right">Final</th><th>Ações</th></tr></thead><tbody>{(state.products || []).map((p) => <tr key={p.code || p.name}><td className="mono muted">{p.code || '-'}</td><td><span className="tag">{p.name}</span><div className="muted">{p.bom}</div></td><td>{p.brand}</td><td>{p.line}</td><td>{p.modality}</td><td>{iFmt(p.stock)}</td><td className="num">{iMoney(p.cost)}</td><td className="num up">{iMoney(p.price)}</td><td><button className="btn" onClick={() => editProduct(p)}>Editar</button></td></tr>)}</tbody></table></div>
   </div></>;
 };
 
@@ -539,6 +687,110 @@ const ReportsDashboard = ({ state, metrics }) => {
   </div></>;
 };
 
+const opSlug = (value) => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 18);
+
+const ProductionOrderCreator = ({ state, update }) => {
+  const firstProduct = state.products?.[0] || {};
+  const nowLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  const dueLocal = new Date(Date.now() + 7 * 86400000 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  const [kind, setKind] = useState('catalog');
+  const [form, setForm] = useState({
+    name: 'OP Bola Profissional',
+    createdAt: nowLocal,
+    dueAt: dueLocal,
+    productCode: firstProduct.code || '',
+    model: firstProduct.model || firstProduct.name || '',
+    customer: 'Cliente industrial',
+    qty: 1000,
+    internalQty: 700,
+    externalQty: 300,
+    externalPartner: 'Presídio Industrial MS',
+    color: '',
+    customLayout: '',
+    notes: '',
+    priority: 'Alta',
+  });
+  const selectedProduct = (state.products || []).find((product) => product.code === form.productCode || product.model === form.model || product.name === form.model) || firstProduct;
+  const changeProduct = (code) => {
+    const product = (state.products || []).find((item) => item.code === code) || {};
+    setForm({ ...form, productCode: code, model: product.model || product.name || form.model });
+  };
+  const createOp = () => {
+    const qty = Math.max(1, Number(form.qty || 0));
+    const internalQty = Math.max(0, Math.min(qty, Number(form.internalQty || qty)));
+    const externalQty = Math.max(0, Math.min(qty - internalQty, Number(form.externalQty || 0)));
+    const opNumber = `OP-${new Date().getFullYear()}-${String((state.orders || []).length + 1).padStart(4, '0')}`;
+    const lot = `LT-${opSlug(form.name || opNumber) || Date.now()}`;
+    const productName = kind === 'custom'
+      ? `Bola personalizada ${form.color ? `· ${form.color}` : ''}`.trim()
+      : (selectedProduct.name || selectedProduct.model || form.model || 'Produto sem modelo');
+    update((next) => {
+      next.orders = next.orders || [];
+      next.lots = next.lots || [];
+      next.records = next.records || [];
+      next.orders.unshift({
+        id: opNumber,
+        name: form.name || opNumber,
+        type: kind === 'custom' ? 'Personalizada' : 'Catálogo',
+        product: productName,
+        productCode: kind === 'custom' ? 'PERSONALIZADO' : (selectedProduct.code || form.productCode),
+        model: kind === 'custom' ? form.customLayout || 'Layout personalizado' : (selectedProduct.model || form.model),
+        customer: form.customer || 'Sem cliente',
+        totalQty: qty,
+        internalQty,
+        externalQty,
+        current: 'op',
+        status: 'Planejada',
+        createdAt: form.createdAt,
+        dueAt: form.dueAt,
+        dueDate: String(form.dueAt || '').slice(0, 10),
+        priority: form.priority,
+        lot,
+        externalPartner: form.externalPartner,
+        color: form.color,
+        customLayout: form.customLayout,
+        notes: form.notes,
+      });
+      next.lots.unshift({ id: `${lot}-A`, opId: opNumber, type: 'Interno', qty: internalQty || qty, location: 'OP / PCP', step: 'op', status: 'Planejado' });
+      if (externalQty) next.lots.unshift({ id: `${lot}-B`, opId: opNumber, type: 'Externo', qty: externalQty, location: form.externalPartner || 'Produção externa', step: 'externa', status: 'Separado para terceiro' });
+      next.records.unshift({ id: `REC-${Date.now()}`, opId: opNumber, step: 'op', sector: 'Gestão', employee: 'PCP Industrial', startedAt: form.createdAt || stamp(), endedAt: '', qty, losses: 0, status: 'Em produção' });
+      return next;
+    });
+    setForm({ ...form, name: '', notes: '', customLayout: '', color: '' });
+  };
+  return <div className="card">
+    <div className="card-head">
+      <div><div className="card-title">Abrir nova OP</div><div className="card-sub">Produto de catálogo ou bola personalizada com prazo final, lote e divisão interna/externa</div></div>
+      <button className="btn btn-primary" onClick={createOp}><Icon name="plus" /> Criar OP</button>
+    </div>
+    <div className="op-mode">
+      <button className={'btn ' + (kind === 'catalog' ? 'btn-primary' : '')} onClick={() => setKind('catalog')}>Produto cadastrado</button>
+      <button className={'btn ' + (kind === 'custom' ? 'btn-primary' : '')} onClick={() => setKind('custom')}>Bola personalizada</button>
+    </div>
+    <div className="op-form-grid">
+      <div className="field wide"><label>Nome da OP</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ex: OP Samba Pro Loja Centro" /></div>
+      <div className="field"><label>Data/hora abertura</label><input type="datetime-local" value={form.createdAt} onChange={(e) => setForm({ ...form, createdAt: e.target.value })} /></div>
+      <div className="field"><label>Precisa estar pronta em</label><input type="datetime-local" value={form.dueAt} onChange={(e) => setForm({ ...form, dueAt: e.target.value })} /></div>
+      <div className="field"><label>Cliente / pedido</label><input value={form.customer} onChange={(e) => setForm({ ...form, customer: e.target.value })} placeholder="Cliente, pedido ou representante" /></div>
+      <div className="field"><label>Quantidade total</label><input type="number" value={form.qty} onChange={(e) => setForm({ ...form, qty: e.target.value })} /></div>
+      <div className="field"><label>Interno</label><input type="number" value={form.internalQty} onChange={(e) => setForm({ ...form, internalQty: e.target.value, externalQty: Math.max(0, Number(form.qty || 0) - Number(e.target.value || 0)) })} /></div>
+      <div className="field"><label>Externo / terceiro</label><input type="number" value={form.externalQty} onChange={(e) => setForm({ ...form, externalQty: e.target.value })} /></div>
+      {kind === 'catalog' ? <>
+        <div className="field"><label>Código do produto</label><select value={form.productCode} onChange={(e) => changeProduct(e.target.value)}>{(state.products || []).map((product) => <option value={product.code} key={product.code || product.name}>{product.code || product.name}</option>)}</select></div>
+        <div className="field"><label>Modelo</label><input value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} placeholder="Modelo da bola" /></div>
+        <div className="field"><label>Linha / modalidade</label><input value={`${selectedProduct.line || '-'} · ${selectedProduct.modality || '-'}`} readOnly /></div>
+      </> : <>
+        <div className="field"><label>Cor</label><input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} placeholder="Ex: Branco, preto e dourado" /></div>
+        <div className="field"><label>Layout personalizado</label><input value={form.customLayout} onChange={(e) => setForm({ ...form, customLayout: e.target.value })} placeholder="Ex: Escudo, patrocinador, arte do cliente" /></div>
+        <div className="field"><label>Modelo base</label><input value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} placeholder="Campo, futsal, vôlei..." /></div>
+      </>}
+      <div className="field"><label>Produção externa</label><input value={form.externalPartner} onChange={(e) => setForm({ ...form, externalPartner: e.target.value })} placeholder="Terceiro, presídio, oficina externa" /></div>
+      <div className="field"><label>Prioridade</label><select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}><option>Alta</option><option>Média</option><option>Baixa</option></select></div>
+      <div className="field wide"><label>Observações da OP</label><textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Costura especial, embalagem, validação de arte, aprovação do cliente, restrição de matéria-prima..." /></div>
+    </div>
+  </div>;
+};
+
 const FlowBoard = ({ state, metrics }) => <div className="card"><div className="card-head"><div><div className="card-title">Fluxo real da fábrica</div><div className="card-sub">OP → Enrolagem → Cola / Marcação → Serigrafia paralelo → Dublagem → Selador → Externa → Montagem → Formas → Qualidade → Expedição</div></div></div><div className="flow-board">
   {metrics.sectorMap.map((step, i) => <div key={step.id} className={'flow-step ' + (step.open ? 'active ' : '') + (step.mode === 'paralelo' ? 'parallel ' : '') + (metrics.slowest.id === step.id && step.produced ? 'bottleneck' : '')}><div className="row"><span className="flow-index">{i + 1}</span><span className="tag">{step.mode}</span></div><div className="flow-title">{step.name}</div><div className="flow-meta">Setor: {step.sector}<br />Produzido: {iFmt(step.produced)} un.<br />Perdas: {iFmt(step.loss)} un.</div><div className="progress-rail"><span style={{ width: `${step.efficiency || 4}%` }} /></div><div className="flow-meta">Eficiência {step.efficiency.toFixed(1).replace('.', ',')}%</div></div>)}
 </div></div>;
@@ -547,22 +799,53 @@ const LotTracking = ({ state }) => <div className="card"><div className="card-he
 
 const OperatorPanel = ({ state, update, profile, sector }) => {
   const visibleSteps = profile === 'operador' ? FLOW_STEPS.filter((s) => s.sector === sector) : FLOW_STEPS;
-  const [form, setForm] = useState({ opId: state.orders[0]?.id || 'OP-9101', step: visibleSteps[0]?.id || 'montagem', employee: state.employees[0]?.name || '', qty: '100', losses: '0' });
-  const start = () => update((next) => { next.records.unshift({ id: 'REC-' + Date.now(), opId: form.opId, step: form.step, sector: FLOW_STEPS.find((s) => s.id === form.step)?.sector, employee: form.employee, startedAt: stamp(), endedAt: '', qty: 0, losses: 0, status: 'Em produção' }); return next; });
-  const finish = () => update((next) => { const rec = next.records.find((r) => r.opId === form.opId && r.step === form.step && r.status === 'Em produção'); if (rec) { rec.endedAt = stamp(); rec.qty = Number(form.qty || 0); rec.losses = Number(form.losses || 0); rec.status = 'Finalizado'; } const op = next.orders.find((o) => o.id === form.opId); if (op) { op.current = nextStep(form.step); op.status = op.current === 'expedicao' ? 'Aguardando expedição' : 'Em produção'; } return next; });
-  const splitLot = () => update((next) => { const op = next.orders.find((o) => o.id === form.opId); if (!op) return next; op.internalQty = 700; op.externalQty = Math.max(0, op.totalQty - 700); if (!next.lots.some((l) => l.id === `${op.lot}-B`)) next.lots.push({ id: `${op.lot}-B`, opId: op.id, type: 'Externo', qty: op.externalQty, location: 'Presídio Industrial MS', step: 'externa', status: 'Aguardando retorno' }); return next; });
-  const receiveExternal = () => update((next) => { next.lots.filter((l) => l.type === 'Externo').forEach((l) => { l.location = 'Montagem'; l.step = 'montagem'; l.status = 'Retornou da produção externa'; }); return next; });
-  return <div className="operator-panel"><div className="card"><div className="card-head"><div><div className="card-title">Interface rápida do operador</div><div className="card-sub">Iniciar/finalizar etapa com quantidade e perdas</div></div></div><div className="row-3"><div className="field"><label>OP</label><select value={form.opId} onChange={(e) => setForm({ ...form, opId: e.target.value })}>{state.orders.map((o) => <option key={o.id}>{o.id}</option>)}</select></div><div className="field"><label>Etapa</label><select value={form.step} onChange={(e) => setForm({ ...form, step: e.target.value })}>{visibleSteps.map((s) => <option value={s.id} key={s.id}>{s.name}</option>)}</select></div><div className="field"><label>Responsável</label><select value={form.employee} onChange={(e) => setForm({ ...form, employee: e.target.value })}>{state.employees.map((e) => <option key={e.id}>{e.name}</option>)}</select></div><div className="field"><label>Quantidade</label><input value={form.qty} onChange={(e) => setForm({ ...form, qty: e.target.value })} /></div><div className="field"><label>Perdas</label><input value={form.losses} onChange={(e) => setForm({ ...form, losses: e.target.value })} /></div></div><div className="operator-buttons"><button className="btn btn-primary" onClick={start}><Icon name="activity" /> Iniciar etapa</button><button className="btn" onClick={finish}><Icon name="check" /> Finalizar etapa</button><button className="btn" onClick={splitLot}>Dividir lote 700/300</button><button className="btn" onClick={receiveExternal}>Receber externo</button></div></div><div className="card"><div className="card-title">Regras em tempo real</div><div className="card-sub">Ao finalizar, a próxima etapa recebe a OP automaticamente. Outras abas abertas sincronizam via BroadcastChannel/localStorage.</div><div className="rank-list">{state.orders.map((op) => <div className="rank-row" key={op.id}><div className="rank-pos">OP</div><div><strong>{op.id}</strong><div className="muted">{op.product} · {op.customer}</div></div><span className="tag">{FLOW_STEPS.find((s) => s.id === op.current)?.name}</span></div>)}</div></div></div>;
+  const availableEmployees = state.employees.filter((employee) => profile !== 'operador' || employee.sector === sector);
+  const [form, setForm] = useState({ opId: state.orders[0]?.id || 'OP-9101', step: visibleSteps[0]?.id || 'montagem', employee: availableEmployees[0]?.name || state.employees[0]?.name || '', qty: '100', losses: '0' });
+  const start = () => update((next) => {
+    const step = FLOW_STEPS.find((s) => s.id === form.step);
+    if (!next.records.some((r) => r.opId === form.opId && r.step === form.step && r.status === 'Em produção')) next.records.unshift({ id: 'REC-' + Date.now(), opId: form.opId, step: form.step, sector: step?.sector, employee: form.employee, startedAt: stamp(), endedAt: '', qty: 0, losses: 0, status: 'Em produção' });
+    const op = next.orders.find((o) => o.id === form.opId);
+    if (op) { op.current = form.step; op.status = 'Em produção'; }
+    next.lots.filter((lot) => lot.opId === form.opId && lot.type === 'Interno').forEach((lot) => { lot.step = form.step; lot.location = step?.name || step?.sector || lot.location; lot.status = 'Em produção'; });
+    return next;
+  });
+  const finish = () => update((next) => {
+    const step = FLOW_STEPS.find((s) => s.id === form.step);
+    const rec = next.records.find((r) => r.opId === form.opId && r.step === form.step && r.status === 'Em produção');
+    const qty = Number(form.qty || 0);
+    const losses = Number(form.losses || 0);
+    if (rec) { rec.endedAt = stamp(); rec.qty = qty; rec.losses = losses; rec.status = 'Finalizado'; }
+    const employee = next.employees.find((item) => item.name === form.employee);
+    if (employee) employee.produced = Number(employee.produced || 0) + Math.max(0, qty - losses);
+    const op = next.orders.find((o) => o.id === form.opId);
+    if (op) {
+      const nextId = nextStep(form.step);
+      op.current = nextId;
+      op.status = nextId === 'expedicao' && form.step === 'expedicao' ? 'Finalizado' : 'Em produção';
+      next.lots.filter((lot) => lot.opId === op.id && lot.type === 'Interno').forEach((lot) => { lot.step = nextId; lot.location = FLOW_STEPS.find((s) => s.id === nextId)?.name || step?.name; lot.status = op.status; });
+    }
+    return next;
+  });
+  const splitLot = () => update((next) => {
+    const op = next.orders.find((o) => o.id === form.opId);
+    if (!op) return next;
+    op.externalQty = Number(op.externalQty || Math.round(Number(op.totalQty || 0) * 0.3));
+    op.internalQty = Math.max(0, Number(op.totalQty || 0) - op.externalQty);
+    if (!next.lots.some((l) => l.id === `${op.lot}-B`)) next.lots.push({ id: `${op.lot}-B`, opId: op.id, type: 'Externo', qty: op.externalQty, location: op.externalPartner || 'Produção externa', step: 'externa', status: 'Aguardando retorno' });
+    return next;
+  });
+  const receiveExternal = () => update((next) => { next.lots.filter((l) => l.type === 'Externo' && l.opId === form.opId).forEach((l) => { l.location = 'Montagem'; l.step = 'montagem'; l.status = 'Retornou da produção externa'; }); return next; });
+  return <div className="operator-panel"><div className="card"><div className="card-head"><div><div className="card-title">Tela rápida do setor</div><div className="card-sub">Uso no celular: escolher OP, iniciar/finalizar, apontar quantidade e perdas</div></div></div><div className="row-3"><div className="field"><label>OP</label><select value={form.opId} onChange={(e) => setForm({ ...form, opId: e.target.value })}>{state.orders.map((o) => <option value={o.id} key={o.id}>{o.id} · {o.product}</option>)}</select></div><div className="field"><label>Etapa</label><select value={form.step} onChange={(e) => setForm({ ...form, step: e.target.value })}>{visibleSteps.map((s) => <option value={s.id} key={s.id}>{s.name}</option>)}</select></div><div className="field"><label>Responsável</label><select value={form.employee} onChange={(e) => setForm({ ...form, employee: e.target.value })}>{(availableEmployees.length ? availableEmployees : state.employees).map((e) => <option key={e.id}>{e.name}</option>)}</select></div><div className="field"><label>Quantidade boa</label><input type="number" inputMode="numeric" value={form.qty} onChange={(e) => setForm({ ...form, qty: e.target.value })} /></div><div className="field"><label>Perdas</label><input type="number" inputMode="numeric" value={form.losses} onChange={(e) => setForm({ ...form, losses: e.target.value })} /></div></div><div className="operator-buttons"><button className="btn btn-primary" onClick={start}><Icon name="activity" /> Iniciar etapa</button><button className="btn" onClick={finish}><Icon name="check" /> Finalizar e enviar próxima</button><button className="btn" onClick={splitLot}>Separar produção externa</button><button className="btn" onClick={receiveExternal}>Receber externo</button></div></div><div className="card"><div className="card-title">Fila do setor</div><div className="card-sub">O operador vê somente o que precisa agir agora quando estiver no perfil operador.</div><div className="rank-list">{state.orders.filter((op) => profile !== 'operador' || visibleSteps.some((step) => step.id === op.current)).map((op) => <div className="rank-row" key={op.id}><div className="rank-pos">OP</div><div><strong>{op.id}</strong><div className="muted">{op.product} · {op.customer} · prazo {new Date(op.dueAt || op.dueDate).toLocaleDateString('pt-BR')}</div><div className="progress-rail"><span style={{ width: `${opProgress(op)}%` }} /></div></div><span className="tag">{FLOW_STEPS.find((s) => s.id === op.current)?.name}</span></div>)}</div></div></div>;
 };
 
 const EfficiencyView = ({ state, metrics, update }) => {
   const ranked = enrichEmployees(state).sort((a, b) => b.pph - a.pph);
-  return <><IndustrialKpis metrics={metrics} /><EfficiencyDashboard state={state} metrics={metrics} ranked={ranked} /><SectorDashboards state={state} metrics={metrics} ranked={ranked} /><PeopleAndSectorsAdmin state={state} update={update} /><div className="row-21"><div className="card"><div className="card-title">Eficiência por funcionário</div><div className="rank-list">{ranked.map((e, i) => <div className="rank-row" key={e.id}><div className="rank-pos">#{i + 1}</div><div><strong>{e.name}</strong><div className="muted">{e.role || 'Operador'} · {e.sector} · {iFmt(e.produced)} peças · {e.hours}h · {e.pph.toFixed(1)} p/h</div><div className="progress-rail"><span style={{ width: `${Math.min(100, e.produced / Math.max(e.goal, 1) * 100)}%` }} /></div>{e.capApplied && <div className="muted">Teto do setor aplicado: {iMoney(e.sectorCap)}</div>}</div><div className="num up">{iMoney(e.bonus)}</div></div>)}</div></div><div className="card"><div className="card-title">Eficiência por setor</div><div className="gantt">{metrics.sectorMap.map((s) => <div className="gantt-row" key={s.id}><span>{s.name}</span><div className="gantt-track"><span style={{ width: `${s.efficiency || 3}%` }} /></div><strong>{s.efficiency.toFixed(1)}%</strong></div>)}</div></div></div></>;
+  return <><IndustrialKpis metrics={metrics} /><EfficiencyDashboard state={state} metrics={metrics} ranked={ranked} /><ProcessControlDashboard state={state} metrics={metrics} sector={state.selectedSector} /><SectorDashboards state={state} metrics={metrics} ranked={ranked} /><PeopleAndSectorsAdmin state={state} update={update} /><div className="row-21"><div className="card"><div className="card-title">Eficiência por funcionário</div><div className="rank-list">{ranked.map((e, i) => <div className="rank-row" key={e.id}><div className="rank-pos">#{i + 1}</div><div><strong>{e.name}</strong><div className="muted">{e.role || 'Operador'} · {e.sector} · {iFmt(e.produced)} peças · {e.hours}h · {e.pph.toFixed(1)} p/h</div><div className="progress-rail"><span style={{ width: `${Math.min(100, e.produced / Math.max(e.goal, 1) * 100)}%` }} /></div>{e.capApplied && <div className="muted">Teto do setor aplicado: {iMoney(e.sectorCap)}</div>}</div><div className="num up">{iMoney(e.bonus)}</div></div>)}</div></div><div className="card"><div className="card-title">Eficiência por setor</div><div className="gantt">{metrics.sectorMap.map((s) => <div className="gantt-row" key={s.id}><span>{s.name}</span><div className="gantt-track"><span style={{ width: `${s.efficiency || 3}%` }} /></div><strong>{s.efficiency.toFixed(1)}%</strong></div>)}</div></div></div></>;
 };
 
 const ReportsView = ({ state, metrics }) => <><div className="print-only"><h1>CARVION Industrial — Relatório</h1></div><IndustrialKpis metrics={metrics} /><ReportsDashboard state={state} metrics={metrics} /><div className="row-3"><div className="insight-card"><div className="card-title">Produção por período</div><div className="kpi-value">{iFmt(metrics.totalProduced)}</div><div className="card-sub">peças registradas</div></div><div className="insight-card"><div className="card-title">Comissões e bônus</div><div className="kpi-value">{iMoney(metrics.bonusTotal)}</div><div className="card-sub">bônus automático com teto por setor</div></div><div className="insight-card"><div className="card-title">Gargalo</div><div className="kpi-value">{metrics.slowest.name}</div><div className="card-sub">menor eficiência atual</div></div></div><div className="card"><div className="card-head"><div><div className="card-title">Rastreabilidade completa</div><div className="card-sub">Início, fim, responsável, quantidade e perdas por etapa</div></div><button className="btn" onClick={() => window.print()}><Icon name="file" /> Imprimir / Exportar PDF</button></div><div className="table-wrap"><table className="table"><thead><tr><th>OP</th><th>Etapa</th><th>Responsável</th><th>Início</th><th>Fim</th><th>Qtd.</th><th>Perdas</th><th>Status</th></tr></thead><tbody>{state.records.map((r) => <tr key={r.id}><td className="mono">{r.opId}</td><td>{FLOW_STEPS.find((s) => s.id === r.step)?.name}</td><td>{r.employee}</td><td className="muted">{r.startedAt ? new Date(r.startedAt).toLocaleString('pt-BR') : '-'}</td><td className="muted">{r.endedAt ? new Date(r.endedAt).toLocaleString('pt-BR') : '-'}</td><td>{iFmt(r.qty)}</td><td>{iFmt(r.losses)}</td><td><span className="status-pill status-draft">{r.status}</span></td></tr>)}</tbody></table></div></div></>;
 
-const DashboardView = ({ state, update, metrics, profile, sector }) => <><IndustrialKpis metrics={metrics} /><IndustrialHomeDashboard state={state} metrics={metrics} /><FlowBoard state={state} metrics={metrics} /><LotTracking state={state} /><OperatorPanel state={state} update={update} profile={profile} sector={sector} /></>;
+const DashboardView = ({ state, update, metrics, profile, sector }) => <><IndustrialKpis metrics={metrics} /><IndustrialHomeDashboard state={state} metrics={metrics} /><ProcessControlDashboard state={state} metrics={metrics} sector={sector} /><FlowBoard state={state} metrics={metrics} /><LotTracking state={state} /><OperatorPanel state={state} update={update} profile={profile} sector={sector} /></>;
 
 const IndustrialApp = () => {
   const [state, update] = useIndustrialRealtime();
@@ -571,7 +854,7 @@ const IndustrialApp = () => {
   const titleMap = { dashboard: ['Dashboard Industrial', 'Power BI industrial em tempo real'], producao: ['Produção', 'Fluxo operacional, lote e operador'], produtos: ['Produtos Industriais', 'Importação de Excel, modelos e precificação'], eficiencia: ['Eficiência', 'Setores, funcionários, ranking e bônus'], relatorios: ['Relatórios', 'PDFs de produção, eficiência e comissões'] };
   const setProfile = (profile) => update((next) => { next.activeProfile = profile; return next; });
   const setSector = (sector) => update((next) => { next.selectedSector = sector; return next; });
-  return <div className="industrial-shell"><div className="industrial-layout"><IndustrialSidebar current={route} /><main className="main"><IndustrialTopbar title={titleMap[route]?.[0] || 'CARVION Industrial'} subtitle={titleMap[route]?.[1] || 'Controle industrial'} profile={state.activeProfile} setProfile={setProfile} sector={state.selectedSector} setSector={setSector} /><IndustrialTabs current={route} /><div className="content">{route === 'producao' ? <><FlowBoard state={state} metrics={metrics} /><LotTracking state={state} /><OperatorPanel state={state} update={update} profile={state.activeProfile} sector={state.selectedSector} /></> : route === 'produtos' ? <IndustrialProductsTable state={state} update={update} /> : route === 'eficiencia' ? <EfficiencyView state={state} metrics={metrics} update={update} /> : route === 'relatorios' ? <ReportsView state={state} metrics={metrics} /> : <DashboardView state={state} update={update} metrics={metrics} profile={state.activeProfile} sector={state.selectedSector} />}</div></main></div></div>;
+  return <div className="industrial-shell"><div className="industrial-layout"><IndustrialSidebar current={route} /><main className="main"><IndustrialTopbar title={titleMap[route]?.[0] || 'CARVION Industrial'} subtitle={titleMap[route]?.[1] || 'Controle industrial'} profile={state.activeProfile} setProfile={setProfile} sector={state.selectedSector} setSector={setSector} sectors={state.sectors} /><IndustrialTabs current={route} /><div className="content">{route === 'producao' ? <><ProcessControlDashboard state={state} metrics={metrics} sector={state.selectedSector} /><FlowBoard state={state} metrics={metrics} /><ProductionOrderCreator state={state} update={update} /><LotTracking state={state} /><OperatorPanel state={state} update={update} profile={state.activeProfile} sector={state.selectedSector} /></> : route === 'produtos' ? <IndustrialProductsTable state={state} update={update} /> : route === 'eficiencia' ? <EfficiencyView state={state} metrics={metrics} update={update} /> : route === 'relatorios' ? <ReportsView state={state} metrics={metrics} /> : <DashboardView state={state} update={update} metrics={metrics} profile={state.activeProfile} sector={state.selectedSector} />}</div></main></div></div>;
 };
 
 ReactDOM.createRoot(document.getElementById('root')).render(<IndustrialApp />);

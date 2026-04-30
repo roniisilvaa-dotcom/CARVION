@@ -29,6 +29,18 @@
 .industrial-donut strong { font-family: var(--font-mono); font-size: 20px; }
 .industrial-donut-legend { display: grid; gap: 11px; font-size: 12.5px; color: var(--text-dim); }
 .industrial-donut-legend div { display: grid; grid-template-columns: 12px 1fr auto; gap: 8px; align-items: center; }
+.process-map { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.process-card { border: 1px solid var(--border-soft); border-radius: var(--r-lg); background: var(--surface); padding: 13px; display: grid; gap: 10px; }
+.process-card-head, .process-current { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.process-card-head strong { display: block; font-family: var(--font-mono); }
+.process-card-head span:not(.status-pill), .process-current span { display: block; color: var(--text-faint); font-size: 11.5px; margin-top: 3px; }
+.process-current strong { font-family: var(--font-mono); color: var(--accent); }
+.process-timeline { display: grid; grid-template-columns: repeat(11, 1fr); gap: 4px; }
+.process-timeline span { height: 8px; border-radius: 999px; background: var(--surface-2); }
+.process-timeline span.done { background: linear-gradient(90deg, var(--accent), var(--info)); }
+.process-lots { display: grid; gap: 7px; }
+.process-lots div { display: grid; grid-template-columns: 92px 1fr auto; gap: 8px; align-items: center; color: var(--text-dim); font-size: 11.5px; }
+.process-lots small { color: var(--text-faint); }
 .flow-board { display: grid; grid-template-columns: repeat(11, minmax(150px, 1fr)); gap: 10px; overflow-x: auto; padding-bottom: 4px; }
 .flow-step { min-height: 158px; padding: 12px; border: 1px solid var(--border-soft); border-radius: var(--r-lg); background: var(--surface); display: flex; flex-direction: column; gap: 8px; }
 .flow-step.active { border-color: oklch(0.74 0.17 155 / 0.48); background: var(--accent-soft); }
@@ -38,6 +50,10 @@
 .flow-meta { color: var(--text-faint); font-size: 11.5px; line-height: 1.35; }
 .lot-split { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .lot-card { border: 1px solid var(--border-soft); border-radius: var(--r-lg); background: var(--surface); padding: 14px; display: grid; gap: 10px; }
+.op-mode { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.op-form-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.op-form-grid .wide { grid-column: span 2; }
+.op-form-grid textarea { min-height: 84px; resize: vertical; }
 .operator-panel { display: grid; grid-template-columns: 1.2fr .8fr; gap: 14px; }
 .operator-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
 .progress-rail { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
@@ -68,5 +84,5 @@
 .bottleneck { border-color: oklch(0.68 0.20 25 / 0.38) !important; background: var(--danger-soft) !important; }
 .print-only { display: none; }
 @media print { .sidebar, .topbar, .industrial-tabs, .mobile-tab, .btn, .icon-btn { display: none !important; } .industrial-layout { display: block; } .content { padding: 0; } .card, .kpi, .table-wrap { break-inside: avoid; } .print-only { display: block; } }
-@media (max-width: 1100px) { .industrial-layout { grid-template-columns: 1fr; } .industrial-layout .sidebar { position: fixed; transform: translateX(-100%); } .flow-board { grid-template-columns: repeat(11, 160px); } .operator-panel, .lot-split, .industrial-home-grid { grid-template-columns: 1fr; } .industrial-tabs { top: 61px; padding: 10px 14px; } }
-@media (max-width: 760px) { .flow-board { grid-template-columns: repeat(11, 148px); } .gantt-row, .industrial-bar-row, .industrial-donut-wrap, .industrial-command-kpis, .industrial-command-kpis.report-kpis, .sector-dashboard-grid, .sector-ring-row { grid-template-columns: 1fr; } .industrial-bar-row strong { text-align: left; } }
+@media (max-width: 1100px) { .industrial-layout { grid-template-columns: 1fr; } .industrial-layout .sidebar { position: fixed; transform: translateX(-100%); } .flow-board { grid-template-columns: repeat(11, 160px); } .operator-panel, .lot-split, .industrial-home-grid, .op-form-grid, .process-map { grid-template-columns: 1fr; } .op-form-grid .wide { grid-column: auto; } .industrial-tabs { top: 61px; padding: 10px 14px; } }
+@media (max-width: 760px) { .flow-board { grid-template-columns: repeat(11, 148px); } .gantt-row, .industrial-bar-row, .industrial-donut-wrap, .industrial-command-kpis, .industrial-command-kpis.report-kpis, .sector-dashboard-grid, .sector-ring-row, .process-lots div { grid-template-columns: 1fr; } .industrial-bar-row strong { text-align: left; } .operator-buttons .btn, .op-mode .btn { width: 100%; justify-content: center; } }
