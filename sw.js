@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'carvion-cache-';
-const STATIC_CACHE = `${CACHE_PREFIX}2026-04-30-auto-update-v1`;
+const STATIC_CACHE = `${CACHE_PREFIX}2026-04-30-industrial-v2`;
 const CORE_ASSETS = [
   '/',
   '/dashboard',
@@ -11,6 +11,18 @@ const CORE_ASSETS = [
   '/data.jsx',
   '/charts.jsx',
   '/app.jsx',
+  '/industrial',
+  '/industrial/index.html',
+  '/industrial/dashboard',
+  '/industrial/dashboard.html',
+  '/industrial/producao',
+  '/industrial/producao.html',
+  '/industrial/eficiencia',
+  '/industrial/eficiencia.html',
+  '/industrial/relatorios',
+  '/industrial/relatorios.html',
+  '/industrial.jsx',
+  '/industrial.css',
   '/auth/login.html',
   '/auth/auth.css',
   '/version.json'

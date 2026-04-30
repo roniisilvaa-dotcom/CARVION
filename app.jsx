@@ -147,6 +147,20 @@ const DashboardPage = ({ state, kpis, secondaryKpis, onAdd, period, showSecondar
         ))}
       </div>
 
+      <div className="card" style={{ padding: 18, overflow: 'hidden' }}>
+        <div className="card-head" style={{ alignItems: 'center' }}>
+          <div>
+            <div className="card-title">CARVION Industrial</div>
+            <div className="card-sub">Controle completo da produção e eficiência</div>
+          </div>
+          <div className="card-actions">
+            <a className="btn btn-primary" href="/industrial">
+              <Icon name="activity" size={13} /> Acessar Módulo
+            </a>
+          </div>
+        </div>
+      </div>
+
       <div className="row-21">
         <div className="card">
           <div className="card-head">

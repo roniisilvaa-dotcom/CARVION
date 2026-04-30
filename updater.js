@@ -1,6 +1,20 @@
 (() => {
   const VERSION_URL = '/version.json';
-  const WATCH_URLS = ['/version.json', '/app.jsx', '/data.jsx', '/carvion-core.js', '/styles.css', '/dashboard'];
+  const WATCH_URLS = [
+    '/version.json',
+    '/app.jsx',
+    '/data.jsx',
+    '/carvion-core.js',
+    '/styles.css',
+    '/dashboard',
+    '/industrial',
+    '/industrial/dashboard',
+    '/industrial/producao',
+    '/industrial/eficiencia',
+    '/industrial/relatorios',
+    '/industrial.jsx',
+    '/industrial.css'
+  ];
   const STORAGE_KEY = 'carvion.deploy.fingerprint';
   const RELOAD_FLAG = 'carvion.deploy.reloading';
   const CHECK_INTERVAL = 30000;
