@@ -1,5 +1,6 @@
 (() => {
   const VERSION_URL = '/version.json';
+  const WATCH_URLS = ['/version.json', '/app.jsx', '/data.jsx', '/carvion-core.js', '/styles.css', '/dashboard'];
   const STORAGE_KEY = 'carvion.deploy.fingerprint';
   const RELOAD_FLAG = 'carvion.deploy.reloading';
   const CHECK_INTERVAL = 30000;
@@ -9,6 +10,23 @@
     const etag = response.headers.get('etag') || '';
     const modified = response.headers.get('last-modified') || '';
     return `${etag}|${modified}|${text}`;
+  };
+
+  const deployFingerprint = async () => {
+    const parts = [];
+    for (const url of WATCH_URLS) {
+      const response = await fetch(`${url}?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
+      if (!response.ok) continue;
+      const etag = response.headers.get('etag') || '';
+      const modified = response.headers.get('last-modified') || '';
+      const length = response.headers.get('content-length') || '';
+      const text = url.endsWith('.json') ? await response.clone().text() : '';
+      parts.push(`${url}:${etag}:${modified}:${length}:${text}`);
+    }
+    return parts.join('|');
   };
 
   const showUpdateBanner = () => {
@@ -50,12 +68,8 @@
 
   const checkVersion = async ({ initial = false } = {}) => {
     try {
-      const response = await fetch(`${VERSION_URL}?t=${Date.now()}`, {
-        cache: 'no-store',
-        headers: { 'Cache-Control': 'no-cache' }
-      });
-      if (!response.ok) return;
-      const fingerprint = await fingerprintFrom(response);
+      const fingerprint = await deployFingerprint();
+      if (!fingerprint) return;
       const current = localStorage.getItem(STORAGE_KEY);
       if (!current) {
         localStorage.setItem(STORAGE_KEY, fingerprint);
