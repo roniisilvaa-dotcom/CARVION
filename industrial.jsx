@@ -1,7 +1,7 @@
 /* CARVION Industrial — produção em tempo real */
 const { useEffect, useMemo, useState } = React;
 
-const INDUSTRIAL_KEY = 'carvion.industrial.v5';
+const INDUSTRIAL_KEY = 'carvion.industrial.v6';
 const INDUSTRIAL_CHANNEL = 'carvion-industrial-realtime';
 
 const FLOW_STEPS = [
@@ -37,11 +37,17 @@ const defaultIndustrialState = () => ({
     { id: 'LT-9101-B', opId: 'OP-9101', type: 'Externo', qty: 300, location: 'Presídio Industrial MS', step: 'externa', status: 'Aguardando retorno' },
     { id: 'LT-9102-A', opId: 'OP-9102', type: 'Interno', qty: 650, location: 'Cola / Dublagem', step: 'cola-dublagem', status: 'Em produção' },
   ],
+  sectors: [
+    { id: 'SET-ENR', name: 'Enrolagem', leader: 'João Pereira', goal: 500, rate: 0.18, bonusCap: 420, status: 'Ativo' },
+    { id: 'SET-SER', name: 'Serigrafia', leader: 'Marta Souza', goal: 620, rate: 0.22, bonusCap: 520, status: 'Ativo' },
+    { id: 'SET-MON', name: 'Montagem', leader: 'Carlos Lima', goal: 500, rate: 0.25, bonusCap: 650, status: 'Ativo' },
+    { id: 'SET-QUA', name: 'Qualidade', leader: 'Bianca Alves', goal: 520, rate: 0.20, bonusCap: 380, status: 'Ativo' },
+  ],
   employees: [
-    { id: 'COL-01', name: 'João Pereira', sector: 'Enrolagem', produced: 720, hours: 7.2, goal: 500, rate: 0.18 },
-    { id: 'COL-02', name: 'Marta Souza', sector: 'Serigrafia', produced: 840, hours: 8.0, goal: 620, rate: 0.22 },
-    { id: 'COL-03', name: 'Carlos Lima', sector: 'Montagem', produced: 650, hours: 7.5, goal: 500, rate: 0.25 },
-    { id: 'COL-04', name: 'Bianca Alves', sector: 'Qualidade', produced: 590, hours: 7.8, goal: 520, rate: 0.20 },
+    { id: 'COL-01', name: 'João Pereira', role: 'Operador', sector: 'Enrolagem', produced: 720, hours: 7.2, goal: 500, rate: 0.18, baseSalary: 2200, status: 'Ativo' },
+    { id: 'COL-02', name: 'Marta Souza', role: 'Líder', sector: 'Serigrafia', produced: 840, hours: 8.0, goal: 620, rate: 0.22, baseSalary: 2600, status: 'Ativo' },
+    { id: 'COL-03', name: 'Carlos Lima', role: 'Operador', sector: 'Montagem', produced: 650, hours: 7.5, goal: 500, rate: 0.25, baseSalary: 2300, status: 'Ativo' },
+    { id: 'COL-04', name: 'Bianca Alves', role: 'Inspetora', sector: 'Qualidade', produced: 590, hours: 7.8, goal: 520, rate: 0.20, baseSalary: 2400, status: 'Ativo' },
   ],
   records: [
     { id: 'REC-1', opId: 'OP-9101', step: 'enrolagem', sector: 'Enrolagem', employee: 'João Pereira', startedAt: '2026-04-30T07:10:00', endedAt: '2026-04-30T09:25:00', qty: 1000, losses: 18, status: 'Finalizado' },
@@ -61,6 +67,19 @@ const iMoney = (n) => new Intl.NumberFormat('pt-BR', { style: 'currency', curren
 const stamp = () => new Date().toISOString();
 const flowIndex = (stepId) => FLOW_STEPS.findIndex((s) => s.id === stepId);
 const nextStep = (stepId) => FLOW_STEPS[Math.min(flowIndex(stepId) + 1, FLOW_STEPS.length - 1)]?.id || stepId;
+const sectorConfig = (state, sector) => (state.sectors || []).find((s) => s.name === sector) || { goal: 0, rate: 0, bonusCap: 0 };
+const rawEmployeeBonus = (employee, config) => Math.max(0, Number(employee.produced || 0) - Number(employee.goal || config.goal || 0)) * Number(employee.rate || config.rate || 0);
+const employeeBonusFactor = (state, sector) => {
+  const config = sectorConfig(state, sector);
+  const rawTotal = (state.employees || []).filter((e) => e.sector === sector).reduce((s, e) => s + rawEmployeeBonus(e, config), 0);
+  return rawTotal && config.bonusCap ? Math.min(1, Number(config.bonusCap || 0) / rawTotal) : 1;
+};
+const enrichEmployees = (state) => [...(state.employees || [])].map((e) => {
+  const config = sectorConfig(state, e.sector);
+  const rawBonus = rawEmployeeBonus(e, config);
+  const factor = employeeBonusFactor(state, e.sector);
+  return { ...e, pph: Number(e.hours || 0) ? Number(e.produced || 0) / Number(e.hours || 1) : 0, rawBonus, bonus: rawBonus * factor, capApplied: factor < 1, sectorCap: Number(config.bonusCap || 0), goal: Number(e.goal || config.goal || 0), rate: Number(e.rate || config.rate || 0) };
+});
 const normalizeIndustrialHeader = (value) => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '');
 const pickIndustrialValue = (row, aliases) => {
   const keys = Object.keys(row);
@@ -132,7 +151,7 @@ const calcMetrics = (state) => {
     return { ...step, produced, loss, efficiency, open, avgTime: rows.length ? (1.4 + rows.length * .35) : 0 };
   });
   const slowest = sectorMap.filter((s) => s.produced).sort((a, b) => a.efficiency - b.efficiency)[0] || sectorMap[0];
-  const bonusTotal = state.employees.reduce((s, e) => s + Math.max(0, e.produced - e.goal) * e.rate, 0);
+  const bonusTotal = enrichEmployees(state).reduce((s, e) => s + Number(e.bonus || 0), 0);
   const activeLots = state.lots.filter((l) => !l.status.includes('Finalizado')).length;
   return { totalProduced, losses, activeOps, activeLots, internal, external, bonusTotal, sectorMap, slowest, efficiency: totalProduced ? ((totalProduced - losses) / totalProduced) * 100 : 0 };
 };
@@ -360,7 +379,7 @@ const EfficiencyDashboard = ({ state, metrics, ranked }) => {
         <div><span>Melhor produtividade</span><strong>{best.pph.toFixed(1)}</strong></div>
         <div><span>Abaixo da meta</span><strong>{belowGoal}</strong></div>
       </div>
-      <div className="industrial-command-note">{best.name} lidera em {best.sector}. Gargalo atual: {metrics.slowest.name}, com {metrics.slowest.efficiency.toFixed(1).replace('.', ',')}% de eficiência.</div>
+      <div className="industrial-command-note">{best.name} lidera em {best.sector}. Gargalo atual: {metrics.slowest.name}. O bônus calculado respeita meta, valor por peça extra e teto salarial de bonificação por setor.</div>
     </div>
     <div className="card">
       <div className="card-head"><div><div className="card-title">Distribuição produtiva</div><div className="card-sub">Interno, externo e perdas afetam a eficiência</div></div></div>
@@ -378,6 +397,63 @@ const EfficiencyDashboard = ({ state, metrics, ranked }) => {
       <div className="rank-list">{ranked.slice(0, 4).map((e, i) => <div className="rank-row" key={e.id}><div className="rank-pos">#{i + 1}</div><div><strong>{e.name}</strong><div className="muted">{e.sector} · meta {iFmt(e.goal)} · realizado {iFmt(e.produced)}</div><div className="progress-rail"><span style={{ width: `${Math.min(100, e.produced / e.goal * 100)}%` }} /></div></div><div className="num up">{iMoney(e.bonus)}</div></div>)}</div>
     </div>
   </div></>;
+};
+
+const PeopleAndSectorsAdmin = ({ state, update }) => {
+  const firstSector = state.sectors?.[0] || { name: 'Montagem', goal: 500, rate: 0.2 };
+  const [sectorForm, setSectorForm] = useState({ name: '', leader: '', goal: 500, rate: 0.2, bonusCap: 500 });
+  const [employeeForm, setEmployeeForm] = useState({ name: '', role: 'Operador', sector: firstSector.name, produced: 0, hours: 8, goal: firstSector.goal, rate: firstSector.rate, baseSalary: 2200 });
+  const saveSector = () => {
+    const name = String(sectorForm.name || '').trim();
+    if (!name) return;
+    update((next) => {
+      next.sectors = next.sectors || [];
+      const existing = next.sectors.find((sector) => sector.name.toLowerCase() === name.toLowerCase());
+      const payload = { id: existing?.id || `SET-${Date.now()}`, name, leader: sectorForm.leader || 'A definir', goal: Number(sectorForm.goal || 0), rate: Number(sectorForm.rate || 0), bonusCap: Number(sectorForm.bonusCap || 0), status: 'Ativo' };
+      if (existing) Object.assign(existing, payload);
+      else next.sectors.unshift(payload);
+      return next;
+    });
+    setSectorForm({ name: '', leader: '', goal: 500, rate: 0.2, bonusCap: 500 });
+  };
+  const saveEmployee = () => {
+    const name = String(employeeForm.name || '').trim();
+    if (!name) return;
+    update((next) => {
+      next.employees = next.employees || [];
+      next.employees.unshift({ id: `COL-${Date.now()}`, name, role: employeeForm.role || 'Operador', sector: employeeForm.sector, produced: Number(employeeForm.produced || 0), hours: Number(employeeForm.hours || 0), goal: Number(employeeForm.goal || 0), rate: Number(employeeForm.rate || 0), baseSalary: Number(employeeForm.baseSalary || 0), status: 'Ativo' });
+      return next;
+    });
+    setEmployeeForm({ ...employeeForm, name: '', produced: 0 });
+  };
+  const chooseSector = (sectorName) => {
+    const sector = (state.sectors || []).find((s) => s.name === sectorName) || firstSector;
+    setEmployeeForm({ ...employeeForm, sector: sector.name, goal: sector.goal, rate: sector.rate });
+  };
+  return <div className="row-21">
+    <div className="card">
+      <div className="card-head"><div><div className="card-title">Cadastro de setores</div><div className="card-sub">Meta, valor por peça e teto salarial de bonificação</div></div><button className="btn btn-primary" onClick={saveSector}><Icon name="plus" /> Salvar setor</button></div>
+      <div className="row-3">
+        <div className="field"><label>Setor</label><input value={sectorForm.name} onChange={(e) => setSectorForm({ ...sectorForm, name: e.target.value })} placeholder="Ex: Selador" /></div>
+        <div className="field"><label>Responsável</label><input value={sectorForm.leader} onChange={(e) => setSectorForm({ ...sectorForm, leader: e.target.value })} placeholder="Líder do setor" /></div>
+        <div className="field"><label>Meta padrão</label><input type="number" value={sectorForm.goal} onChange={(e) => setSectorForm({ ...sectorForm, goal: e.target.value })} /></div>
+        <div className="field"><label>R$ por peça extra</label><input type="number" step="0.01" value={sectorForm.rate} onChange={(e) => setSectorForm({ ...sectorForm, rate: e.target.value })} /></div>
+        <div className="field"><label>Teto bonificação do setor</label><input type="number" value={sectorForm.bonusCap} onChange={(e) => setSectorForm({ ...sectorForm, bonusCap: e.target.value })} /></div>
+      </div>
+      <div className="rank-list">{(state.sectors || []).map((sector) => <div className="rank-row" key={sector.id}><div className="rank-pos">S</div><div><strong>{sector.name}</strong><div className="muted">{sector.leader} · meta {iFmt(sector.goal)} · {iMoney(sector.rate)} por peça</div></div><span className="tag">Teto {iMoney(sector.bonusCap)}</span></div>)}</div>
+    </div>
+    <div className="card">
+      <div className="card-head"><div><div className="card-title">Cadastro de colaboradores</div><div className="card-sub">Produção individual ligada ao setor e à bonificação</div></div><button className="btn btn-primary" onClick={saveEmployee}><Icon name="plus" /> Salvar colaborador</button></div>
+      <div className="row-3">
+        <div className="field"><label>Nome</label><input value={employeeForm.name} onChange={(e) => setEmployeeForm({ ...employeeForm, name: e.target.value })} placeholder="Nome completo" /></div>
+        <div className="field"><label>Cargo</label><input value={employeeForm.role} onChange={(e) => setEmployeeForm({ ...employeeForm, role: e.target.value })} /></div>
+        <div className="field"><label>Setor</label><select value={employeeForm.sector} onChange={(e) => chooseSector(e.target.value)}>{(state.sectors || []).map((s) => <option key={s.id}>{s.name}</option>)}</select></div>
+        <div className="field"><label>Produzido</label><input type="number" value={employeeForm.produced} onChange={(e) => setEmployeeForm({ ...employeeForm, produced: e.target.value })} /></div>
+        <div className="field"><label>Horas</label><input type="number" step="0.1" value={employeeForm.hours} onChange={(e) => setEmployeeForm({ ...employeeForm, hours: e.target.value })} /></div>
+        <div className="field"><label>Salário base</label><input type="number" value={employeeForm.baseSalary} onChange={(e) => setEmployeeForm({ ...employeeForm, baseSalary: e.target.value })} /></div>
+      </div>
+    </div>
+  </div>;
 };
 
 const ReportsDashboard = ({ state, metrics }) => {
@@ -428,12 +504,12 @@ const OperatorPanel = ({ state, update, profile, sector }) => {
   return <div className="operator-panel"><div className="card"><div className="card-head"><div><div className="card-title">Interface rápida do operador</div><div className="card-sub">Iniciar/finalizar etapa com quantidade e perdas</div></div></div><div className="row-3"><div className="field"><label>OP</label><select value={form.opId} onChange={(e) => setForm({ ...form, opId: e.target.value })}>{state.orders.map((o) => <option key={o.id}>{o.id}</option>)}</select></div><div className="field"><label>Etapa</label><select value={form.step} onChange={(e) => setForm({ ...form, step: e.target.value })}>{visibleSteps.map((s) => <option value={s.id} key={s.id}>{s.name}</option>)}</select></div><div className="field"><label>Responsável</label><select value={form.employee} onChange={(e) => setForm({ ...form, employee: e.target.value })}>{state.employees.map((e) => <option key={e.id}>{e.name}</option>)}</select></div><div className="field"><label>Quantidade</label><input value={form.qty} onChange={(e) => setForm({ ...form, qty: e.target.value })} /></div><div className="field"><label>Perdas</label><input value={form.losses} onChange={(e) => setForm({ ...form, losses: e.target.value })} /></div></div><div className="operator-buttons"><button className="btn btn-primary" onClick={start}><Icon name="activity" /> Iniciar etapa</button><button className="btn" onClick={finish}><Icon name="check" /> Finalizar etapa</button><button className="btn" onClick={splitLot}>Dividir lote 700/300</button><button className="btn" onClick={receiveExternal}>Receber externo</button></div></div><div className="card"><div className="card-title">Regras em tempo real</div><div className="card-sub">Ao finalizar, a próxima etapa recebe a OP automaticamente. Outras abas abertas sincronizam via BroadcastChannel/localStorage.</div><div className="rank-list">{state.orders.map((op) => <div className="rank-row" key={op.id}><div className="rank-pos">OP</div><div><strong>{op.id}</strong><div className="muted">{op.product} · {op.customer}</div></div><span className="tag">{FLOW_STEPS.find((s) => s.id === op.current)?.name}</span></div>)}</div></div></div>;
 };
 
-const EfficiencyView = ({ state, metrics }) => {
-  const ranked = [...state.employees].map((e) => ({ ...e, pph: e.hours ? e.produced / e.hours : 0, bonus: Math.max(0, e.produced - e.goal) * e.rate })).sort((a, b) => b.pph - a.pph);
-  return <><IndustrialKpis metrics={metrics} /><EfficiencyDashboard state={state} metrics={metrics} ranked={ranked} /><div className="row-21"><div className="card"><div className="card-title">Eficiência por funcionário</div><div className="rank-list">{ranked.map((e, i) => <div className="rank-row" key={e.id}><div className="rank-pos">#{i + 1}</div><div><strong>{e.name}</strong><div className="muted">{e.sector} · {iFmt(e.produced)} peças · {e.hours}h · {e.pph.toFixed(1)} p/h</div><div className="progress-rail"><span style={{ width: `${Math.min(100, e.produced / e.goal * 100)}%` }} /></div></div><div className="num up">{iMoney(e.bonus)}</div></div>)}</div></div><div className="card"><div className="card-title">Eficiência por setor</div><div className="gantt">{metrics.sectorMap.map((s) => <div className="gantt-row" key={s.id}><span>{s.name}</span><div className="gantt-track"><span style={{ width: `${s.efficiency || 3}%` }} /></div><strong>{s.efficiency.toFixed(1)}%</strong></div>)}</div></div></div></>;
+const EfficiencyView = ({ state, metrics, update }) => {
+  const ranked = enrichEmployees(state).sort((a, b) => b.pph - a.pph);
+  return <><IndustrialKpis metrics={metrics} /><EfficiencyDashboard state={state} metrics={metrics} ranked={ranked} /><PeopleAndSectorsAdmin state={state} update={update} /><div className="row-21"><div className="card"><div className="card-title">Eficiência por funcionário</div><div className="rank-list">{ranked.map((e, i) => <div className="rank-row" key={e.id}><div className="rank-pos">#{i + 1}</div><div><strong>{e.name}</strong><div className="muted">{e.role || 'Operador'} · {e.sector} · {iFmt(e.produced)} peças · {e.hours}h · {e.pph.toFixed(1)} p/h</div><div className="progress-rail"><span style={{ width: `${Math.min(100, e.produced / Math.max(e.goal, 1) * 100)}%` }} /></div>{e.capApplied && <div className="muted">Teto do setor aplicado: {iMoney(e.sectorCap)}</div>}</div><div className="num up">{iMoney(e.bonus)}</div></div>)}</div></div><div className="card"><div className="card-title">Eficiência por setor</div><div className="gantt">{metrics.sectorMap.map((s) => <div className="gantt-row" key={s.id}><span>{s.name}</span><div className="gantt-track"><span style={{ width: `${s.efficiency || 3}%` }} /></div><strong>{s.efficiency.toFixed(1)}%</strong></div>)}</div></div></div></>;
 };
 
-const ReportsView = ({ state, metrics }) => <><div className="print-only"><h1>CARVION Industrial — Relatório</h1></div><IndustrialKpis metrics={metrics} /><ReportsDashboard state={state} metrics={metrics} /><div className="row-3"><div className="insight-card"><div className="card-title">Produção por período</div><div className="kpi-value">{iFmt(metrics.totalProduced)}</div><div className="card-sub">peças registradas</div></div><div className="insight-card"><div className="card-title">Comissões e bônus</div><div className="kpi-value">{iMoney(state.employees.reduce((s, e) => s + Math.max(0, e.produced - e.goal) * e.rate, 0))}</div><div className="card-sub">bônus automático por desempenho</div></div><div className="insight-card"><div className="card-title">Gargalo</div><div className="kpi-value">{metrics.slowest.name}</div><div className="card-sub">menor eficiência atual</div></div></div><div className="card"><div className="card-head"><div><div className="card-title">Rastreabilidade completa</div><div className="card-sub">Início, fim, responsável, quantidade e perdas por etapa</div></div><button className="btn" onClick={() => window.print()}><Icon name="file" /> Imprimir / Exportar PDF</button></div><div className="table-wrap"><table className="table"><thead><tr><th>OP</th><th>Etapa</th><th>Responsável</th><th>Início</th><th>Fim</th><th>Qtd.</th><th>Perdas</th><th>Status</th></tr></thead><tbody>{state.records.map((r) => <tr key={r.id}><td className="mono">{r.opId}</td><td>{FLOW_STEPS.find((s) => s.id === r.step)?.name}</td><td>{r.employee}</td><td className="muted">{r.startedAt ? new Date(r.startedAt).toLocaleString('pt-BR') : '-'}</td><td className="muted">{r.endedAt ? new Date(r.endedAt).toLocaleString('pt-BR') : '-'}</td><td>{iFmt(r.qty)}</td><td>{iFmt(r.losses)}</td><td><span className="status-pill status-draft">{r.status}</span></td></tr>)}</tbody></table></div></div></>;
+const ReportsView = ({ state, metrics }) => <><div className="print-only"><h1>CARVION Industrial — Relatório</h1></div><IndustrialKpis metrics={metrics} /><ReportsDashboard state={state} metrics={metrics} /><div className="row-3"><div className="insight-card"><div className="card-title">Produção por período</div><div className="kpi-value">{iFmt(metrics.totalProduced)}</div><div className="card-sub">peças registradas</div></div><div className="insight-card"><div className="card-title">Comissões e bônus</div><div className="kpi-value">{iMoney(metrics.bonusTotal)}</div><div className="card-sub">bônus automático com teto por setor</div></div><div className="insight-card"><div className="card-title">Gargalo</div><div className="kpi-value">{metrics.slowest.name}</div><div className="card-sub">menor eficiência atual</div></div></div><div className="card"><div className="card-head"><div><div className="card-title">Rastreabilidade completa</div><div className="card-sub">Início, fim, responsável, quantidade e perdas por etapa</div></div><button className="btn" onClick={() => window.print()}><Icon name="file" /> Imprimir / Exportar PDF</button></div><div className="table-wrap"><table className="table"><thead><tr><th>OP</th><th>Etapa</th><th>Responsável</th><th>Início</th><th>Fim</th><th>Qtd.</th><th>Perdas</th><th>Status</th></tr></thead><tbody>{state.records.map((r) => <tr key={r.id}><td className="mono">{r.opId}</td><td>{FLOW_STEPS.find((s) => s.id === r.step)?.name}</td><td>{r.employee}</td><td className="muted">{r.startedAt ? new Date(r.startedAt).toLocaleString('pt-BR') : '-'}</td><td className="muted">{r.endedAt ? new Date(r.endedAt).toLocaleString('pt-BR') : '-'}</td><td>{iFmt(r.qty)}</td><td>{iFmt(r.losses)}</td><td><span className="status-pill status-draft">{r.status}</span></td></tr>)}</tbody></table></div></div></>;
 
 const DashboardView = ({ state, update, metrics, profile, sector }) => <><IndustrialKpis metrics={metrics} /><IndustrialHomeDashboard state={state} metrics={metrics} /><FlowBoard state={state} metrics={metrics} /><LotTracking state={state} /><OperatorPanel state={state} update={update} profile={profile} sector={sector} /></>;
 
@@ -444,7 +520,7 @@ const IndustrialApp = () => {
   const titleMap = { dashboard: ['Dashboard Industrial', 'Power BI industrial em tempo real'], producao: ['Produção', 'Fluxo operacional, lote e operador'], produtos: ['Produtos Industriais', 'Importação de Excel, modelos e precificação'], eficiencia: ['Eficiência', 'Setores, funcionários, ranking e bônus'], relatorios: ['Relatórios', 'PDFs de produção, eficiência e comissões'] };
   const setProfile = (profile) => update((next) => { next.activeProfile = profile; return next; });
   const setSector = (sector) => update((next) => { next.selectedSector = sector; return next; });
-  return <div className="industrial-shell"><div className="industrial-layout"><IndustrialSidebar current={route} /><main className="main"><IndustrialTopbar title={titleMap[route]?.[0] || 'CARVION Industrial'} subtitle={titleMap[route]?.[1] || 'Controle industrial'} profile={state.activeProfile} setProfile={setProfile} sector={state.selectedSector} setSector={setSector} /><IndustrialTabs current={route} /><div className="content">{route === 'producao' ? <><FlowBoard state={state} metrics={metrics} /><LotTracking state={state} /><OperatorPanel state={state} update={update} profile={state.activeProfile} sector={state.selectedSector} /></> : route === 'produtos' ? <IndustrialProductsTable state={state} update={update} /> : route === 'eficiencia' ? <EfficiencyView state={state} metrics={metrics} /> : route === 'relatorios' ? <ReportsView state={state} metrics={metrics} /> : <DashboardView state={state} update={update} metrics={metrics} profile={state.activeProfile} sector={state.selectedSector} />}</div></main></div></div>;
+  return <div className="industrial-shell"><div className="industrial-layout"><IndustrialSidebar current={route} /><main className="main"><IndustrialTopbar title={titleMap[route]?.[0] || 'CARVION Industrial'} subtitle={titleMap[route]?.[1] || 'Controle industrial'} profile={state.activeProfile} setProfile={setProfile} sector={state.selectedSector} setSector={setSector} /><IndustrialTabs current={route} /><div className="content">{route === 'producao' ? <><FlowBoard state={state} metrics={metrics} /><LotTracking state={state} /><OperatorPanel state={state} update={update} profile={state.activeProfile} sector={state.selectedSector} /></> : route === 'produtos' ? <IndustrialProductsTable state={state} update={update} /> : route === 'eficiencia' ? <EfficiencyView state={state} metrics={metrics} update={update} /> : route === 'relatorios' ? <ReportsView state={state} metrics={metrics} /> : <DashboardView state={state} update={update} metrics={metrics} profile={state.activeProfile} sector={state.selectedSector} />}</div></main></div></div>;
 };
 
 ReactDOM.createRoot(document.getElementById('root')).render(<IndustrialApp />);

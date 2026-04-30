@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'carvion-cache-';
-const STATIC_CACHE = `${CACHE_PREFIX}2026-04-30-industrial-standalone-v1`;
+const STATIC_CACHE = `${CACHE_PREFIX}2026-04-30-sectors-bonus-v1`;
 const CORE_ASSETS = [
   '/',
   '/dashboard',
