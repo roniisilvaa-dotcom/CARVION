@@ -28,20 +28,20 @@ const KPIS = [
     label: 'Bolas Produzidas',
     icon: 'box',
     value: 0,
-    delta: 0,
+    delta: 18.4,
     period: 'mês atual',
     color: 'var(--accent)',
-    spark: Array(12).fill(0),
+    spark: sparkline(1, 2),
   },
   {
     id: 'unit-cost',
     label: 'Custo Médio / Bola',
     icon: 'banknote',
     value: 0,
-    delta: 0,
+    delta: -4.7,
     period: 'vs. mês anterior',
     color: 'var(--info)',
-    spark: Array(12).fill(0),
+    spark: sparkline(2, -0.4),
     moneyPlain: true,
     inverted: true,
   },
@@ -50,10 +50,10 @@ const KPIS = [
     label: 'Lucro por Lote',
     icon: 'trending-up',
     value: 0,
-    delta: 0,
+    delta: 24.1,
     period: 'lotes finalizados',
     color: 'var(--purple)',
-    spark: Array(12).fill(0),
+    spark: sparkline(3, 2.2),
   },
   {
     id: 'efficiency',
@@ -61,10 +61,10 @@ const KPIS = [
     icon: 'percent',
     value: 0,
     isPct: true,
-    delta: 0,
+    delta: 6.2,
     period: 'corte · costura · montagem',
     color: 'var(--warn)',
-    spark: Array(12).fill(0),
+    spark: sparkline(4, 1.1),
   },
 ];
 
@@ -79,49 +79,72 @@ const SECONDARY_KPIS = [
 
 /* produção vs custo — 12 meses */
 const REV_EXP = [
-  { m: 'Mai/25', rev: 0, exp: 0 },
-  { m: 'Jun/25', rev: 0, exp: 0 },
-  { m: 'Jul/25', rev: 0, exp: 0 },
-  { m: 'Ago/25', rev: 0, exp: 0 },
-  { m: 'Set/25', rev: 0, exp: 0 },
-  { m: 'Out/25', rev: 0, exp: 0 },
-  { m: 'Nov/25', rev: 0, exp: 0 },
-  { m: 'Dez/25', rev: 0, exp: 0 },
-  { m: 'Jan/26', rev: 0, exp: 0 },
-  { m: 'Fev/26', rev: 0, exp: 0 },
-  { m: 'Mar/26', rev: 0, exp: 0 },
-  { m: 'Abr/26', rev: 0, exp: 0 }
+  { m: 'Mai/25', rev: 640, exp: 72400 },
+  { m: 'Jun/25', rev: 780, exp: 88400 },
+  { m: 'Jul/25', rev: 920, exp: 101200 },
+  { m: 'Ago/25', rev: 1180, exp: 132600 },
+  { m: 'Set/25', rev: 1360, exp: 151800 },
+  { m: 'Out/25', rev: 1540, exp: 169400 },
+  { m: 'Nov/25', rev: 1780, exp: 194000 },
+  { m: 'Dez/25', rev: 1650, exp: 184500 },
+  { m: 'Jan/26', rev: 1420, exp: 163800 },
+  { m: 'Fev/26', rev: 1960, exp: 218600 },
+  { m: 'Mar/26', rev: 2240, exp: 249800 },
+  { m: 'Abr/26', rev: 2760, exp: 309600 }
 ];
 
 /* consumo de matéria-prima */
 const EXPENSE_CATS = [
-  { name: 'Couro sintético', value: 0, color: 'var(--accent)' },
-  { name: 'Borracha', value: 0, color: 'var(--info)' },
-  { name: 'Linha', value: 0, color: 'var(--purple)' },
-  { name: 'Válvulas', value: 0, color: 'var(--warn)' },
-  { name: 'Cola & acabamento', value: 0, color: 'oklch(0.65 0.14 340)' },
-  { name: 'Perdas', value: 0, color: 'oklch(0.55 0.02 240)' },
+  { name: 'PU premium', value: 128000, color: 'var(--accent)' },
+  { name: 'Câmara / borracha', value: 62000, color: 'var(--info)' },
+  { name: 'Linha reforçada', value: 28500, color: 'var(--purple)' },
+  { name: 'Válvulas', value: 21000, color: 'var(--warn)' },
+  { name: 'Mão de obra', value: 70200, color: 'oklch(0.65 0.14 340)' },
+  { name: 'Perdas', value: 9900, color: 'oklch(0.55 0.02 240)' }
 ];
 
 /* produção por tipo de bola */
 const REV_BY_PLAN = [
-  { m: 'Nov', enterprise: 0, business: 0, starter: 0 },
-  { m: 'Dez', enterprise: 0, business: 0, starter: 0 },
-  { m: 'Jan', enterprise: 0, business: 0, starter: 0 },
-  { m: 'Fev', enterprise: 0, business: 0, starter: 0 },
-  { m: 'Mar', enterprise: 0, business: 0, starter: 0 },
-  { m: 'Abr', enterprise: 0, business: 0, starter: 0 }
+  { m: 'Nov', enterprise: 940, business: 620, starter: 0 },
+  { m: 'Dez', enterprise: 870, business: 580, starter: 0 },
+  { m: 'Jan', enterprise: 760, business: 510, starter: 0 },
+  { m: 'Fev', enterprise: 1080, business: 690, starter: 0 },
+  { m: 'Mar', enterprise: 1260, business: 820, starter: 0 },
+  { m: 'Abr', enterprise: 1640, business: 1120, starter: 0 }
 ];
 
-const TRANSACTIONS = [];
+const TRANSACTIONS = [
+  { id: 'PED-9001', date: '29 Abr', client: 'Rede Campo Forte', plan: 'SAMBA PRO', amount: 192000, type: 'in', status: 'pending', method: 'Rep. Ana · Lojista' },
+  { id: 'PED-9002', date: '29 Abr', client: 'Arena Futsal Center', plan: 'FUTSAL EXTREME', amount: 86700, type: 'in', status: 'paid', method: 'Rep. Bruno · Parceiro' },
+  { id: 'PED-9003', date: '28 Abr', client: 'Distribuidora Bola Cheia', plan: 'SAMBA PRO', amount: 128000, type: 'in', status: 'paid', method: 'Rep. Ana · Final' },
+  { id: 'MP-4101', date: '28 Abr', client: 'TexBall PU Premium', plan: 'Matéria-prima', amount: 68400, type: 'out', status: 'pending', method: 'NF-e XML' },
+  { id: 'MP-4102', date: '27 Abr', client: 'KGV Borrachas', plan: 'Câmara / borracha', amount: 39200, type: 'out', status: 'paid', method: 'NF-e XML' },
+  { id: 'MOB-2105', date: '27 Abr', client: 'Célula costura e montagem', plan: 'Mão de obra', amount: 41800, type: 'out', status: 'paid', method: 'Rateio por lote' }
+];
 
-const ACCOUNTS = [];
+const ACCOUNTS = [
+  { name: 'SAMBA PRO', branch: 'Topper · Linha Pro · Campo · 120 un. estoque', balance: 121200, color: 'oklch(0.78 0.16 75)', logo: 'SP' },
+  { name: 'FUTSAL EXTREME', branch: 'Kagiva · Linha Pro · Futsal · 80 un. estoque', balance: 70400, color: 'oklch(0.72 0.13 230)', logo: 'FE' },
+  { name: 'Pedidos em aberto', branch: '2 pedidos aguardando faturamento', balance: 278700, color: 'oklch(0.70 0.15 295)', logo: 'PV' }
+];
 
-const MATERIALS = [];
+const MATERIALS = [
+  { sku: 'MAT-PU-PRO', name: 'PU premium campo', unit: 'm²', stock: 860, min: 300, cost: 48.5, status: 'paid' },
+  { sku: 'MAT-CAM-BUT', name: 'Câmara butílica', unit: 'un.', stock: 1480, min: 500, cost: 18.2, status: 'paid' },
+  { sku: 'MAT-LIN-REF', name: 'Linha reforçada', unit: 'rolo', stock: 96, min: 60, cost: 74.9, status: 'paid' },
+  { sku: 'MAT-VAL-CAM', name: 'Válvula campo/futsal', unit: 'un.', stock: 2100, min: 700, cost: 2.8, status: 'paid' }
+];
 
-const PRODUCTION_ORDERS = [];
+const PRODUCTION_ORDERS = [
+  { id: 'OP-9101', product: 'SAMBA PRO', qty: 1640, status: 'Finalizado', stage: 'Acabamento', estimated: 193520, real: 188760, margin: 63.1 },
+  { id: 'OP-9102', product: 'FUTSAL EXTREME', qty: 1120, status: 'Em produção', stage: 'Montagem', estimated: 116480, real: 120840, margin: 64.0 },
+  { id: 'OP-9103', product: 'SAMBA PRO', qty: 600, status: 'Planejado', stage: 'Corte', estimated: 70800, real: 0, margin: 63.1 }
+];
 
-const REPRESENTATIVES = [];
+const REPRESENTATIVES = [
+  { id: 'REP-ANA', name: 'Ana Ribeiro', region: 'Sudeste', sales: 320000, goal: 380000, commission: 12800, orders: 2, status: 'pending' },
+  { id: 'REP-BRU', name: 'Bruno Lima', region: 'Sul', sales: 86700, goal: 160000, commission: 3468, orders: 1, status: 'paid' }
+];
 
 const PRODUCTS = [
   {
@@ -156,21 +179,33 @@ const PRODUCTS = [
   },
 ];
 
-const CLIENTS = [];
+const CLIENTS = [
+  { name: 'Rede Campo Forte', city: 'São Paulo/SP', segment: 'Lojista', revenue: 192000, rep: 'Ana Ribeiro' },
+  { name: 'Arena Futsal Center', city: 'Curitiba/PR', segment: 'Parceiro', revenue: 86700, rep: 'Bruno Lima' },
+  { name: 'Distribuidora Bola Cheia', city: 'Belo Horizonte/MG', segment: 'Distribuidor', revenue: 128000, rep: 'Ana Ribeiro' }
+];
 
 /* heatmap fluxo de caixa — 7 colunas (semanas), 7 linhas (dias) */
-const HEATMAP = Array.from({ length: 7 }, () => Array(14).fill(0));
+const HEATMAP = [
+  [0.55,0.62,0.68,0.71,0.73,0.59,0.44,0.61,0.67,0.76,0.80,0.72,0.66,0.58],
+  [0.48,0.57,0.63,0.66,0.70,0.52,0.41,0.56,0.62,0.69,0.74,0.67,0.60,0.52],
+  [0.62,0.69,0.72,0.78,0.82,0.64,0.50,0.70,0.75,0.84,0.88,0.79,0.71,0.63],
+  [0.44,0.50,0.58,0.61,0.65,0.47,0.36,0.53,0.58,0.63,0.68,0.60,0.54,0.46],
+  [0.67,0.72,0.78,0.83,0.86,0.70,0.55,0.76,0.81,0.89,0.92,0.84,0.77,0.69],
+  [0.35,0.42,0.46,0.50,0.53,0.40,0.30,0.45,0.48,0.55,0.58,0.52,0.47,0.39],
+  [0.28,0.34,0.38,0.42,0.45,0.32,0.24,0.37,0.41,0.46,0.50,0.43,0.38,0.31]
+];
 
 const NAV = [
   { group: 'INDÚSTRIA', items: [
     { id: 'dashboard', label: 'Dashboard Industrial', icon: 'home' },
-    { id: 'production', label: 'Ordens de Produção', icon: 'activity', badge: '0' },
-    { id: 'materials', label: 'Matéria-prima', icon: 'box', badge: '0' },
+    { id: 'production', label: 'Ordens de Produção', icon: 'activity', badge: '3' },
+    { id: 'materials', label: 'Matéria-prima', icon: 'box', badge: '4' },
     { id: 'costing', label: 'Custo por Bola', icon: 'percent' },
   ]},
   { group: 'COMERCIAL', items: [
-    { id: 'sales', label: 'Vendas & Pedidos', icon: 'arrow-down-left', badge: '0' },
-    { id: 'representatives', label: 'Representantes', icon: 'users', badge: '0' },
+    { id: 'sales', label: 'Vendas & Pedidos', icon: 'arrow-down-left', badge: '3' },
+    { id: 'representatives', label: 'Representantes', icon: 'users', badge: '2' },
     { id: 'clients', label: 'Clientes', icon: 'briefcase' },
     { id: 'commissions', label: 'Comissões', icon: 'banknote' },
   ]},
@@ -181,8 +216,8 @@ const NAV = [
   ]},
   { group: 'FINANCEIRO & IA', items: [
     { id: 'cashflow', label: 'Fluxo de Caixa', icon: 'activity' },
-    { id: 'payables', label: 'Contas a Pagar', icon: 'send', badge: '0' },
-    { id: 'receivables', label: 'Contas a Receber', icon: 'inbox', badge: '0' },
+    { id: 'payables', label: 'Contas a Pagar', icon: 'send', badge: '1' },
+    { id: 'receivables', label: 'Contas a Receber', icon: 'inbox', badge: '2' },
     { id: 'analytics', label: 'Analytics Industrial', icon: 'pie' },
     { id: 'reports', label: 'Relatórios', icon: 'file' },
     { id: 'settings', label: 'Multiempresa', icon: 'settings' },

@@ -18,7 +18,7 @@ const ACCENT_MAP = {
 
 const STORAGE_KEY = 'carvion.factory.v1';
 const APP_RESET_KEY = 'carvion.app.reset.version';
-const APP_RESET_VERSION = '2026-04-29-products-nfe-v1';
+const APP_RESET_VERSION = '2026-04-30-demo-values-v1';
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const defaultState = () => ({
   transactions: clone(TRANSACTIONS),
