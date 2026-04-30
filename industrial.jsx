@@ -48,7 +48,7 @@ const defaultIndustrialState = () => ({
   ],
   lots: [
     { id: 'LT-9101-A', opId: 'OP-9101', type: 'Interno', qty: 700, location: 'Montagem', step: 'montagem', status: 'Em produção' },
-    { id: 'LT-9101-B', opId: 'OP-9101', type: 'Externo', qty: 300, location: 'Presídio Industrial MS', step: 'externa', status: 'Aguardando retorno' },
+    { id: 'LT-9101-B', opId: 'OP-9101', type: 'Externo', qty: 300, sentQty: 300, returnedQty: 0, location: 'Presídio Industrial MS', step: 'externa', status: 'Aguardando retorno', materials: '300 kits de montagem; 300 carcaças; 300 válvulas; linha reforçada; romaneio de envio' },
     { id: 'LT-9102-A', opId: 'OP-9102', type: 'Interno', qty: 650, location: 'Cola / Dublagem', step: 'cola-dublagem', status: 'Em produção' },
   ],
   sectors: DEFAULT_SECTOR_CONFIGS,
@@ -73,8 +73,8 @@ const defaultIndustrialState = () => ({
     { id: 'REC-5', opId: 'OP-9102', step: 'cola-dublagem', sector: 'Dublagem', employee: 'Equipe Dublagem', startedAt: '2026-04-30T10:15:00', endedAt: '', qty: 380, losses: 4, status: 'Em produção' },
   ],
   products: [
-    { code: 'TOP-SAMBA-PRO-CAMPO', model: 'SAMBA PRO', name: 'SAMBA PRO', brand: 'Topper', line: 'Pro', modality: 'Campo', cost: 118, dealerPrice: 214, partnerPrice: 188, price: 320, stock: 120, bom: 'PU premium, câmara butílica, linha reforçada, válvula campo' },
-    { code: 'KGV-FUTSAL-EXTREME', model: 'FUTSAL EXTREME', name: 'FUTSAL EXTREME', brand: 'Kagiva', line: 'Pro', modality: 'Futsal', cost: 104, dealerPrice: 196, partnerPrice: 174, price: 289, stock: 80, bom: 'PU soft, câmara futsal, camada de amortecimento, válvula futsal' },
+    { code: '10001', model: 'SAMBA PRO', name: 'SAMBA PRO', brand: 'Topper', line: 'Pro', modality: 'Campo', cost: 118, dealerPrice: 214, partnerPrice: 188, price: 320, stock: 120, bom: 'PU premium, câmara butílica, linha reforçada, válvula campo' },
+    { code: '10002', model: 'FUTSAL EXTREME', name: 'FUTSAL EXTREME', brand: 'Kagiva', line: 'Pro', modality: 'Futsal', cost: 104, dealerPrice: 196, partnerPrice: 174, price: 289, stock: 80, bom: 'PU soft, câmara futsal, camada de amortecimento, válvula futsal' },
   ],
 });
 
@@ -83,6 +83,7 @@ const iMoney = (n) => new Intl.NumberFormat('pt-BR', { style: 'currency', curren
 const stamp = () => new Date().toISOString();
 const flowIndex = (stepId) => FLOW_STEPS.findIndex((s) => s.id === stepId);
 const nextStep = (stepId) => FLOW_STEPS[Math.min(flowIndex(stepId) + 1, FLOW_STEPS.length - 1)]?.id || stepId;
+const numericProductCode = (value, fallback = '') => String(value || fallback || '').replace(/\D/g, '');
 const sectorConfig = (state, sector) => (state.sectors || []).find((s) => s.name === sector) || { goal: 0, rate: 0, bonusCap: 0 };
 const rawEmployeeBonus = (employee, config) => Math.max(0, Number(employee.produced || 0) - Number(employee.goal || config.goal || 0)) * Number(employee.rate || config.rate || 0);
 const employeeBonusFactor = (state, sector) => {
@@ -142,7 +143,7 @@ const industrialDatasets = (state, metrics) => {
     produto: op.product,
     codigoProduto: op.productCode || '',
     modelo: op.model || '',
-    cliente: op.customer || '',
+    observacao: op.notes || '',
     status: op.status,
     etapaAtual: FLOW_STEPS.find((step) => step.id === op.current)?.name || op.current,
     setorAtual: FLOW_STEPS.find((step) => step.id === op.current)?.sector || '',
@@ -161,9 +162,13 @@ const industrialDatasets = (state, metrics) => {
     opId: lot.opId,
     tipo: lot.type,
     quantidade: Number(lot.qty || 0),
+    enviado: Number(lot.sentQty || lot.qty || 0),
+    retornou: Number(lot.returnedQty || 0),
+    saldoPendente: Math.max(0, Number(lot.sentQty || lot.qty || 0) - Number(lot.returnedQty || 0)),
     localizacao: lot.location,
     etapa: FLOW_STEPS.find((step) => step.id === lot.step)?.name || lot.step,
     status: lot.status,
+    materiais: lot.materials || '',
   }));
   const records = (state.records || []).map((record) => ({
     apontamentoId: record.id,
@@ -244,7 +249,7 @@ const industrialDatasets = (state, metrics) => {
   return { kpis, orders, lots, records, sectors, employees: employeeRows, products };
 };
 const industrialProductFromRow = (row, index) => {
-  const code = String(pickIndustrialValue(row, ['codigo', 'código', 'cod', 'sku', 'referencia', 'referência']) || '').trim();
+  const code = numericProductCode(pickIndustrialValue(row, ['codigo', 'código', 'cod', 'sku', 'referencia', 'referência']));
   const model = String(pickIndustrialValue(row, ['modelo', 'model', 'arte']) || '').trim();
   const name = String(pickIndustrialValue(row, ['produto', 'nome', 'descricao', 'descrição', 'nome produto']) || model || code || `Produto importado ${index + 1}`).trim();
   const cost = industrialMoney(pickIndustrialValue(row, ['preco custo', 'preço custo', 'custo', 'custo unitario']));
@@ -274,7 +279,18 @@ const normalizeIndustrialState = (state) => {
   next.orders = next.orders || [];
   next.lots = next.lots || [];
   next.records = next.records || [];
-  next.products = next.products || [];
+  next.products = (next.products || []).map((product, index) => {
+    const knownCode = String(product.name || product.model || '').toUpperCase().includes('SAMBA PRO') ? '10001'
+      : String(product.name || product.model || '').toUpperCase().includes('FUTSAL EXTREME') ? '10002'
+      : String(90000 + index);
+    return { ...product, code: numericProductCode(product.code, knownCode) || knownCode };
+  });
+  next.lots = next.lots.map((lot) => lot.type === 'Externo' ? {
+    ...lot,
+    sentQty: Number(lot.sentQty || lot.qty || 0),
+    returnedQty: Number(lot.returnedQty || 0),
+    materials: lot.materials || `${iFmt(lot.qty)} kits; ${iFmt(lot.qty)} carcaças; válvulas; linha; materiais de acabamento`,
+  } : lot);
   next.sectors = [...DEFAULT_SECTOR_CONFIGS.map((sector) => ({ ...sector }))];
   (state?.sectors || []).forEach((sector) => {
     const index = next.sectors.findIndex((item) => item.name === sector.name);
@@ -408,9 +424,26 @@ const isOpLate = (op) => {
   return due < Date.now() && !['Finalizado', 'Concluída', 'Expedido'].includes(op.status);
 };
 
-const ProcessControlDashboard = ({ state, metrics, sector }) => {
+const insertOrderIntoProduction = (next, opId) => {
+  const op = next.orders.find((item) => item.id === opId);
+  if (!op) return;
+  op.current = 'enrolagem';
+  op.status = 'Em produção';
+  op.startedAt = op.startedAt || stamp();
+  next.lots.filter((lot) => lot.opId === op.id && lot.type === 'Interno').forEach((lot) => {
+    lot.step = 'enrolagem';
+    lot.location = 'Enrolagem';
+    lot.status = 'Liberado para produção';
+  });
+  if (!next.records.some((record) => record.opId === op.id && record.step === 'enrolagem' && record.status === 'Em produção')) {
+    next.records.unshift({ id: `REC-${Date.now()}`, opId: op.id, step: 'enrolagem', sector: 'Enrolagem', employee: 'Aguardando operador', startedAt: stamp(), endedAt: '', qty: 0, losses: 0, status: 'Em produção' });
+  }
+};
+
+const ProcessControlDashboard = ({ state, metrics, sector, update }) => {
   const selectedStepIds = FLOW_STEPS.filter((step) => step.sector === sector).map((step) => step.id);
   const sectorOps = state.orders.filter((op) => selectedStepIds.includes(op.current));
+  const plannedOps = state.orders.filter((op) => op.status === 'Planejada');
   const lateOps = state.orders.filter(isOpLate);
   const nextDue = [...state.orders].filter((op) => !['Finalizado', 'Expedido'].includes(op.status)).sort((a, b) => new Date(a.dueAt || a.dueDate) - new Date(b.dueAt || b.dueDate))[0];
   const inExternal = state.lots.filter((lot) => lot.type === 'Externo' && !lot.status.includes('Retornou'));
@@ -421,17 +454,23 @@ const ProcessControlDashboard = ({ state, metrics, sector }) => {
     </div>
     <div className="industrial-command-kpis report-kpis">
       <div><span>No setor selecionado</span><strong>{sectorOps.length}</strong><small>{sector}</small></div>
+      <div><span>Planejadas</span><strong>{plannedOps.length}</strong><small>aguardando liberação</small></div>
       <div><span>OPs atrasadas</span><strong>{lateOps.length}</strong><small>prazo vencido</small></div>
       <div><span>Produção externa</span><strong>{iFmt(inExternal.reduce((s, lot) => s + Number(lot.qty || 0), 0))}</strong><small>unidades fora</small></div>
-      <div><span>Próximo prazo</span><strong>{nextDue?.id || '-'}</strong><small>{nextDue ? new Date(nextDue.dueAt || nextDue.dueDate).toLocaleDateString('pt-BR') : 'sem OP'}</small></div>
     </div>
+    {plannedOps.length > 0 && <div className="release-list">
+      {plannedOps.map((op) => <div className="release-row" key={op.id}>
+        <div><strong>{op.id}</strong><span>{op.name || op.product} · prazo {new Date(op.dueAt || op.dueDate).toLocaleString('pt-BR')}</span></div>
+        <button className="btn btn-primary" onClick={() => update?.((next) => { insertOrderIntoProduction(next, op.id); return next; })}>Inserir na produção</button>
+      </div>)}
+    </div>}
     <div className="process-map">
       {state.orders.map((op) => {
         const step = FLOW_STEPS.find((item) => item.id === op.current) || FLOW_STEPS[0];
         const lots = state.lots.filter((lot) => lot.opId === op.id);
         return <div className="process-card" key={op.id}>
           <div className="process-card-head">
-            <div><strong>{op.id}</strong><span>{op.name || op.product} · {op.customer}</span></div>
+            <div><strong>{op.id}</strong><span>{op.name || op.product} · {op.notes || 'sem observação'}</span></div>
             <span className={'status-pill ' + (isOpLate(op) ? 'status-pending' : 'status-draft')}>{isOpLate(op) ? 'Atrasada' : op.status}</span>
           </div>
           <div className="process-current"><span>{step.name}</span><strong>{opProgress(op)}%</strong></div>
@@ -442,6 +481,7 @@ const ProcessControlDashboard = ({ state, metrics, sector }) => {
           <div className="process-lots">
             {lots.map((lot) => <div key={lot.id}><span className="mono">{lot.id}</span><strong>{lot.location}</strong><small>{lot.type} · {iFmt(lot.qty)} un.</small></div>)}
           </div>
+          {op.status === 'Planejada' && <button className="btn btn-primary" onClick={() => update?.((next) => { insertOrderIntoProduction(next, op.id); return next; })}>Inserir na produção</button>}
         </div>;
       })}
     </div>
@@ -450,13 +490,13 @@ const ProcessControlDashboard = ({ state, metrics, sector }) => {
 
 const ActiveOrdersTable = ({ state }) => <div className="table-wrap">
   <table className="table">
-    <thead><tr><th>OP</th><th>Produto</th><th>Lote</th><th>Etapa atual</th><th>Cliente</th><th>Prazo</th><th className="text-right">Qtd.</th></tr></thead>
+    <thead><tr><th>OP</th><th>Produto</th><th>Lote</th><th>Etapa atual</th><th>OBS</th><th>Prazo</th><th className="text-right">Qtd.</th></tr></thead>
     <tbody>{state.orders.map((op) => <tr key={op.id}>
       <td className="mono muted">{op.id}<div className="muted">{op.name || ''}</div></td>
       <td><span className="tag">{op.product}</span><div className="muted">{op.productCode || op.model || op.type}</div></td>
       <td className="mono">{op.lot}</td>
       <td>{FLOW_STEPS.find((s) => s.id === op.current)?.name}</td>
-      <td>{op.customer}</td>
+      <td className="muted">{op.notes || '-'}</td>
       <td className="muted">{new Date(op.dueAt || op.dueDate).toLocaleString('pt-BR')}</td>
       <td className="num">{iFmt(op.totalQty)}</td>
     </tr>)}</tbody>
@@ -468,7 +508,7 @@ const IndustrialProductsTable = ({ state, update }) => {
   const [productForm, setProductForm] = useState({ code: '', name: '', model: '', brand: '', line: 'Pro', modality: 'Campo', cost: 0, dealerPrice: 0, partnerPrice: 0, price: 0, stock: 0, bom: '' });
   const editProduct = (product) => {
     setProductForm({
-      code: product.code || '',
+      code: numericProductCode(product.code),
       name: product.name || '',
       model: product.model || '',
       brand: product.brand || '',
@@ -488,7 +528,7 @@ const IndustrialProductsTable = ({ state, update }) => {
     if (!name) { setMessage('Informe ao menos nome ou modelo do produto.'); return; }
     const product = {
       ...productForm,
-      code: String(productForm.code || opSlug(name)).trim(),
+      code: numericProductCode(productForm.code, Date.now()),
       name,
       model: String(productForm.model || name).trim(),
       brand: String(productForm.brand || 'A definir').trim(),
@@ -569,7 +609,7 @@ const IndustrialProductsTable = ({ state, update }) => {
   <div className="card">
     <div className="card-head"><div><div className="card-title">Cadastro manual de produto</div><div className="card-sub">Crie ou edite modelos importados para usar em OP, custo, estoque e precificação</div></div><button className="btn btn-primary" onClick={saveProduct}><Icon name="plus" /> Salvar produto</button></div>
     <div className="op-form-grid">
-      <div className="field"><label>Código/SKU</label><input value={productForm.code} onChange={(e) => setProductForm({ ...productForm, code: e.target.value })} placeholder="TOP-SAMBA-PRO" /></div>
+      <div className="field"><label>Código do produto</label><input type="number" inputMode="numeric" value={productForm.code} onChange={(e) => setProductForm({ ...productForm, code: numericProductCode(e.target.value) })} placeholder="10001" /></div>
       <div className="field"><label>Produto</label><input value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.target.value })} placeholder="SAMBA PRO" /></div>
       <div className="field"><label>Modelo</label><input value={productForm.model} onChange={(e) => setProductForm({ ...productForm, model: e.target.value })} placeholder="Campo oficial" /></div>
       <div className="field"><label>Marca</label><input value={productForm.brand} onChange={(e) => setProductForm({ ...productForm, brand: e.target.value })} placeholder="Topper, Kagiva..." /></div>
@@ -828,11 +868,11 @@ const ProductionOrderCreator = ({ state, update }) => {
     dueAt: dueLocal,
     productCode: firstProduct.code || '',
     model: firstProduct.model || firstProduct.name || '',
-    customer: 'Cliente industrial',
     qty: 1000,
     internalQty: 700,
     externalQty: 300,
     externalPartner: 'Presídio Industrial MS',
+    externalMaterials: '300 kits de montagem; 300 carcaças; 300 válvulas; linha reforçada; romaneio de envio',
     color: '',
     customLayout: '',
     notes: '',
@@ -861,9 +901,9 @@ const ProductionOrderCreator = ({ state, update }) => {
         name: form.name || opNumber,
         type: kind === 'custom' ? 'Personalizada' : 'Catálogo',
         product: productName,
-        productCode: kind === 'custom' ? 'PERSONALIZADO' : (selectedProduct.code || form.productCode),
+        productCode: kind === 'custom' ? '' : numericProductCode(selectedProduct.code || form.productCode),
         model: kind === 'custom' ? form.customLayout || 'Layout personalizado' : (selectedProduct.model || form.model),
-        customer: form.customer || 'Sem cliente',
+        customer: '',
         totalQty: qty,
         internalQty,
         externalQty,
@@ -875,13 +915,13 @@ const ProductionOrderCreator = ({ state, update }) => {
         priority: form.priority,
         lot,
         externalPartner: form.externalPartner,
+        externalMaterials: form.externalMaterials,
         color: form.color,
         customLayout: form.customLayout,
         notes: form.notes,
       });
       next.lots.unshift({ id: `${lot}-A`, opId: opNumber, type: 'Interno', qty: internalQty || qty, location: 'OP / PCP', step: 'op', status: 'Planejado' });
-      if (externalQty) next.lots.unshift({ id: `${lot}-B`, opId: opNumber, type: 'Externo', qty: externalQty, location: form.externalPartner || 'Produção externa', step: 'externa', status: 'Separado para terceiro' });
-      next.records.unshift({ id: `REC-${Date.now()}`, opId: opNumber, step: 'op', sector: 'Gestão', employee: 'PCP Industrial', startedAt: form.createdAt || stamp(), endedAt: '', qty, losses: 0, status: 'Em produção' });
+      if (externalQty) next.lots.unshift({ id: `${lot}-B`, opId: opNumber, type: 'Externo', qty: externalQty, sentQty: externalQty, returnedQty: 0, location: form.externalPartner || 'Produção externa', step: 'externa', status: 'Separado para terceiro', materials: form.externalMaterials || `${iFmt(externalQty)} kits; ${iFmt(externalQty)} carcaças; válvulas; linha` });
       return next;
     });
     setForm({ ...form, name: '', notes: '', customLayout: '', color: '' });
@@ -889,7 +929,7 @@ const ProductionOrderCreator = ({ state, update }) => {
   return <div className="card">
     <div className="card-head">
       <div><div className="card-title">Abrir nova OP</div><div className="card-sub">Produto de catálogo ou bola personalizada com prazo final, lote e divisão interna/externa</div></div>
-      <button className="btn btn-primary" onClick={createOp}><Icon name="plus" /> Criar OP</button>
+      <button className="btn btn-primary" onClick={createOp}><Icon name="plus" /> Planejar OP</button>
     </div>
     <div className="op-mode">
       <button className={'btn ' + (kind === 'catalog' ? 'btn-primary' : '')} onClick={() => setKind('catalog')}>Produto cadastrado</button>
@@ -899,7 +939,6 @@ const ProductionOrderCreator = ({ state, update }) => {
       <div className="field wide"><label>Nome da OP</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ex: OP Samba Pro Loja Centro" /></div>
       <div className="field"><label>Data/hora abertura</label><input type="datetime-local" value={form.createdAt} onChange={(e) => setForm({ ...form, createdAt: e.target.value })} /></div>
       <div className="field"><label>Precisa estar pronta em</label><input type="datetime-local" value={form.dueAt} onChange={(e) => setForm({ ...form, dueAt: e.target.value })} /></div>
-      <div className="field"><label>Cliente / pedido</label><input value={form.customer} onChange={(e) => setForm({ ...form, customer: e.target.value })} placeholder="Cliente, pedido ou representante" /></div>
       <div className="field"><label>Quantidade total</label><input type="number" value={form.qty} onChange={(e) => setForm({ ...form, qty: e.target.value })} /></div>
       <div className="field"><label>Interno</label><input type="number" value={form.internalQty} onChange={(e) => setForm({ ...form, internalQty: e.target.value, externalQty: Math.max(0, Number(form.qty || 0) - Number(e.target.value || 0)) })} /></div>
       <div className="field"><label>Externo / terceiro</label><input type="number" value={form.externalQty} onChange={(e) => setForm({ ...form, externalQty: e.target.value })} /></div>
@@ -914,6 +953,7 @@ const ProductionOrderCreator = ({ state, update }) => {
       </>}
       <div className="field"><label>Produção externa</label><input value={form.externalPartner} onChange={(e) => setForm({ ...form, externalPartner: e.target.value })} placeholder="Terceiro, presídio, oficina externa" /></div>
       <div className="field"><label>Prioridade</label><select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}><option>Alta</option><option>Média</option><option>Baixa</option></select></div>
+      <div className="field wide"><label>Materiais enviados ao presídio/terceiro</label><textarea value={form.externalMaterials} onChange={(e) => setForm({ ...form, externalMaterials: e.target.value })} placeholder="Kits, carcaças, válvulas, linhas, etiquetas, romaneio..." /></div>
       <div className="field wide"><label>Observações da OP</label><textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Costura especial, embalagem, validação de arte, aprovação do cliente, restrição de matéria-prima..." /></div>
     </div>
   </div>;
@@ -923,7 +963,54 @@ const FlowBoard = ({ state, metrics }) => <div className="card"><div className="
   {metrics.sectorMap.map((step, i) => <div key={step.id} className={'flow-step ' + (step.open ? 'active ' : '') + (step.mode === 'paralelo' ? 'parallel ' : '') + (metrics.slowest.id === step.id && step.produced ? 'bottleneck' : '')}><div className="row"><span className="flow-index">{i + 1}</span><span className="tag">{step.mode}</span></div><div className="flow-title">{step.name}</div><div className="flow-meta">Setor: {step.sector}<br />Produzido: {iFmt(step.produced)} un.<br />Perdas: {iFmt(step.loss)} un.</div><div className="progress-rail"><span style={{ width: `${step.efficiency || 4}%` }} /></div><div className="flow-meta">Eficiência {step.efficiency.toFixed(1).replace('.', ',')}%</div></div>)}
 </div></div>;
 
-const LotTracking = ({ state }) => <div className="card"><div className="card-head"><div><div className="card-title">Controle de lote e subdivisão</div><div className="card-sub">Rastreio separado entre produção interna, externa e retorno</div></div></div><div className="lot-split">{state.lots.map((lot) => <div className="lot-card" key={lot.id}><div className="row"><span className="tag">{lot.type}</span><span className="muted mono">{lot.id}</span></div><div className="kpi-value">{iFmt(lot.qty)}<span className="currency">un.</span></div><div className="card-sub">OP {lot.opId} · {lot.location}</div><span className={'status-pill ' + (lot.status.includes('Aguardando') ? 'status-pending' : 'status-draft')}>{lot.status}</span></div>)}</div></div>;
+const LotTracking = ({ state }) => <div className="card"><div className="card-head"><div><div className="card-title">Controle de lote e subdivisão</div><div className="card-sub">Rastreio separado entre produção interna, externa e retorno</div></div></div><div className="lot-split">{state.lots.map((lot) => <div className="lot-card" key={lot.id}><div className="row"><span className="tag">{lot.type}</span><span className="muted mono">{lot.id}</span></div><div className="kpi-value">{iFmt(lot.qty)}<span className="currency">un.</span></div><div className="card-sub">OP {lot.opId} · {lot.location}</div><span className={'status-pill ' + (lot.status.includes('Aguardando') || lot.status.includes('pendente') ? 'status-pending' : 'status-draft')}>{lot.status}</span></div>)}</div></div>;
+
+const ExternalProductionControl = ({ state, update }) => {
+  const externalLots = state.lots.filter((lot) => lot.type === 'Externo');
+  const [returns, setReturns] = useState({});
+  const registerReturn = (lotId) => {
+    const qty = Number(returns[lotId] || 0);
+    if (!qty) return;
+    update((next) => {
+      const lot = next.lots.find((item) => item.id === lotId);
+      if (!lot) return next;
+      lot.sentQty = Number(lot.sentQty || lot.qty || 0);
+      lot.returnedQty = Math.min(lot.sentQty, Number(lot.returnedQty || 0) + qty);
+      const pending = Math.max(0, lot.sentQty - lot.returnedQty);
+      lot.status = pending ? `Retorno parcial · ${iFmt(pending)} pendente` : 'Retornou completo';
+      lot.location = pending ? lot.location : 'Montagem';
+      lot.step = pending ? 'externa' : 'montagem';
+      return next;
+    });
+    setReturns({ ...returns, [lotId]: '' });
+  };
+  return <div className="card">
+    <div className="card-head"><div><div className="card-title">Controle do presídio / terceiros</div><div className="card-sub">Entrada e retorno batendo por lote, kits, carcaças e materiais enviados</div></div></div>
+    <div className="external-grid">
+      {externalLots.map((lot) => {
+        const sent = Number(lot.sentQty || lot.qty || 0);
+        const returned = Number(lot.returnedQty || 0);
+        const pending = Math.max(0, sent - returned);
+        return <div className="external-card" key={lot.id}>
+          <div className="sector-card-head"><div><strong>{lot.id}</strong><span>OP {lot.opId} · {lot.location}</span></div><span className={'status-pill ' + (pending ? 'status-pending' : 'status-draft')}>{pending ? 'Pendente' : 'Batido'}</span></div>
+          <div className="sector-mini-kpis">
+            <div><span>Enviado</span><strong>{iFmt(sent)}</strong></div>
+            <div><span>Retornou</span><strong>{iFmt(returned)}</strong></div>
+            <div><span>Saldo</span><strong>{iFmt(pending)}</strong></div>
+            <div><span>Conferência</span><strong>{pending ? 'Aberta' : 'OK'}</strong></div>
+          </div>
+          <div className="progress-rail"><span style={{ width: `${sent ? Math.min(100, returned / sent * 100) : 0}%` }} /></div>
+          <div className="external-materials"><strong>Materiais</strong><span>{lot.materials || 'Kits, carcaças e materiais não informados.'}</span></div>
+          <div className="external-return">
+            <input type="number" inputMode="numeric" value={returns[lot.id] || ''} onChange={(e) => setReturns({ ...returns, [lot.id]: e.target.value })} placeholder="Qtd. retornou" />
+            <button className="btn btn-primary" onClick={() => registerReturn(lot.id)}>Registrar retorno</button>
+          </div>
+        </div>;
+      })}
+      {!externalLots.length && <div className="muted">Nenhum lote externo cadastrado.</div>}
+    </div>
+  </div>;
+};
 
 const OperatorPanel = ({ state, update, profile, sector }) => {
   const visibleSteps = profile === 'operador' ? FLOW_STEPS.filter((s) => s.sector === sector) : FLOW_STEPS;
@@ -968,7 +1055,7 @@ const OperatorPanel = ({ state, update, profile, sector }) => {
 
 const EfficiencyView = ({ state, metrics, update }) => {
   const ranked = enrichEmployees(state).sort((a, b) => b.pph - a.pph);
-  return <><IndustrialKpis metrics={metrics} /><EfficiencyDashboard state={state} metrics={metrics} ranked={ranked} /><ProcessControlDashboard state={state} metrics={metrics} sector={state.selectedSector} /><SectorDashboards state={state} metrics={metrics} ranked={ranked} /><PeopleAndSectorsAdmin state={state} update={update} /><div className="row-21"><div className="card"><div className="card-title">Eficiência por funcionário</div><div className="rank-list">{ranked.map((e, i) => <div className="rank-row" key={e.id}><div className="rank-pos">#{i + 1}</div><div><strong>{e.name}</strong><div className="muted">{e.role || 'Operador'} · {e.sector} · {iFmt(e.produced)} peças · {e.hours}h · {e.pph.toFixed(1)} p/h</div><div className="progress-rail"><span style={{ width: `${Math.min(100, e.produced / Math.max(e.goal, 1) * 100)}%` }} /></div>{e.capApplied && <div className="muted">Teto do setor aplicado: {iMoney(e.sectorCap)}</div>}</div><div className="num up">{iMoney(e.bonus)}</div></div>)}</div></div><div className="card"><div className="card-title">Eficiência por setor</div><div className="gantt">{metrics.sectorMap.map((s) => <div className="gantt-row" key={s.id}><span>{s.name}</span><div className="gantt-track"><span style={{ width: `${s.efficiency || 3}%` }} /></div><strong>{s.efficiency.toFixed(1)}%</strong></div>)}</div></div></div></>;
+  return <><IndustrialKpis metrics={metrics} /><EfficiencyDashboard state={state} metrics={metrics} ranked={ranked} /><ProcessControlDashboard state={state} metrics={metrics} sector={state.selectedSector} update={update} /><SectorDashboards state={state} metrics={metrics} ranked={ranked} /><PeopleAndSectorsAdmin state={state} update={update} /><div className="row-21"><div className="card"><div className="card-title">Eficiência por funcionário</div><div className="rank-list">{ranked.map((e, i) => <div className="rank-row" key={e.id}><div className="rank-pos">#{i + 1}</div><div><strong>{e.name}</strong><div className="muted">{e.role || 'Operador'} · {e.sector} · {iFmt(e.produced)} peças · {e.hours}h · {e.pph.toFixed(1)} p/h</div><div className="progress-rail"><span style={{ width: `${Math.min(100, e.produced / Math.max(e.goal, 1) * 100)}%` }} /></div>{e.capApplied && <div className="muted">Teto do setor aplicado: {iMoney(e.sectorCap)}</div>}</div><div className="num up">{iMoney(e.bonus)}</div></div>)}</div></div><div className="card"><div className="card-title">Eficiência por setor</div><div className="gantt">{metrics.sectorMap.map((s) => <div className="gantt-row" key={s.id}><span>{s.name}</span><div className="gantt-track"><span style={{ width: `${s.efficiency || 3}%` }} /></div><strong>{s.efficiency.toFixed(1)}%</strong></div>)}</div></div></div></>;
 };
 
 const ReportsView = ({ state, metrics }) => <><div className="print-only"><h1>CARVION Industrial — Relatório</h1></div><IndustrialKpis metrics={metrics} /><ReportsDashboard state={state} metrics={metrics} /><div className="row-3"><div className="insight-card"><div className="card-title">Produção por período</div><div className="kpi-value">{iFmt(metrics.totalProduced)}</div><div className="card-sub">peças registradas</div></div><div className="insight-card"><div className="card-title">Comissões e bônus</div><div className="kpi-value">{iMoney(metrics.bonusTotal)}</div><div className="card-sub">bônus automático com teto por setor</div></div><div className="insight-card"><div className="card-title">Gargalo</div><div className="kpi-value">{metrics.slowest.name}</div><div className="card-sub">menor eficiência atual</div></div></div><div className="card"><div className="card-head"><div><div className="card-title">Rastreabilidade completa</div><div className="card-sub">Início, fim, responsável, quantidade e perdas por etapa</div></div><button className="btn" onClick={() => window.print()}><Icon name="file" /> Imprimir / Exportar PDF</button></div><div className="table-wrap"><table className="table"><thead><tr><th>OP</th><th>Etapa</th><th>Responsável</th><th>Início</th><th>Fim</th><th>Qtd.</th><th>Perdas</th><th>Status</th></tr></thead><tbody>{state.records.map((r) => <tr key={r.id}><td className="mono">{r.opId}</td><td>{FLOW_STEPS.find((s) => s.id === r.step)?.name}</td><td>{r.employee}</td><td className="muted">{r.startedAt ? new Date(r.startedAt).toLocaleString('pt-BR') : '-'}</td><td className="muted">{r.endedAt ? new Date(r.endedAt).toLocaleString('pt-BR') : '-'}</td><td>{iFmt(r.qty)}</td><td>{iFmt(r.losses)}</td><td><span className="status-pill status-draft">{r.status}</span></td></tr>)}</tbody></table></div></div></>;
@@ -1058,16 +1145,16 @@ const IntegrationsView = ({ state, metrics }) => {
   </div></>;
 };
 
-const DashboardView = ({ state, update, metrics, profile, sector }) => <><IndustrialKpis metrics={metrics} /><IndustrialHomeDashboard state={state} metrics={metrics} /><ProcessControlDashboard state={state} metrics={metrics} sector={sector} /><FlowBoard state={state} metrics={metrics} /><LotTracking state={state} /><OperatorPanel state={state} update={update} profile={profile} sector={sector} /></>;
+const DashboardView = ({ state, update, metrics, profile, sector }) => <><IndustrialKpis metrics={metrics} /><IndustrialHomeDashboard state={state} metrics={metrics} /><ProcessControlDashboard state={state} metrics={metrics} sector={sector} update={update} /><FlowBoard state={state} metrics={metrics} /><LotTracking state={state} /><ExternalProductionControl state={state} update={update} /><OperatorPanel state={state} update={update} profile={profile} sector={sector} /></>;
 
 const IndustrialApp = () => {
   const [state, update] = useIndustrialRealtime();
   const metrics = useMemo(() => calcMetrics(state), [state]);
-  const route = location.pathname.split('/').filter(Boolean)[1] || 'dashboard';
+  const route = (location.pathname.split('/').filter(Boolean)[1] || 'dashboard').replace('.html', '');
   const titleMap = { dashboard: ['Dashboard Industrial', 'Power BI industrial em tempo real'], producao: ['Produção', 'Fluxo operacional, lote e operador'], produtos: ['Produtos Industriais', 'Importação de Excel, modelos e precificação'], eficiencia: ['Eficiência', 'Setores, funcionários, ranking e bônus'], relatorios: ['Relatórios', 'PDFs de produção, eficiência e comissões'], integracoes: ['Integrações', 'Power BI, APIs, webhooks e exportações corporativas'] };
   const setProfile = (profile) => update((next) => { next.activeProfile = profile; return next; });
   const setSector = (sector) => update((next) => { next.selectedSector = sector; return next; });
-  return <div className="industrial-shell"><div className="industrial-layout"><IndustrialSidebar current={route} /><main className="main"><IndustrialTopbar title={titleMap[route]?.[0] || 'CARVION Industrial'} subtitle={titleMap[route]?.[1] || 'Controle industrial'} profile={state.activeProfile} setProfile={setProfile} sector={state.selectedSector} setSector={setSector} sectors={state.sectors} /><IndustrialTabs current={route} /><div className="content">{route === 'producao' ? <><ProcessControlDashboard state={state} metrics={metrics} sector={state.selectedSector} /><FlowBoard state={state} metrics={metrics} /><ProductionOrderCreator state={state} update={update} /><LotTracking state={state} /><OperatorPanel state={state} update={update} profile={state.activeProfile} sector={state.selectedSector} /></> : route === 'produtos' ? <IndustrialProductsTable state={state} update={update} /> : route === 'eficiencia' ? <EfficiencyView state={state} metrics={metrics} update={update} /> : route === 'relatorios' ? <ReportsView state={state} metrics={metrics} /> : route === 'integracoes' ? <IntegrationsView state={state} metrics={metrics} /> : <DashboardView state={state} update={update} metrics={metrics} profile={state.activeProfile} sector={state.selectedSector} />}</div></main></div></div>;
+  return <div className="industrial-shell"><div className="industrial-layout"><IndustrialSidebar current={route} /><main className="main"><IndustrialTopbar title={titleMap[route]?.[0] || 'CARVION Industrial'} subtitle={titleMap[route]?.[1] || 'Controle industrial'} profile={state.activeProfile} setProfile={setProfile} sector={state.selectedSector} setSector={setSector} sectors={state.sectors} /><IndustrialTabs current={route} /><div className="content">{route === 'producao' ? <><ProcessControlDashboard state={state} metrics={metrics} sector={state.selectedSector} update={update} /><FlowBoard state={state} metrics={metrics} /><ProductionOrderCreator state={state} update={update} /><LotTracking state={state} /><ExternalProductionControl state={state} update={update} /><OperatorPanel state={state} update={update} profile={state.activeProfile} sector={state.selectedSector} /></> : route === 'produtos' ? <IndustrialProductsTable state={state} update={update} /> : route === 'eficiencia' ? <EfficiencyView state={state} metrics={metrics} update={update} /> : route === 'relatorios' ? <ReportsView state={state} metrics={metrics} /> : route === 'integracoes' ? <IntegrationsView state={state} metrics={metrics} /> : <DashboardView state={state} update={update} metrics={metrics} profile={state.activeProfile} sector={state.selectedSector} />}</div></main></div></div>;
 };
 
 ReactDOM.createRoot(document.getElementById('root')).render(<IndustrialApp />);
