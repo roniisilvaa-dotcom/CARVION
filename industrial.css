@@ -12,6 +12,8 @@
 .industrial-command-kpis div { padding: 14px; border: 1px solid var(--border-soft); border-radius: var(--r-lg); background: oklch(0.16 0.012 240 / .55); }
 .industrial-command-kpis span { display: block; color: var(--text-faint); font-size: 11px; margin-bottom: 7px; }
 .industrial-command-kpis strong { font-family: var(--font-mono); font-size: 24px; font-weight: 650; }
+.industrial-command-kpis small { display: block; color: var(--text-faint); font-size: 11px; margin-top: 5px; }
+.industrial-command-kpis.report-kpis { grid-template-columns: repeat(4, 1fr); }
 .industrial-command-note { margin-top: 12px; padding: 11px 12px; border-radius: var(--r-lg); color: var(--text-dim); background: var(--accent-soft); border: 1px solid oklch(0.74 0.17 155 / .25); font-size: 12.5px; }
 .industrial-bars { display: grid; gap: 13px; min-height: 318px; align-content: center; }
 .industrial-bar-row { display: grid; grid-template-columns: 150px 1fr 76px; align-items: center; gap: 12px; font-size: 12px; color: var(--text-dim); }
@@ -51,4 +53,4 @@
 .print-only { display: none; }
 @media print { .sidebar, .topbar, .industrial-tabs, .mobile-tab, .btn, .icon-btn { display: none !important; } .industrial-layout { display: block; } .content { padding: 0; } .card, .kpi, .table-wrap { break-inside: avoid; } .print-only { display: block; } }
 @media (max-width: 1100px) { .industrial-layout { grid-template-columns: 1fr; } .industrial-layout .sidebar { position: fixed; transform: translateX(-100%); } .flow-board { grid-template-columns: repeat(11, 160px); } .operator-panel, .lot-split, .industrial-home-grid { grid-template-columns: 1fr; } .industrial-tabs { top: 61px; padding: 10px 14px; } }
-@media (max-width: 760px) { .flow-board { grid-template-columns: repeat(11, 148px); } .gantt-row, .industrial-bar-row, .industrial-donut-wrap, .industrial-command-kpis { grid-template-columns: 1fr; } .industrial-bar-row strong { text-align: left; } }
+@media (max-width: 760px) { .flow-board { grid-template-columns: repeat(11, 148px); } .gantt-row, .industrial-bar-row, .industrial-donut-wrap, .industrial-command-kpis, .industrial-command-kpis.report-kpis { grid-template-columns: 1fr; } .industrial-bar-row strong { text-align: left; } }

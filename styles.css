@@ -916,6 +916,22 @@ input, select, textarea { font-family: inherit; }
   grid-template-columns: repeat(3, 1fr);
   gap: 14px;
 }
+.product-import-card {
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px;
+}
+.product-import-card .btn {
+  cursor: pointer;
+  white-space: nowrap;
+}
+.product-import-card .btn.disabled {
+  opacity: .7;
+  pointer-events: none;
+}
 .product-card {
   overflow: hidden;
   border: 1px solid var(--border-soft);

@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'carvion-cache-';
-const STATIC_CACHE = `${CACHE_PREFIX}2026-04-30-industrial-v3`;
+const STATIC_CACHE = `${CACHE_PREFIX}2026-04-30-excel-import-v1`;
 const CORE_ASSETS = [
   '/',
   '/dashboard',

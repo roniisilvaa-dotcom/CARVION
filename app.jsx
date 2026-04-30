@@ -81,6 +81,58 @@ const parseNfeXml = (xmlText) => {
 const todayLabel = () => new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(new Date()).replace('.', '');
 const productByName = (products, name) => products.find((p) => p.name === name) || products[0];
 const nfeItemKey = (item, index) => (item.ncm || item.product || `item-${index + 1}`).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 28) || `item-${index + 1}`;
+const normalizeHeader = (value) => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+const pickRowValue = (row, aliases) => {
+  const keys = Object.keys(row);
+  for (const alias of aliases) {
+    const found = keys.find((key) => normalizeHeader(key) === normalizeHeader(alias));
+    if (found && row[found] !== undefined && row[found] !== '') return row[found];
+  }
+  return '';
+};
+const parseSheetNumber = (value) => {
+  if (typeof value === 'number') return value;
+  return parseMoney(value);
+};
+const productFromSpreadsheetRow = (row, index) => {
+  const code = String(pickRowValue(row, ['codigo', 'código', 'cod', 'sku', 'referencia', 'referência', 'codigo produto']) || '').trim();
+  const model = String(pickRowValue(row, ['modelo', 'model', 'arte']) || '').trim();
+  const name = String(pickRowValue(row, ['produto', 'nome', 'descricao', 'descrição', 'nome produto']) || model || code || `Produto importado ${index + 1}`).trim();
+  const cost = parseSheetNumber(pickRowValue(row, ['preco custo', 'preço custo', 'custo', 'custo unitario', 'custo unitário']));
+  const price = parseSheetNumber(pickRowValue(row, ['preco final', 'preço final', 'preco venda', 'preço venda', 'valor venda', 'final']));
+  const dealerPrice = parseSheetNumber(pickRowValue(row, ['preco lojista', 'preço lojista', 'lojista', 'atacado']));
+  const partnerPrice = parseSheetNumber(pickRowValue(row, ['preco parceiro', 'preço parceiro', 'parceiro', 'parceiros']));
+  const stock = parseSheetNumber(pickRowValue(row, ['estoque', 'saldo', 'quantidade', 'qtd']));
+  const finalPrice = price || partnerPrice || dealerPrice || (cost ? cost * 2.4 : 0);
+  return {
+    code,
+    model,
+    name,
+    brand: String(pickRowValue(row, ['marca', 'brand']) || 'A definir').trim(),
+    line: String(pickRowValue(row, ['linha', 'categoria']) || 'Linha').trim(),
+    modality: String(pickRowValue(row, ['modalidade', 'tipo', 'esporte']) || 'A definir').trim(),
+    type: String(pickRowValue(row, ['tipo', 'modalidade', 'esporte']) || 'Produto').trim(),
+    image: '',
+    cost,
+    dealerPrice: dealerPrice || finalPrice,
+    partnerPrice: partnerPrice || finalPrice,
+    price: finalPrice,
+    stock,
+    margin: finalPrice ? ((finalPrice - cost) / finalPrice) * 100 : 0,
+    bom: String(pickRowValue(row, ['bom', 'materiais', 'ficha tecnica', 'ficha técnica', 'composicao', 'composição']) || 'Ficha técnica importada do Excel').trim(),
+  };
+};
+const parseCsvRows = (text) => {
+  const lines = text.split(/\r?\n/).filter((line) => line.trim());
+  if (!lines.length) return [];
+  const separator = lines[0].includes(';') ? ';' : ',';
+  const split = (line) => line.split(separator).map((cell) => cell.replace(/^"|"$/g, '').trim());
+  const headers = split(lines[0]);
+  return lines.slice(1).map((line) => {
+    const cells = split(line);
+    return headers.reduce((row, header, index) => ({ ...row, [header]: cells[index] || '' }), {});
+  });
+};
 const buildKpis = (state) => {
   const produced = state.productionOrders.reduce((sum, order) => sum + Number(order.qty || 0), 0);
   const realCost = state.productionOrders.reduce((sum, order) => sum + Number(order.real || order.estimated || 0), 0);
@@ -464,26 +516,71 @@ const RepresentativesList = ({ rows }) => (
   </div>
 );
 
-const ProductsGrid = ({ rows }) => (
-  <div className="product-grid">
-    {rows.map((p) => (
-      <div className="product-card" key={p.name}>
-        {p.image ? <img src={p.image} alt={p.name} /> : <div className="product-empty-img">{(p.name || 'PR').slice(0, 2)}</div>}
-        <div className="product-meta">
-          <div className="product-title">{p.name}<span>{p.brand || p.type} · {p.line || 'Linha'} · {p.modality || p.type}</span></div>
-          <div className="product-bom">{p.bom}</div>
-          <div className="product-stats">
-            <span>Custo {fmtBRL(p.cost)}</span>
-            <span>Lojista {fmtBRL(p.dealerPrice || p.price)}</span>
-            <span>Parceiro {fmtBRL(p.partnerPrice || p.price)}</span>
-            <span>Final {fmtBRL(p.price)}</span>
-            <span>Margem {p.margin.toFixed(1).replace('.', ',')}%</span>
-            <span>Estoque {fmtNum(p.stock)}</span>
+const ProductImportPanel = ({ onImport }) => {
+  const [loading, setLoading] = useState(false);
+  const handleFile = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setLoading(true);
+    try {
+      const isCsv = file.name.toLowerCase().endsWith('.csv');
+      let rows = [];
+      if (isCsv) {
+        rows = parseCsvRows(await file.text());
+      } else {
+        if (!window.XLSX) throw new Error('Leitor de Excel não carregou. Use CSV ou tente recarregar a página.');
+        const buffer = await file.arrayBuffer();
+        const workbook = window.XLSX.read(buffer, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        rows = window.XLSX.utils.sheet_to_json(sheet, { defval: '' });
+      }
+      const products = rows.map(productFromSpreadsheetRow).filter((p) => p.name);
+      if (!products.length) throw new Error('Não encontrei produtos na planilha.');
+      onImport(products, file.name);
+    } catch (error) {
+      onImport([], file.name, error.message);
+    } finally {
+      setLoading(false);
+      event.target.value = '';
+    }
+  };
+  return (
+    <div className="card product-import-card">
+      <div>
+        <div className="card-title">Importar produtos do Excel</div>
+        <div className="card-sub">Lê código, modelo, produto, marca, linha, modalidade, custo, preços, estoque e ficha técnica sem apagar dados atuais.</div>
+      </div>
+      <label className={'btn btn-primary' + (loading ? ' disabled' : '')}>
+        <Icon name="inbox" size={13} /> {loading ? 'Lendo planilha...' : 'Importar Excel / CSV'}
+        <input type="file" accept=".xlsx,.xls,.csv" onChange={handleFile} hidden />
+      </label>
+    </div>
+  );
+};
+
+const ProductsGrid = ({ rows, onImport }) => (
+  <>
+    {onImport && <ProductImportPanel onImport={onImport} />}
+    <div className="product-grid">
+      {rows.map((p) => (
+        <div className="product-card" key={p.code || p.name}>
+          {p.image ? <img src={p.image} alt={p.name} /> : <div className="product-empty-img">{(p.name || 'PR').slice(0, 2)}</div>}
+          <div className="product-meta">
+            <div className="product-title">{p.name}<span>{p.code ? `${p.code} · ` : ''}{p.model ? `${p.model} · ` : ''}{p.brand || p.type} · {p.line || 'Linha'} · {p.modality || p.type}</span></div>
+            <div className="product-bom">{p.bom}</div>
+            <div className="product-stats">
+              <span>Custo {fmtBRL(p.cost)}</span>
+              <span>Lojista {fmtBRL(p.dealerPrice || p.price)}</span>
+              <span>Parceiro {fmtBRL(p.partnerPrice || p.price)}</span>
+              <span>Final {fmtBRL(p.price)}</span>
+              <span>Margem {Number(p.margin || 0).toFixed(1).replace('.', ',')}%</span>
+              <span>Estoque {fmtNum(p.stock)}</span>
+            </div>
           </div>
         </div>
-      </div>
-    ))}
-  </div>
+      ))}
+    </div>
+  </>
 );
 
 const EmptyState = ({ text }) => (
@@ -1054,6 +1151,46 @@ const App = () => {
     setTimeout(() => setToast(''), 3500);
   };
 
+  const importProducts = (products, fileName, errorMessage) => {
+    if (errorMessage) {
+      setToast(`Importação não concluída: ${errorMessage}`);
+      setTimeout(() => setToast(''), 4500);
+      return;
+    }
+    setAppState((current) => {
+      const next = clone(current);
+      let created = 0;
+      let updated = 0;
+      products.forEach((product) => {
+        const index = next.products.findIndex((p) => {
+          const sameCode = product.code && p.code && String(p.code).toLowerCase() === String(product.code).toLowerCase();
+          const sameName = String(p.name || '').toLowerCase() === String(product.name || '').toLowerCase();
+          return sameCode || sameName;
+        });
+        if (index >= 0) {
+          next.products[index] = { ...next.products[index], ...product, image: next.products[index].image || product.image };
+          updated += 1;
+        } else {
+          next.products.unshift(product);
+          created += 1;
+        }
+      });
+      next.transactions.unshift({
+        id: 'IMP-' + String(Date.now()).slice(-5),
+        date: todayLabel(),
+        client: fileName || 'Planilha importada',
+        plan: 'Importação de produtos',
+        amount: 0,
+        type: 'in',
+        status: 'paid',
+        method: `${created} novos · ${updated} atualizados`,
+      });
+      return next;
+    });
+    setToast(`${products.length} produtos importados do Excel (${fileName}).`);
+    setTimeout(() => setToast(''), 4500);
+  };
+
   const logout = () => {
     Carvion.logout();
     location.href = 'auth/login.html';
@@ -1202,7 +1339,7 @@ const App = () => {
                 </div>
               </div>
               {Carvion.canAccessModule(active, currentUser)
-                ? <PlaceholderForSection id={active} state={appState} adminData={adminData} onAction={handleAdminAction} />
+                ? <PlaceholderForSection id={active} state={appState} adminData={adminData} onAction={handleAdminAction} onProductImport={importProducts} />
                 : <AccessDenied />}
             </div>
           )}
@@ -1233,7 +1370,7 @@ const App = () => {
 };
 
 /* contextual content for each section */
-const PlaceholderForSection = ({ id, state, adminData, onAction }) => {
+const PlaceholderForSection = ({ id, state, adminData, onAction, onProductImport }) => {
   if (id === 'users-admin') {
     return <UsersAdmin data={adminData} onAction={onAction} />;
   }
@@ -1253,7 +1390,7 @@ const PlaceholderForSection = ({ id, state, adminData, onAction }) => {
     return <MaterialsTable rows={state.materials} />;
   }
   if (id === 'products') {
-    return <ProductsGrid rows={state.products} />;
+    return <ProductsGrid rows={state.products} onImport={onProductImport} />;
   }
   if (id === 'representatives' || id === 'commissions') {
     return <RepresentativesList rows={state.representatives} />;
