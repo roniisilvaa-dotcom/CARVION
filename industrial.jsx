@@ -1,7 +1,7 @@
 /* CARVION Industrial — produção em tempo real */
 const { useEffect, useMemo, useState } = React;
 
-const INDUSTRIAL_KEY = 'carvion.industrial.v4';
+const INDUSTRIAL_KEY = 'carvion.industrial.v5';
 const INDUSTRIAL_CHANNEL = 'carvion-industrial-realtime';
 
 const FLOW_STEPS = [
@@ -50,6 +50,10 @@ const defaultIndustrialState = () => ({
     { id: 'REC-4', opId: 'OP-9101', step: 'montagem', sector: 'Montagem', employee: 'Carlos Lima', startedAt: '2026-04-30T13:10:00', endedAt: '', qty: 430, losses: 6, status: 'Em produção' },
     { id: 'REC-5', opId: 'OP-9102', step: 'cola-dublagem', sector: 'Dublagem', employee: 'Equipe Dublagem', startedAt: '2026-04-30T10:15:00', endedAt: '', qty: 380, losses: 4, status: 'Em produção' },
   ],
+  products: [
+    { code: 'TOP-SAMBA-PRO-CAMPO', model: 'SAMBA PRO', name: 'SAMBA PRO', brand: 'Topper', line: 'Pro', modality: 'Campo', cost: 118, dealerPrice: 214, partnerPrice: 188, price: 320, stock: 120, bom: 'PU premium, câmara butílica, linha reforçada, válvula campo' },
+    { code: 'KGV-FUTSAL-EXTREME', model: 'FUTSAL EXTREME', name: 'FUTSAL EXTREME', brand: 'Kagiva', line: 'Pro', modality: 'Futsal', cost: 104, dealerPrice: 196, partnerPrice: 174, price: 289, stock: 80, bom: 'PU soft, câmara futsal, camada de amortecimento, válvula futsal' },
+  ],
 });
 
 const iFmt = (n) => new Intl.NumberFormat('pt-BR').format(Number(n || 0));
@@ -57,6 +61,50 @@ const iMoney = (n) => new Intl.NumberFormat('pt-BR', { style: 'currency', curren
 const stamp = () => new Date().toISOString();
 const flowIndex = (stepId) => FLOW_STEPS.findIndex((s) => s.id === stepId);
 const nextStep = (stepId) => FLOW_STEPS[Math.min(flowIndex(stepId) + 1, FLOW_STEPS.length - 1)]?.id || stepId;
+const normalizeIndustrialHeader = (value) => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+const pickIndustrialValue = (row, aliases) => {
+  const keys = Object.keys(row);
+  for (const alias of aliases) {
+    const found = keys.find((key) => normalizeIndustrialHeader(key) === normalizeIndustrialHeader(alias));
+    if (found && row[found] !== undefined && row[found] !== '') return row[found];
+  }
+  return '';
+};
+const industrialMoney = (value) => typeof value === 'number' ? value : Number(String(value || '').replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.')) || 0;
+const industrialCsvRows = (text) => {
+  const lines = text.split(/\r?\n/).filter((line) => line.trim());
+  if (!lines.length) return [];
+  const separator = lines[0].includes(';') ? ';' : ',';
+  const headers = lines[0].split(separator).map((h) => h.replace(/^"|"$/g, '').trim());
+  return lines.slice(1).map((line) => {
+    const cells = line.split(separator).map((c) => c.replace(/^"|"$/g, '').trim());
+    return headers.reduce((row, header, index) => ({ ...row, [header]: cells[index] || '' }), {});
+  });
+};
+const industrialProductFromRow = (row, index) => {
+  const code = String(pickIndustrialValue(row, ['codigo', 'código', 'cod', 'sku', 'referencia', 'referência']) || '').trim();
+  const model = String(pickIndustrialValue(row, ['modelo', 'model', 'arte']) || '').trim();
+  const name = String(pickIndustrialValue(row, ['produto', 'nome', 'descricao', 'descrição', 'nome produto']) || model || code || `Produto importado ${index + 1}`).trim();
+  const cost = industrialMoney(pickIndustrialValue(row, ['preco custo', 'preço custo', 'custo', 'custo unitario']));
+  const price = industrialMoney(pickIndustrialValue(row, ['preco final', 'preço final', 'preco venda', 'preço venda', 'valor venda']));
+  const dealerPrice = industrialMoney(pickIndustrialValue(row, ['preco lojista', 'preço lojista', 'lojista', 'atacado']));
+  const partnerPrice = industrialMoney(pickIndustrialValue(row, ['preco parceiro', 'preço parceiro', 'parceiro', 'parceiros']));
+  const finalPrice = price || partnerPrice || dealerPrice || (cost ? cost * 2.4 : 0);
+  return {
+    code,
+    model,
+    name,
+    brand: String(pickIndustrialValue(row, ['marca', 'brand']) || 'A definir').trim(),
+    line: String(pickIndustrialValue(row, ['linha', 'categoria']) || 'Linha').trim(),
+    modality: String(pickIndustrialValue(row, ['modalidade', 'tipo', 'esporte']) || 'A definir').trim(),
+    cost,
+    dealerPrice: dealerPrice || finalPrice,
+    partnerPrice: partnerPrice || finalPrice,
+    price: finalPrice,
+    stock: industrialMoney(pickIndustrialValue(row, ['estoque', 'saldo', 'quantidade', 'qtd'])),
+    bom: String(pickIndustrialValue(row, ['bom', 'materiais', 'ficha tecnica', 'ficha técnica', 'composicao', 'composição']) || 'Ficha técnica importada da planilha').trim(),
+  };
+};
 
 const loadIndustrial = () => {
   try { return { ...defaultIndustrialState(), ...JSON.parse(localStorage.getItem(INDUSTRIAL_KEY)) }; }
@@ -107,12 +155,12 @@ const useIndustrialRealtime = () => {
 
 const IndustrialSidebar = ({ current }) => {
   const links = [
-    ['/dashboard', 'Dashboard'], ['/producao', 'Produção'], ['/eficiencia', 'Eficiência'], ['/relatorios', 'Relatórios']
+    ['/dashboard', 'Dashboard'], ['/producao', 'Produção'], ['/produtos', 'Produtos'], ['/eficiencia', 'Eficiência'], ['/relatorios', 'Relatórios']
   ];
   return <aside className="sidebar">
     <div className="brand"><div className="industrial-logo">CI</div><div><div className="brand-name">CARVION</div><div className="brand-sub">Industrial</div></div></div>
     <div className="nav-label">MÓDULO INDUSTRIAL</div>
-    {links.map(([href, label]) => <a key={href} className={'nav-item' + (current === href.replace('/', '') ? ' active' : '')} href={`/industrial${href}`}><Icon name={label === 'Dashboard' ? 'home' : label === 'Produção' ? 'activity' : label === 'Eficiência' ? 'percent' : 'file'} />{label}</a>)}
+    {links.map(([href, label]) => <a key={href} className={'nav-item' + (current === href.replace('/', '') ? ' active' : '')} href={`/industrial${href}`}><Icon name={label === 'Dashboard' ? 'home' : label === 'Produção' ? 'activity' : label === 'Produtos' ? 'box' : label === 'Eficiência' ? 'percent' : 'file'} />{label}</a>)}
     <div className="nav-label">SISTEMA</div>
     <a className="nav-item" href="/dashboard"><Icon name="chevron-down" />Voltar ao ERP</a>
   </aside>;
@@ -129,6 +177,7 @@ const IndustrialTopbar = ({ title, subtitle, profile, setProfile, sector, setSec
 const IndustrialTabs = ({ current }) => <nav className="industrial-tabs">
   <a className={current === 'dashboard' ? 'active' : ''} href="/industrial/dashboard"><Icon name="home" />Dashboard</a>
   <a className={current === 'producao' ? 'active' : ''} href="/industrial/producao"><Icon name="activity" />Produção</a>
+  <a className={current === 'produtos' ? 'active' : ''} href="/industrial/produtos"><Icon name="box" />Produtos</a>
   <a className={current === 'eficiencia' ? 'active' : ''} href="/industrial/eficiencia"><Icon name="percent" />Eficiência</a>
   <a className={current === 'relatorios' ? 'active' : ''} href="/industrial/relatorios"><Icon name="file" />Relatórios</a>
 </nav>;
@@ -181,6 +230,69 @@ const ActiveOrdersTable = ({ state }) => <div className="table-wrap">
     </tr>)}</tbody>
   </table>
 </div>;
+
+const IndustrialProductsTable = ({ state, update }) => {
+  const [message, setMessage] = useState('');
+  const importFile = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const rows = file.name.toLowerCase().endsWith('.csv')
+        ? industrialCsvRows(await file.text())
+        : (() => {
+          if (!window.XLSX) throw new Error('Leitor de Excel não carregou. Recarregue a página ou envie CSV.');
+          return null;
+        })();
+      let parsedRows = rows;
+      if (!parsedRows) {
+        const workbook = window.XLSX.read(await file.arrayBuffer(), { type: 'array' });
+        parsedRows = window.XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: '' });
+      }
+      const imported = parsedRows.map(industrialProductFromRow).filter((p) => p.name);
+      if (!imported.length) throw new Error('Não encontrei produtos nessa planilha.');
+      update((next) => {
+        next.products = next.products || [];
+        let created = 0;
+        let updated = 0;
+        imported.forEach((product) => {
+          const index = next.products.findIndex((p) => (product.code && p.code === product.code) || String(p.name).toLowerCase() === String(product.name).toLowerCase());
+          if (index >= 0) {
+            next.products[index] = { ...next.products[index], ...product };
+            updated += 1;
+          } else {
+            next.products.unshift(product);
+            created += 1;
+          }
+        });
+        next.updatedAt = stamp();
+        next.lastProductImport = { fileName: file.name, created, updated, at: stamp() };
+        return next;
+      });
+      setMessage(`${imported.length} produtos lidos: cadastrados/atualizados sem apagar dados existentes.`);
+    } catch (error) {
+      setMessage(error.message || 'Não foi possível importar a planilha.');
+    } finally {
+      event.target.value = '';
+    }
+  };
+  return <><div className="card industrial-command-card">
+    <div className="card-head">
+      <div><div className="card-title">Produtos industriais e importação</div><div className="card-sub">Base própria do módulo Industrial para virar app separado depois</div></div>
+      <label className="btn btn-primary"><Icon name="inbox" /> Importar Excel / CSV<input type="file" accept=".xlsx,.xls,.csv" hidden onChange={importFile} /></label>
+    </div>
+    <div className="industrial-command-kpis report-kpis">
+      <div><span>Produtos</span><strong>{iFmt(state.products?.length || 0)}</strong><small>modelos cadastrados</small></div>
+      <div><span>Estoque total</span><strong>{iFmt((state.products || []).reduce((s, p) => s + Number(p.stock || 0), 0))}</strong><small>unidades</small></div>
+      <div><span>Custo médio</span><strong>{iMoney((state.products || []).reduce((s, p) => s + Number(p.cost || 0), 0) / Math.max(1, state.products?.length || 0))}</strong><small>por produto</small></div>
+      <div><span>Última importação</span><strong>{state.lastProductImport?.created || 0}/{state.lastProductImport?.updated || 0}</strong><small>novos/atualizados</small></div>
+    </div>
+    <div className="industrial-command-note">{message || 'A planilha pode conter código, modelo, produto, marca, linha, modalidade, custo, preço lojista, preço parceiro, preço final, estoque e BOM.'}</div>
+  </div>
+  <div className="card">
+    <div className="card-head"><div><div className="card-title">Catálogo para OP e custo industrial</div><div className="card-sub">Produtos amarrados à produção, lote, estoque e precificação</div></div></div>
+    <div className="table-wrap"><table className="table"><thead><tr><th>Código</th><th>Modelo</th><th>Marca</th><th>Linha</th><th>Modalidade</th><th>Estoque</th><th className="text-right">Custo</th><th className="text-right">Final</th></tr></thead><tbody>{(state.products || []).map((p) => <tr key={p.code || p.name}><td className="mono muted">{p.code || '-'}</td><td><span className="tag">{p.name}</span><div className="muted">{p.bom}</div></td><td>{p.brand}</td><td>{p.line}</td><td>{p.modality}</td><td>{iFmt(p.stock)}</td><td className="num">{iMoney(p.cost)}</td><td className="num up">{iMoney(p.price)}</td></tr>)}</tbody></table></div>
+  </div></>;
+};
 
 const IndustrialHomeDashboard = ({ state, metrics }) => {
   const topEmployees = [...state.employees].map((e) => ({ ...e, pph: e.hours ? e.produced / e.hours : 0 })).sort((a, b) => b.pph - a.pph).slice(0, 4);
@@ -329,10 +441,10 @@ const IndustrialApp = () => {
   const [state, update] = useIndustrialRealtime();
   const metrics = useMemo(() => calcMetrics(state), [state]);
   const route = location.pathname.split('/').filter(Boolean)[1] || 'dashboard';
-  const titleMap = { dashboard: ['Dashboard Industrial', 'Power BI industrial em tempo real'], producao: ['Produção', 'Fluxo operacional, lote e operador'], eficiencia: ['Eficiência', 'Setores, funcionários, ranking e bônus'], relatorios: ['Relatórios', 'PDFs de produção, eficiência e comissões'] };
+  const titleMap = { dashboard: ['Dashboard Industrial', 'Power BI industrial em tempo real'], producao: ['Produção', 'Fluxo operacional, lote e operador'], produtos: ['Produtos Industriais', 'Importação de Excel, modelos e precificação'], eficiencia: ['Eficiência', 'Setores, funcionários, ranking e bônus'], relatorios: ['Relatórios', 'PDFs de produção, eficiência e comissões'] };
   const setProfile = (profile) => update((next) => { next.activeProfile = profile; return next; });
   const setSector = (sector) => update((next) => { next.selectedSector = sector; return next; });
-  return <div className="industrial-shell"><div className="industrial-layout"><IndustrialSidebar current={route} /><main className="main"><IndustrialTopbar title={titleMap[route]?.[0] || 'CARVION Industrial'} subtitle={titleMap[route]?.[1] || 'Controle industrial'} profile={state.activeProfile} setProfile={setProfile} sector={state.selectedSector} setSector={setSector} /><IndustrialTabs current={route} /><div className="content">{route === 'producao' ? <><FlowBoard state={state} metrics={metrics} /><LotTracking state={state} /><OperatorPanel state={state} update={update} profile={state.activeProfile} sector={state.selectedSector} /></> : route === 'eficiencia' ? <EfficiencyView state={state} metrics={metrics} /> : route === 'relatorios' ? <ReportsView state={state} metrics={metrics} /> : <DashboardView state={state} update={update} metrics={metrics} profile={state.activeProfile} sector={state.selectedSector} />}</div></main></div></div>;
+  return <div className="industrial-shell"><div className="industrial-layout"><IndustrialSidebar current={route} /><main className="main"><IndustrialTopbar title={titleMap[route]?.[0] || 'CARVION Industrial'} subtitle={titleMap[route]?.[1] || 'Controle industrial'} profile={state.activeProfile} setProfile={setProfile} sector={state.selectedSector} setSector={setSector} /><IndustrialTabs current={route} /><div className="content">{route === 'producao' ? <><FlowBoard state={state} metrics={metrics} /><LotTracking state={state} /><OperatorPanel state={state} update={update} profile={state.activeProfile} sector={state.selectedSector} /></> : route === 'produtos' ? <IndustrialProductsTable state={state} update={update} /> : route === 'eficiencia' ? <EfficiencyView state={state} metrics={metrics} /> : route === 'relatorios' ? <ReportsView state={state} metrics={metrics} /> : <DashboardView state={state} update={update} metrics={metrics} profile={state.activeProfile} sector={state.selectedSector} />}</div></main></div></div>;
 };
 
 ReactDOM.createRoot(document.getElementById('root')).render(<IndustrialApp />);

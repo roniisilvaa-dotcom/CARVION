@@ -10,6 +10,7 @@
     '/industrial',
     '/industrial/dashboard',
     '/industrial/producao',
+    '/industrial/produtos',
     '/industrial/eficiencia',
     '/industrial/relatorios',
     '/industrial.jsx',
