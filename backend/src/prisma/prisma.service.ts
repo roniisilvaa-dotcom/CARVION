@@ -4,12 +4,16 @@ import { PrismaClient } from '@prisma/client';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
-    await this.$connect();
-    await this.ensureSyncTable();
+    try {
+      await this.$connect();
+      await this.ensureSyncTable();
+    } catch (err) {
+      console.error('CARVION Neon unavailable on boot:', err);
+    }
   }
 
   async onModuleDestroy() {
-    await this.$disconnect();
+    await this.$disconnect().catch(() => undefined);
   }
 
   private async ensureSyncTable() {
