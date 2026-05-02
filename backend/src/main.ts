@@ -10,7 +10,7 @@ async function bootstrap() {
   const config = app.get(ConfigService);
   app.setGlobalPrefix('api');
   app.enableCors({ origin: true, credentials: true });
-  app.use(helmet());
+  app.use(helmet({ contentSecurityPolicy: false }));
   const publicRoot = join(process.cwd(), '..');
   app.useStaticAssets(publicRoot, { index: false });
   const server = app.getHttpAdapter().getInstance();
