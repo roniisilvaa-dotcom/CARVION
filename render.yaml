@@ -4,8 +4,7 @@ services:
     runtime: node
     plan: free
     region: oregon
-    buildCommand: npm install && npm run build:full
-    preDeployCommand: npm run db:push --prefix backend
+    buildCommand: npm install && npm install --prefix backend && npm run db:generate --prefix backend && npm run build --prefix backend
     startCommand: npm run start:full
     healthCheckPath: /api/sync/financeiro
     envVars:
@@ -21,7 +20,6 @@ services:
     region: oregon
     rootDir: backend
     buildCommand: npm install && npm run db:generate && npm run build
-    preDeployCommand: npm run db:push
     startCommand: npm start
     healthCheckPath: /api/analytics/industrial
     envVars:

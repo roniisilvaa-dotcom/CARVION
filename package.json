@@ -6,8 +6,7 @@
   "scripts": {
     "dev:prototype": "serve -l 3000 .",
     "serve:static": "serve -l ${PORT:-3000} .",
-    "postinstall": "npm install --prefix backend && npm run db:generate --prefix backend && npm run build --prefix backend",
-    "start": "npm run db:push --prefix backend && npm start --prefix backend",
+    "start": "npm start --prefix backend",
     "build:full": "npm install --prefix backend && npm run db:generate --prefix backend && npm run build --prefix backend",
     "start:full": "npm start --prefix backend",
     "dev:api": "npm run dev --prefix backend",
