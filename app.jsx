@@ -94,14 +94,112 @@ const DEMO_DATA = {
   accounts: ACCOUNTS,
 };
 
+const computeRealData = (transactions) => {
+  const now = new Date();
+
+  const parsePtBR = (str) => {
+    if (!str) return null;
+    const p = str.split('/');
+    if (p.length === 3) return new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]));
+    return null;
+  };
+
+  const effectivePaid = (tx) => {
+    if (tx.status === 'paid') return tx.amount || 0;
+    if (tx.status === 'partial') return tx.amountPaid || 0;
+    return 0;
+  };
+  const outstanding = (tx) => {
+    if (tx.status === 'partial') return tx.amountRemaining || 0;
+    if (tx.status === 'pending' || tx.status === 'overdue') return tx.amount || 0;
+    return 0;
+  };
+
+  const paidIn  = transactions.filter((t) => t.type === 'in'  && (t.status === 'paid' || t.status === 'partial'));
+  const paidOut = transactions.filter((t) => t.type === 'out' && (t.status === 'paid' || t.status === 'partial'));
+  const pendIn  = transactions.filter((t) => t.type === 'in'  && (t.status === 'pending' || t.status === 'partial' || t.status === 'overdue'));
+  const pendOut = transactions.filter((t) => t.type === 'out' && (t.status === 'pending' || t.status === 'partial' || t.status === 'overdue'));
+
+  const totalRev  = paidIn.reduce((s, t) => s + effectivePaid(t), 0);
+  const totalExp  = paidOut.reduce((s, t) => s + effectivePaid(t), 0);
+  const profit    = totalRev - totalExp;
+  const margin    = totalRev > 0 ? (profit / totalRev) * 100 : 0;
+  const totPendIn  = pendIn.reduce((s, t) => s + outstanding(t), 0);
+  const totPendOut = pendOut.reduce((s, t) => s + outstanding(t), 0);
+
+  // Last 12 months buckets
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1);
+    const key = `${d.getMonth() + 1}/${d.getFullYear()}`;
+    const label = d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
+      .replace('. de ', '/').replace(' de ', '/').replace(/\.$/, '');
+    return { key, label, rev: 0, exp: 0 };
+  });
+  transactions.forEach((tx) => {
+    const d = parsePtBR(tx.date);
+    if (!d) return;
+    const key = `${d.getMonth() + 1}/${d.getFullYear()}`;
+    const m = months.find((mo) => mo.key === key);
+    if (!m) return;
+    const amt = effectivePaid(tx);
+    if (tx.type === 'in') m.rev += amt; else m.exp += amt;
+  });
+
+  const revExp    = months.map(({ label: m, rev, exp }) => ({ m, rev, exp }));
+  const revSpark  = months.map((m) => m.rev);
+  const expSpark  = months.map((m) => m.exp);
+  const profSpark = months.map((m) => m.rev - m.exp);
+
+  const pct = (a, b) => b > 0 ? parseFloat(((a - b) / b * 100).toFixed(1)) : 0;
+  const cur = months[11]; const prev = months[10];
+  const revDelta  = pct(cur.rev, prev.rev);
+  const expDelta  = pct(cur.exp, prev.exp);
+  const profDelta = pct(cur.rev - cur.exp, prev.rev - prev.exp);
+
+  // Expense categories from real transactions
+  const catMap = {};
+  paidOut.forEach((tx) => { const c = tx.plan || 'Outros'; catMap[c] = (catMap[c] || 0) + effectivePaid(tx); });
+  const catColors = ['var(--accent)', 'var(--info)', 'var(--purple)', 'var(--warn)', 'oklch(0.65 0.14 340)', 'oklch(0.55 0.02 240)'];
+  const expenseCats = Object.entries(catMap).sort((a, b) => b[1] - a[1]).map(([name, value], i) => ({ name, value, color: catColors[i % catColors.length] }));
+
+  const fullyPaidIn  = paidIn.filter((t) => t.status === 'paid');
+  const avgTicket    = fullyPaidIn.length > 0 ? fullyPaidIn.reduce((s, t) => s + t.amount, 0) / fullyPaidIn.length : 0;
+  const uniqueClients = new Set(transactions.map((t) => t.client).filter(Boolean)).size;
+  const overdueAmt   = transactions.filter((t) => t.status === 'overdue').reduce((s, t) => s + (t.amount || 0), 0);
+  const defaultRate  = totalRev > 0 ? (overdueAmt / totalRev * 100) : 0;
+
+  return {
+    kpis: [
+      { ...KPIS[0], value: totalRev,  delta: revDelta,  spark: revSpark  },
+      { ...KPIS[1], value: totalExp,  delta: expDelta,  spark: expSpark  },
+      { ...KPIS[2], value: profit,    delta: profDelta, spark: profSpark },
+      { ...KPIS[3], value: margin,    delta: 0,         spark: zeroSpark() },
+    ],
+    secondaryKpis: [
+      { ...SECONDARY_KPIS[0], value: fmtBRL(avgTicket),   delta: 0, sub: `${fullyPaidIn.length} recebimentos confirmados` },
+      { ...SECONDARY_KPIS[1], value: fmtBRL(totPendOut),  delta: 0, sub: `${pendOut.length} títulos a pagar` },
+      { ...SECONDARY_KPIS[2], value: fmtBRL(totPendIn),   delta: 0, sub: `${pendIn.length} faturas a receber` },
+      { ...SECONDARY_KPIS[3], value: fmtBRL(profit),      delta: 0, sub: 'receitas pagas − despesas pagas' },
+      { ...SECONDARY_KPIS[4], value: String(uniqueClients), delta: 0, sub: `em ${transactions.length} lançamentos` },
+      { ...SECONDARY_KPIS[5], value: defaultRate.toFixed(1).replace('.', ',') + '%', delta: 0, sub: fmtBRL(overdueAmt) + ' em atraso', good: true },
+    ],
+    revExp,
+    expenseCats,
+    revByPlan: ZERO_DATA.revByPlan,
+    heatmap: ZERO_DATA.heatmap,
+    transactions,
+    accounts: [],
+  };
+};
+
 /* ===== DASHBOARD PAGE ===== */
 const DashboardPage = ({ onAdd, period, showSecondary = true, data = ZERO_DATA, demoMode = false }) => {
   return (
     <>
-      {!demoMode && (
+      {!demoMode && data.transactions.length === 0 && (
         <div className="empty-system-banner">
           <Icon name="check" size={16} />
-          <span><strong>Sistema zerado.</strong> Comece cadastrando contas, clientes e lancamentos. Para apresentacao, use a aba DEMO.</span>
+          <span><strong>Nenhum lançamento ainda.</strong> Cadastre receitas, despesas, contas a receber e pagar — os KPIs aparecem aqui automaticamente.</span>
         </div>
       )}
       <div className="kpi-grid">
@@ -138,7 +236,7 @@ const DashboardPage = ({ onAdd, period, showSecondary = true, data = ZERO_DATA, 
           <div className="card-head">
             <div>
               <div className="card-title">Receita vs. Despesa</div>
-              <div className="card-sub">{demoMode ? 'Últimos 12 meses' : 'Sem movimentações ainda'}</div>
+              <div className="card-sub">{data.transactions.length > 0 ? `Últimos 12 meses · ${data.transactions.length} lançamentos` : 'Sem movimentações ainda'}</div>
             </div>
             <div className="card-actions">
               <div className="chart-legend">
@@ -155,7 +253,7 @@ const DashboardPage = ({ onAdd, period, showSecondary = true, data = ZERO_DATA, 
           <div className="card-head">
             <div>
               <div className="card-title">Despesas por Categoria</div>
-              <div className="card-sub">{demoMode ? 'Abril/26 · R$ 2,15M' : 'Aguardando categorias'}</div>
+              <div className="card-sub">{data.expenseCats.length > 0 ? `${data.expenseCats.length} categorias · ${fmtBRL(data.expenseCats.reduce((s, c) => s + c.value, 0), { compact: true })}` : 'Sem despesas lançadas'}</div>
             </div>
             <div className="card-actions">
               <button className="icon-btn" style={{ width: 30, height: 30 }}><Icon name="more" size={14} /></button>
@@ -2222,7 +2320,7 @@ const App = () => {
     }
   });
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
-  const currentData = demoMode ? DEMO_DATA : { ...ZERO_DATA, transactions };
+  const currentData = useMemo(() => demoMode ? DEMO_DATA : computeRealData(transactions), [demoMode, transactions]);
 
   useEffect(() => {
     window.carvionHideBoot?.();
