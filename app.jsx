@@ -16,7 +16,7 @@ const ACCENT_MAP = {
   ambar: 'oklch(0.78 0.16 75)',
 };
 
-const APP_VERSION = '2026-05-02-neon-sync-v34';
+const APP_VERSION = '2026-05-02-neon-sync-v35';
 const DEMO_MODE_KEY = 'carvion_demo_mode';
 const LAST_VERSION_KEY = 'carvion_last_seen_version';
 const SETTINGS_KEY = 'carvion_admin_settings';
@@ -32,6 +32,71 @@ const SYNC_STATUS_KEY = 'carvion_sync_status';
 const API_URL_CACHE_KEY = 'carvion_api_url';
 const DEFAULT_CLIENTS = [];
 const DEFAULT_SUPPLIERS = [];
+const parseCarvionDate = (value) => {
+  if (!value) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  const str = String(value).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+    const date = new Date(str.slice(0, 10) + 'T12:00:00');
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+  const parts = str.split('/');
+  if (parts.length === 3) {
+    const date = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]), 12, 0, 0);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+  const date = new Date(str);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+const startOfDay = (date) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+const endOfDay = (date) => {
+  const d = new Date(date);
+  d.setHours(23, 59, 59, 999);
+  return d;
+};
+const getPeriodInfo = (period, base = new Date()) => {
+  const today = startOfDay(base);
+  let start = new Date(today);
+  let end = endOfDay(today);
+  if (period === 'semana') {
+    const day = today.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    start = startOfDay(new Date(today.getFullYear(), today.getMonth(), today.getDate() + diff));
+    end = endOfDay(new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6));
+  }
+  if (period === 'mes') {
+    start = startOfDay(new Date(today.getFullYear(), today.getMonth(), 1));
+    end = endOfDay(new Date(today.getFullYear(), today.getMonth() + 1, 0));
+  }
+  if (period === 'trimestre') {
+    const firstMonth = Math.floor(today.getMonth() / 3) * 3;
+    start = startOfDay(new Date(today.getFullYear(), firstMonth, 1));
+    end = endOfDay(new Date(today.getFullYear(), firstMonth + 3, 0));
+  }
+  if (period === 'ano') {
+    start = startOfDay(new Date(today.getFullYear(), 0, 1));
+    end = endOfDay(new Date(today.getFullYear(), 11, 31));
+  }
+  const labels = { hoje: 'Hoje', semana: 'Semana', mes: 'Mês', trimestre: 'Trimestre', ano: 'Ano' };
+  return {
+    key: period,
+    label: labels[period] || 'Mês',
+    start,
+    end,
+    rangeLabel: `${start.toLocaleDateString('pt-BR')} - ${end.toLocaleDateString('pt-BR')}`,
+  };
+};
+const filterTransactionsByPeriod = (transactions, period) => {
+  const info = getPeriodInfo(period);
+  return (transactions || []).filter((tx) => {
+    const date = parseCarvionDate(tx.date || tx.due || tx.issuedAt);
+    return date && date >= info.start && date <= info.end;
+  });
+};
 const readDataBackup = () => {
   try {
     return JSON.parse(localStorage.getItem(DATA_BACKUP_KEY) || '{}');
@@ -931,6 +996,114 @@ const PlaceholderPage = ({ title, desc, kpis, children }) => (
     {children}
   </>
 );
+
+const ReportsPage = ({ data = ZERO_DATA, periodInfo }) => {
+  const rows = data.transactions || [];
+  const income = rows.filter((tx) => tx.type === 'in');
+  const expenses = rows.filter((tx) => tx.type === 'out');
+  const totalIncome = income.reduce((s, tx) => s + (tx.amount || 0), 0);
+  const totalExpenses = expenses.reduce((s, tx) => s + (tx.amount || 0), 0);
+  const balance = totalIncome - totalExpenses;
+  const paid = rows.filter((tx) => tx.status === 'paid').reduce((s, tx) => s + (tx.amount || 0), 0);
+  const pending = rows.filter((tx) => tx.status === 'pending' || tx.status === 'partial').reduce((s, tx) => s + (tx.amountRemaining || tx.amount || 0), 0);
+  const overdue = rows.filter((tx) => tx.status === 'overdue').reduce((s, tx) => s + (tx.amountRemaining || tx.amount || 0), 0);
+  const byDate = rows.reduce((acc, tx) => {
+    const date = tx.date || 'Sem data';
+    if (!acc[date]) acc[date] = { date, in: 0, out: 0, count: 0 };
+    acc[date][tx.type === 'in' ? 'in' : 'out'] += tx.amount || 0;
+    acc[date].count += 1;
+    return acc;
+  }, {});
+  const byCategory = rows.reduce((acc, tx) => {
+    const name = tx.plan || tx.category || tx.description || (tx.type === 'in' ? 'Receitas sem categoria' : 'Despesas sem categoria');
+    if (!acc[name]) acc[name] = { name, in: 0, out: 0, count: 0 };
+    acc[name][tx.type === 'in' ? 'in' : 'out'] += tx.amount || 0;
+    acc[name].count += 1;
+    return acc;
+  }, {});
+  const dateRows = Object.values(byDate).sort((a, b) => (parseCarvionDate(b.date)?.getTime() || 0) - (parseCarvionDate(a.date)?.getTime() || 0));
+  const categoryRows = Object.values(byCategory).sort((a, b) => (b.in + b.out) - (a.in + a.out));
+
+  return (
+    <div className="reports-page">
+      <div className="reports-hero">
+        <div>
+          <div className="card-title">Relatório de movimentação</div>
+          <div className="card-sub">{periodInfo.label} · {periodInfo.rangeLabel} · {rows.length} transação{rows.length === 1 ? '' : 'ões'}</div>
+        </div>
+        <button className="btn" onClick={() => window.print()}><Icon name="export" size={13} /> Exportar PDF</button>
+      </div>
+
+      <div className="report-kpi-grid">
+        <div className="mini-card"><span>Receitas</span><strong className="up">{fmtBRL(totalIncome)}</strong></div>
+        <div className="mini-card"><span>Despesas</span><strong className="down">{fmtBRL(totalExpenses)}</strong></div>
+        <div className="mini-card"><span>Resultado</span><strong className={balance >= 0 ? 'up' : 'down'}>{fmtBRL(balance)}</strong></div>
+        <div className="mini-card"><span>Pendente / atraso</span><strong>{fmtBRL(pending + overdue)}</strong></div>
+      </div>
+
+      <div className="report-summary-grid">
+        <div className="card">
+          <div className="card-title">Resumo específico do período</div>
+          <div className="report-lines">
+            <div><Icon name="check" size={13} /><span>Entradas registradas: <strong>{income.length}</strong> movimentação{income.length === 1 ? '' : 'ões'} somando <strong>{fmtBRL(totalIncome)}</strong>.</span></div>
+            <div><Icon name="check" size={13} /><span>Saídas registradas: <strong>{expenses.length}</strong> movimentação{expenses.length === 1 ? '' : 'ões'} somando <strong>{fmtBRL(totalExpenses)}</strong>.</span></div>
+            <div><Icon name="check" size={13} /><span>Movimentação confirmada como paga: <strong>{fmtBRL(paid)}</strong>.</span></div>
+            <div><Icon name="check" size={13} /><span>Em aberto ou parcial: <strong>{fmtBRL(pending)}</strong>. Em atraso: <strong>{fmtBRL(overdue)}</strong>.</span></div>
+          </div>
+        </div>
+        <div className="card">
+          <div className="card-title">Por categoria</div>
+          <div className="report-category-list">
+            {categoryRows.length === 0 ? <span className="muted">Sem movimentações neste período.</span> : categoryRows.slice(0, 8).map((row) => (
+              <div key={row.name} className="report-category-row">
+                <span>{row.name}</span>
+                <strong>{fmtBRL(row.in - row.out)}</strong>
+                <small>{row.count} lançamento{row.count === 1 ? '' : 's'}</small>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-head">
+          <div>
+            <div className="card-title">Movimentação por dia</div>
+            <div className="card-sub">Entradas, saídas e saldo de cada data dentro do filtro</div>
+          </div>
+        </div>
+        <div className="table-wrap">
+          <table className="table">
+            <thead><tr><th>Data</th><th>Lançamentos</th><th className="text-right">Receitas</th><th className="text-right">Despesas</th><th className="text-right">Saldo</th></tr></thead>
+            <tbody>
+              {dateRows.length === 0 ? (
+                <tr><td colSpan="5" className="muted">Nenhuma movimentação encontrada para este período.</td></tr>
+              ) : dateRows.map((row) => (
+                <tr key={row.date}>
+                  <td>{row.date}</td>
+                  <td className="muted">{row.count}</td>
+                  <td className="num up text-right">{fmtBRL(row.in)}</td>
+                  <td className="num down text-right">{fmtBRL(row.out)}</td>
+                  <td className={'num text-right ' + (row.in - row.out >= 0 ? 'up' : 'down')}>{fmtBRL(row.in - row.out)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-head">
+          <div>
+            <div className="card-title">Todas as transações do período</div>
+            <div className="card-sub">Lista específica do filtro selecionado no topo</div>
+          </div>
+        </div>
+        <TransactionsTable rows={rows} />
+      </div>
+    </div>
+  );
+};
 
 const DemoPage = ({ demoMode, onEnableDemo, onDisableDemo }) => (
   <div className="demo-page">
@@ -2538,9 +2711,13 @@ const App = () => {
     }
   });
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const periodInfo = useMemo(() => getPeriodInfo(period), [period]);
+  const periodTransactions = useMemo(() => filterTransactionsByPeriod(transactions, period), [transactions, period]);
   const currentData = useMemo(
-    () => demoMode ? DEMO_DATA : computeRealData(transactions, clients, suppliers, products, fixedExpenses),
-    [demoMode, transactions, clients, suppliers, products, fixedExpenses]
+    () => demoMode
+      ? computeRealData(filterTransactionsByPeriod(TRANSACTIONS, period), clients, suppliers, products, fixedExpenses)
+      : computeRealData(periodTransactions, clients, suppliers, products, fixedExpenses),
+    [demoMode, period, periodTransactions, clients, suppliers, products, fixedExpenses]
   );
   const syncDataRef = useRef({ clients, suppliers, products, fixedExpenses, transactions, settings });
   const syncNowRef = useRef(null);
@@ -2952,7 +3129,7 @@ const App = () => {
                 <button key={k} className={period === k ? 'active' : ''} onClick={() => setPeriod(k)}>{l}</button>
               ))}
             </div>
-            <span className="chip"><Icon name="calendar" size={12} /> 1 abr — 28 abr</span>
+            <span className="chip"><Icon name="calendar" size={12} /> {periodInfo.rangeLabel}</span>
             <span className="chip">Todas as contas <Icon name="chevron-down" size={12} /></span>
             <div className="spacer" />
             <span className="chip" style={{ color: 'var(--accent)', borderColor: 'oklch(0.74 0.17 155 / 0.4)' }}>
@@ -2972,7 +3149,8 @@ const App = () => {
           {active === 'nfe' && <FiscalDocsPage clients={clients} products={products} settings={settings} setSettings={setSettings} onAddClient={(client) => setClients((current) => [...current, client])} onAddProduct={(product) => setProducts((current) => [...current, product])} />}
           {active === 'pedidos' && <PedidosPage clients={clients} products={products} settings={settings} />}
           {active === 'settings' && <SettingsPage settings={settings} setSettings={setSettings} />}
-          {active !== 'dashboard' && active !== 'nfe' && active !== 'demo' && active !== 'settings' && active !== 'pedidos' && (
+          {active === 'reports' && <ReportsPage data={currentData} periodInfo={periodInfo} />}
+          {active !== 'dashboard' && active !== 'nfe' && active !== 'demo' && active !== 'settings' && active !== 'pedidos' && active !== 'reports' && (
             <div className="card" style={{ minHeight: 400, padding: 32 }}>
               <div className="card-head">
                 <div>
@@ -2986,7 +3164,7 @@ const App = () => {
                   </button>
                 </div>
               </div>
-              <PlaceholderForSection id={active} data={currentData} demoMode={demoMode} fixedExpenses={fixedExpenses} clients={clients} suppliers={suppliers} products={products} onEditRecord={openEditRecord} onDeleteFixedExpense={(id) => setFixedExpenses((c) => c.filter((e) => e.id !== id))} onUpdateTx={(txId, updates) => setTransactions((c) => c.map((t) => t.id === txId ? { ...t, ...updates } : t))} />
+              <PlaceholderForSection id={active} data={currentData} periodInfo={periodInfo} demoMode={demoMode} fixedExpenses={fixedExpenses} clients={clients} suppliers={suppliers} products={products} onEditRecord={openEditRecord} onDeleteFixedExpense={(id) => setFixedExpenses((c) => c.filter((e) => e.id !== id))} onUpdateTx={(txId, updates) => setTransactions((c) => c.map((t) => t.id === txId ? { ...t, ...updates } : t))} />
             </div>
           )}
         </div>
@@ -3019,8 +3197,11 @@ const App = () => {
 };
 
 /* contextual content for each section */
-const PlaceholderForSection = ({ id, data = ZERO_DATA, demoMode = false, fixedExpenses = [], clients = [], suppliers = [], products = [], onEditRecord, onDeleteFixedExpense, onUpdateTx }) => {
+const PlaceholderForSection = ({ id, data = ZERO_DATA, periodInfo = getPeriodInfo('mes'), demoMode = false, fixedExpenses = [], clients = [], suppliers = [], products = [], onEditRecord, onDeleteFixedExpense, onUpdateTx }) => {
   const txUpdater = demoMode ? undefined : onUpdateTx;
+  if (id === 'reports') {
+    return <ReportsPage data={data} periodInfo={periodInfo} />;
+  }
   if (id === 'cashflow' || id === 'revenue' || id === 'expenses') {
     return (
       <>
