@@ -557,6 +557,10 @@ const App = () => {
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
 
   useEffect(() => {
+    window.carvionHideBoot?.();
+  }, []);
+
+  useEffect(() => {
     document.documentElement.dataset.theme = tweaks.theme;
     document.documentElement.dataset.density = tweaks.density;
     document.documentElement.style.setProperty('--accent', ACCENT_MAP[tweaks.accent] || ACCENT_MAP.verde);

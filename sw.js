@@ -1,8 +1,9 @@
-const CACHE_NAME = 'carvion-financeiro-v2';
+const CACHE_NAME = 'carvion-financeiro-2026-05-02-reset-v1';
 const CORE_ASSETS = [
   './',
   './index.html',
   './CA.RO Sistema Financeiro.html',
+  './version.json',
   './manifest.json',
   './styles.css',
   './shared.css',
@@ -35,6 +36,25 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
+  if (url.pathname.endsWith('/version.json')) {
+    event.respondWith(fetch(new Request(request, { cache: 'no-store' })).catch(() => caches.match(request)));
+    return;
+  }
+
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(new Request(request, { cache: 'no-store' }))
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          return response;
+        })
+        .catch(() => caches.match(request).then((cached) => cached || caches.match('./CA.RO Sistema Financeiro.html')))
+    );
+    return;
+  }
 
   event.respondWith(
     fetch(request)
