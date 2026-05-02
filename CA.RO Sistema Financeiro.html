@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=2026-05-02-financeiro-reset-v15" />
+  <link rel="stylesheet" href="styles.css?v=2026-05-02-neon-sync-v20" />
   <style>
     /* === CARVION BOOT LOADER === */
     #carvion-boot {
@@ -259,7 +259,10 @@
   </div>
 
   <script>
-    window.CARVION_APP_VERSION = '2026-05-02-financeiro-reset-v15';
+    window.CARVION_APP_VERSION = '2026-05-02-neon-sync-v20';
+    window.CARVION_API_URL = window.location.hostname.includes('localhost')
+      ? 'http://localhost:4000'
+      : 'https://carvion-api.onrender.com';
     window.carvionHideBoot = function() {
       const boot = document.getElementById('carvion-boot');
       if (boot) boot.classList.add('hidden');
@@ -374,7 +377,8 @@
         const p = passInput.value;
         if (u === VALID_USER && p === VALID_PASS) {
           errBox.classList.remove('show');
-          (remember.checked ? localStorage : sessionStorage).setItem(STORAGE_KEY, '1');
+          localStorage.setItem(STORAGE_KEY, '1');
+          sessionStorage.setItem(STORAGE_KEY, '1');
           lock.style.transition = 'opacity 0.3s';
           lock.style.opacity = '0';
           setTimeout(() => lock.classList.add('hidden'), 300);
@@ -400,9 +404,9 @@
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
-  <script type="text/babel" src="tweaks-panel.jsx?v=2026-05-02-financeiro-reset-v15"></script>
-  <script type="text/babel" src="data.jsx?v=2026-05-02-financeiro-reset-v15"></script>
-  <script type="text/babel" src="charts.jsx?v=2026-05-02-financeiro-reset-v15"></script>
-  <script type="text/babel" src="app.jsx?v=2026-05-02-financeiro-reset-v15"></script>
+  <script type="text/babel" src="tweaks-panel.jsx?v=2026-05-02-neon-sync-v20"></script>
+  <script type="text/babel" src="data.jsx?v=2026-05-02-neon-sync-v20"></script>
+  <script type="text/babel" src="charts.jsx?v=2026-05-02-neon-sync-v20"></script>
+  <script type="text/babel" src="app.jsx?v=2026-05-02-neon-sync-v20"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 /* GRUPO CA.RO — main app */
 
-const { useState, useEffect, useMemo } = React;
+const { useState, useEffect, useMemo, useRef } = React;
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "accent": "verde",
@@ -16,7 +16,7 @@ const ACCENT_MAP = {
   ambar: 'oklch(0.78 0.16 75)',
 };
 
-const APP_VERSION = '2026-05-02-financeiro-reset-v15';
+const APP_VERSION = '2026-05-02-neon-sync-v20';
 const DEMO_MODE_KEY = 'carvion_demo_mode';
 const LAST_VERSION_KEY = 'carvion_last_seen_version';
 const SETTINGS_KEY = 'carvion_admin_settings';
@@ -28,6 +28,7 @@ const FIXED_EXPENSES_STORAGE_KEY = 'carvion_fixed_expenses';
 const TRANSACTIONS_STORAGE_KEY = 'carvion_transactions';
 const ORDERS_STORAGE_KEY = 'carvion_orders';
 const DATA_BACKUP_KEY = 'carvion_data_backup';
+const SYNC_STATUS_KEY = 'carvion_sync_status';
 const DEFAULT_CLIENTS = [];
 const DEFAULT_SUPPLIERS = [];
 const readDataBackup = () => {
@@ -36,6 +37,21 @@ const readDataBackup = () => {
   } catch (err) {
     return {};
   }
+};
+const apiBaseUrl = () => {
+  if (window.CARVION_API_URL) return window.CARVION_API_URL.replace(/\/$/, '');
+  const { origin, hostname } = window.location;
+  if (hostname === 'localhost' || hostname === '127.0.0.1') return 'http://localhost:4000';
+  if (hostname.includes('carvion-app')) return origin.replace('carvion-app', 'carvion-api');
+  if (hostname.endsWith('onrender.com')) return 'https://carvion-api.onrender.com';
+  return 'https://carvion-api.onrender.com';
+};
+const mergeById = (remote = [], local = []) => {
+  const map = new Map();
+  [...remote, ...local].forEach((item) => {
+    if (item && item.id) map.set(item.id, { ...(map.get(item.id) || {}), ...item });
+  });
+  return [...map.values()];
 };
 const CURRENT_USER = {
   name: 'CARVION Admin',
@@ -2272,6 +2288,7 @@ const App = () => {
   const [installPrompt, setInstallPrompt] = useState(null);
   const [demoMode, setDemoMode] = useState(() => localStorage.getItem(DEMO_MODE_KEY) === '1');
   const [updateReady, setUpdateReady] = useState(false);
+  const [syncStatus, setSyncStatus] = useState(() => localStorage.getItem(SYNC_STATUS_KEY) || 'Sincronizacao Neon aguardando');
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [clients, setClients] = useState(() => {
     try {
@@ -2321,10 +2338,15 @@ const App = () => {
   });
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const currentData = useMemo(() => demoMode ? DEMO_DATA : computeRealData(transactions), [demoMode, transactions]);
+  const syncDataRef = useRef({ clients, suppliers, products, fixedExpenses, transactions, settings });
 
   useEffect(() => {
     window.carvionHideBoot?.();
   }, []);
+
+  useEffect(() => {
+    syncDataRef.current = { clients, suppliers, products, fixedExpenses, transactions, settings };
+  }, [clients, suppliers, products, fixedExpenses, transactions, settings]);
 
   useEffect(() => {
     localStorage.setItem(DEMO_MODE_KEY, demoMode ? '1' : '0');
@@ -2369,10 +2391,118 @@ const App = () => {
       suppliers,
       products,
       fixedExpenses,
+      transactions,
       settings,
       notes: existingNotes,
+      orders: (() => {
+        try {
+          return JSON.parse(localStorage.getItem(ORDERS_STORAGE_KEY) || '[]');
+        } catch (err) {
+          return [];
+        }
+      })(),
     }));
-  }, [clients, suppliers, products, fixedExpenses, settings]);
+  }, [clients, suppliers, products, fixedExpenses, transactions, settings]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const collectLocalData = () => {
+      const current = syncDataRef.current;
+      return {
+        version: APP_VERSION,
+        updatedAt: new Date().toISOString(),
+        clients: current.clients,
+        suppliers: current.suppliers,
+        products: current.products,
+        fixedExpenses: current.fixedExpenses,
+        transactions: current.transactions,
+        settings: current.settings,
+        notes: (() => {
+        try {
+          return JSON.parse(localStorage.getItem(NFE_STORAGE_KEY) || '[]');
+        } catch (err) {
+          return [];
+        }
+      })(),
+        orders: (() => {
+          try {
+            return JSON.parse(localStorage.getItem(ORDERS_STORAGE_KEY) || '[]');
+          } catch (err) {
+            return [];
+          }
+        })(),
+      };
+    };
+    const saveRemote = async (payload) => {
+      const res = await fetch(`${apiBaseUrl()}/api/sync/financeiro`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error('sync-save-failed');
+      return res.json();
+    };
+    const syncNow = async () => {
+      try {
+        setSyncStatus('Sincronizando com Neon...');
+        const local = collectLocalData();
+        const res = await fetch(`${apiBaseUrl()}/api/sync/financeiro?t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' },
+        });
+        const remoteJson = res.ok ? await res.json() : {};
+        const remote = remoteJson.data || {};
+        const merged = {
+          version: APP_VERSION,
+          updatedAt: new Date().toISOString(),
+          clients: mergeById(remote.clients, local.clients),
+          suppliers: mergeById(remote.suppliers, local.suppliers),
+          products: mergeById(remote.products, local.products),
+          fixedExpenses: mergeById(remote.fixedExpenses, local.fixedExpenses),
+          transactions: mergeById(remote.transactions, local.transactions),
+          notes: mergeById(remote.notes, local.notes),
+          orders: mergeById(remote.orders, local.orders),
+          settings: { ...DEFAULT_SETTINGS, ...(remote.settings || {}), ...(local.settings || {}) },
+        };
+        if (cancelled) return;
+        const current = syncDataRef.current;
+        if (JSON.stringify(current.clients) !== JSON.stringify(merged.clients)) setClients(merged.clients);
+        if (JSON.stringify(current.suppliers) !== JSON.stringify(merged.suppliers)) setSuppliers(merged.suppliers);
+        if (JSON.stringify(current.products) !== JSON.stringify(merged.products)) setProducts(merged.products);
+        if (JSON.stringify(current.fixedExpenses) !== JSON.stringify(merged.fixedExpenses)) setFixedExpenses(merged.fixedExpenses);
+        if (JSON.stringify(current.transactions) !== JSON.stringify(merged.transactions)) setTransactions(merged.transactions);
+        if (JSON.stringify(current.settings) !== JSON.stringify(merged.settings)) setSettings(merged.settings);
+        localStorage.setItem(NFE_STORAGE_KEY, JSON.stringify(merged.notes));
+        localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(merged.orders));
+        localStorage.setItem(DATA_BACKUP_KEY, JSON.stringify(merged));
+        await saveRemote(merged);
+        if (!cancelled) {
+          const label = `Neon sincronizado ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+          setSyncStatus(label);
+          localStorage.setItem(SYNC_STATUS_KEY, label);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const label = 'Neon offline - dados salvos neste dispositivo';
+          setSyncStatus(label);
+          localStorage.setItem(SYNC_STATUS_KEY, label);
+        }
+      }
+    };
+    syncNow();
+    const timer = setInterval(syncNow, 15000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') syncNow();
+    };
+    window.addEventListener('online', syncNow);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+      window.removeEventListener('online', syncNow);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.theme = tweaks.theme;
@@ -2606,7 +2736,7 @@ const App = () => {
             <span className="chip">Todas as contas <Icon name="chevron-down" size={12} /></span>
             <div className="spacer" />
             <span className="chip" style={{ color: 'var(--accent)', borderColor: 'oklch(0.74 0.17 155 / 0.4)' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)' }} /> Sincronizado · há 2 min
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)' }} /> {syncStatus}
             </span>
           </div>
 

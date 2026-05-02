@@ -25,15 +25,6 @@ services:
       - key: NODE_VERSION
         value: 22
       - key: DATABASE_URL
-        fromDatabase:
-          name: carvion-db
-          property: connectionString
+        sync: false
       - key: JWT_ACCESS_SECRET
         generateValue: true
-
-databases:
-  - name: carvion-db
-    plan: free
-    region: oregon
-    databaseName: carvion
-    user: carvion
