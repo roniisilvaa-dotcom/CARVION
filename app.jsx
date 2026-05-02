@@ -1853,16 +1853,20 @@ const PedidosPage = ({ clients = [], products = [], settings }) => {
     clientId: '', clientName: '',
     date: new Date().toISOString().slice(0, 10), due: '',
     payment: 'Pix', status: 'pendente', obs: '', discount: '',
-    items: [{ id: `i-${Date.now()}`, catalogId: fullCatalog[0]?.id || '', name: fullCatalog[0]?.name || '', qty: 1, unit: fullCatalog[0]?.price || 0 }],
+    items: [],
   });
   const [form, setForm] = useState(makeEmpty);
+  const [pickerCatId, setPickerCatId] = useState(() => fullCatalog[0]?.id || '');
+  const [pickerQty, setPickerQty] = useState(1);
+  const [pickerPrice, setPickerPrice] = useState(() => Number(fullCatalog[0]?.price) || 0);
+  const [pickerName, setPickerName] = useState('');
 
   useEffect(() => { localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders)); }, [orders]);
 
   const resolvedItems = form.items.map((row) => {
     const cat = fullCatalog.find((c) => c.id === row.catalogId);
     const qty = Number(row.qty) || 0; const unit = Number(row.unit) || 0;
-    return { ...row, name: cat?.name || row.name || '', code: cat?.code || '', qty, unit, total: qty * unit };
+    return { ...row, name: cat?.name || row.name || '', code: cat?.code || row.code || '', qty, unit, total: qty * unit };
   });
   const subtotal = resolvedItems.reduce((s, r) => s + r.total, 0);
   const discountAmt = Math.max(0, Math.min(subtotal, Number(String(form.discount || '0').replace(',', '.')) || 0));
@@ -1873,15 +1877,20 @@ const PedidosPage = ({ clients = [], products = [], settings }) => {
     ...c,
     items: c.items.map((row) => {
       if (row.id !== id) return row;
-      if (field === 'catalogId') { const cat = fullCatalog.find((p) => p.id === value); return { ...row, catalogId: value, name: cat?.name || row.name, unit: cat?.price ?? row.unit }; }
       return { ...row, [field]: value };
     }),
   }));
-  const addItem = () => {
-    const cat = fullCatalog[0];
-    setForm((c) => ({ ...c, items: [...c.items, { id: `i-${Date.now()}`, catalogId: cat?.id || '', name: cat?.name || '', qty: 1, unit: cat?.price || 0 }] }));
+  const removeItem = (id) => setForm((c) => ({ ...c, items: c.items.filter((r) => r.id !== id) }));
+
+  const addNewItem = () => {
+    const cat = fullCatalog.find((c) => c.id === pickerCatId);
+    const name = cat?.name || pickerName.trim();
+    if (!name) return;
+    const qty = Math.max(1, Number(pickerQty) || 1);
+    const unit = Number(String(pickerPrice).replace(',', '.').replace(/[^\d.]/g, '')) || 0;
+    setForm((c) => ({ ...c, items: [...c.items, { id: `i-${Date.now()}`, catalogId: cat?.id || `custom-${Date.now()}`, name, code: cat?.code || '', qty, unit }] }));
+    setPickerQty(1);
   };
-  const removeItem = (id) => setForm((c) => ({ ...c, items: c.items.length > 1 ? c.items.filter((r) => r.id !== id) : c.items }));
 
   const selectedClient = clients.find((c) => c.id === form.clientId) || null;
 
@@ -1913,7 +1922,7 @@ const PedidosPage = ({ clients = [], products = [], settings }) => {
       date: order.date || '', due: order.due || '', payment: order.payment || 'Pix',
       status: order.status || 'pendente', obs: order.obs || '',
       discount: order.discount ? String(order.discount) : '',
-      items: (order.items || []).map((item, i) => ({ id: `ie-${i}-${Date.now()}`, catalogId: `legacy-${i}`, name: item.name, qty: item.qty, unit: item.unit })),
+      items: (order.items || []).map((item, i) => ({ id: `ie-${i}-${Date.now()}`, catalogId: `legacy-${i}`, name: item.name, code: item.code || '', qty: item.qty, unit: item.unit })),
     });
     setView('form');
   };
@@ -1968,24 +1977,90 @@ const PedidosPage = ({ clients = [], products = [], settings }) => {
               </div>
             </div>
             <div className="card">
-              <div className="card-head"><div><div className="card-title">Itens do pedido</div><div className="card-sub">Produtos e quantidades — total calculado automaticamente</div></div></div>
+              <div className="card-head">
+                <div>
+                  <div className="card-title">Itens do pedido</div>
+                  <div className="card-sub">{resolvedItems.length === 0 ? 'Adicione os produtos abaixo' : `${resolvedItems.length} produto${resolvedItems.length !== 1 ? 's' : ''} · ${fmtBRL(subtotal)}`}</div>
+                </div>
+              </div>
               <div style={{ padding: '0 20px' }}>
-                <div className="pedidos-items-head"><span>Produto</span><span style={{ textAlign: 'center' }}>Qtd</span><span style={{ textAlign: 'right' }}>Vlr unit.</span><span style={{ textAlign: 'right' }}>Total</span><span></span></div>
-                {resolvedItems.map((row) => (
-                  <div className="pedidos-items-row" key={row.id}>
-                    <div>
-                      {fullCatalog.length > 0 && <select value={row.catalogId} onChange={(e) => updateItem(row.id, 'catalogId', e.target.value)}>{fullCatalog.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>}
-                      {(!row.catalogId || !fullCatalog.find((c) => c.id === row.catalogId)) && (
-                        <input value={row.name} onChange={(e) => updateItem(row.id, 'name', e.target.value)} placeholder="Nome do produto" style={{ marginTop: fullCatalog.length ? 6 : 0 }} />
-                      )}
-                    </div>
-                    <input type="number" min="1" value={row.qty} onChange={(e) => updateItem(row.id, 'qty', e.target.value)} style={{ textAlign: 'center', width: 60 }} />
-                    <div className="pedidos-unit-input"><span>R$</span><input type="number" min="0" step="0.01" value={row.unit} onChange={(e) => updateItem(row.id, 'unit', e.target.value)} style={{ textAlign: 'right' }} /></div>
-                    <span style={{ fontFamily: 'var(--font-mono)', textAlign: 'right', fontWeight: 600, color: 'var(--accent)' }}>{fmtBRL(row.total)}</span>
-                    <button className="icon-btn" style={{ width: 26, height: 26, color: 'var(--text-faint)' }} onClick={() => removeItem(row.id)}><Icon name="x" size={12} /></button>
+                {resolvedItems.length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '24px 0 16px', color: 'var(--text-faint)', fontSize: 13 }}>
+                    <Icon name="clipboard" size={22} style={{ marginBottom: 8, display: 'block', margin: '0 auto 8px' }} />
+                    Nenhum produto adicionado ainda
                   </div>
-                ))}
-                <button className="pedidos-add-item" onClick={addItem}><Icon name="plus" size={13} /> Adicionar item</button>
+                )}
+                {resolvedItems.length > 0 && (
+                  <div className="pedidos-items-list">
+                    <div className="pedidos-items-list-head">
+                      <span style={{ flex: 1 }}>Produto</span>
+                      <span style={{ width: 64, textAlign: 'center' }}>Qtd</span>
+                      <span style={{ width: 110, textAlign: 'right' }}>Preço unit.</span>
+                      <span style={{ width: 100, textAlign: 'right' }}>Total</span>
+                      <span style={{ width: 28 }}></span>
+                    </div>
+                    {resolvedItems.map((row, idx) => (
+                      <div className="pedidos-items-list-row" key={row.id}>
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                          <span className="pedidos-item-idx">{idx + 1}</span>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 500, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.name}</div>
+                            {row.code && <div style={{ fontSize: 11, color: 'var(--text-faint)', fontFamily: 'var(--font-mono)' }}>{row.code}</div>}
+                          </div>
+                        </div>
+                        <input type="number" min="1" value={row.qty} onChange={(e) => updateItem(row.id, 'qty', e.target.value)} style={{ width: 64, textAlign: 'center' }} />
+                        <div className="pedidos-unit-input" style={{ width: 110 }}>
+                          <span>R$</span>
+                          <input type="number" min="0" step="0.01" value={row.unit} onChange={(e) => updateItem(row.id, 'unit', e.target.value)} style={{ textAlign: 'right' }} />
+                        </div>
+                        <span style={{ width: 100, fontFamily: 'var(--font-mono)', textAlign: 'right', fontWeight: 600, color: 'var(--accent)', fontSize: 13 }}>{fmtBRL(row.total)}</span>
+                        <button className="icon-btn" style={{ width: 28, height: 28, color: 'var(--danger)' }} onClick={() => removeItem(row.id)}>
+                          <Icon name="trash" size={13} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="pedidos-picker-box">
+                  <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--accent)', fontWeight: 600, marginBottom: 10 }}>
+                    <Icon name="plus" size={11} /> Adicionar produto ao pedido
+                  </div>
+                  <div className="pedidos-picker-row">
+                    {fullCatalog.length > 0 ? (
+                      <div className="field" style={{ flex: 3, marginBottom: 0 }}>
+                        <label>Produto do catálogo</label>
+                        <select value={pickerCatId} onChange={(e) => {
+                          const cat = fullCatalog.find((c) => c.id === e.target.value);
+                          setPickerCatId(e.target.value);
+                          if (cat) setPickerPrice(cat.price);
+                        }}>
+                          {fullCatalog.map((c) => <option key={c.id} value={c.id}>{c.name}{c.code ? ` — ${c.code}` : ''}</option>)}
+                        </select>
+                      </div>
+                    ) : (
+                      <div className="field" style={{ flex: 3, marginBottom: 0 }}>
+                        <label>Nome do produto</label>
+                        <input value={pickerName} onChange={(e) => setPickerName(e.target.value)} placeholder="Ex.: Folha Transfer A4" />
+                      </div>
+                    )}
+                    <div className="field" style={{ width: 70, marginBottom: 0 }}>
+                      <label>Qtd</label>
+                      <input type="number" min="1" value={pickerQty} onChange={(e) => setPickerQty(e.target.value)} style={{ textAlign: 'center' }} />
+                    </div>
+                    <div className="field" style={{ width: 120, marginBottom: 0 }}>
+                      <label>Preço unit. (R$)</label>
+                      <input type="number" min="0" step="0.01" value={pickerPrice} onChange={(e) => setPickerPrice(e.target.value)} style={{ textAlign: 'right' }} />
+                    </div>
+                    <button className="btn btn-primary" style={{ alignSelf: 'flex-end', whiteSpace: 'nowrap', height: 36 }} onClick={addNewItem}>
+                      <Icon name="plus" size={13} /> Adicionar
+                    </button>
+                  </div>
+                  {pickerCatId && fullCatalog.find((c) => c.id === pickerCatId) && (
+                    <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-faint)' }}>
+                      Total: <strong style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>{fmtBRL((Number(pickerQty) || 1) * (Number(String(pickerPrice).replace(',', '.')) || 0))}</strong>
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="pedidos-totals-bar">
                 <div><span>Subtotal</span><strong style={{ fontFamily: 'var(--font-mono)' }}>{fmtBRL(subtotal)}</strong></div>

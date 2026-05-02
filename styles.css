@@ -1456,6 +1456,19 @@ input, select, textarea { font-family: inherit; }
 
 .pedidos-client-chip { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--accent-soft); border-radius: 8px; font-size: 12.5px; color: var(--text); }
 
+/* items list (novo design) */
+.pedidos-items-list { display: flex; flex-direction: column; gap: 0; margin-bottom: 0; border: 1px solid var(--border-soft); border-radius: 10px; overflow: hidden; }
+.pedidos-items-list-head { display: flex; align-items: center; gap: 10px; padding: 8px 14px; background: var(--surface); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-faint); font-weight: 500; }
+.pedidos-items-list-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--border-soft); background: var(--bg-elev); transition: background 0.12s; }
+.pedidos-items-list-row:hover { background: var(--surface); }
+.pedidos-item-idx { width: 20px; height: 20px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); font-size: 11px; font-weight: 700; display: grid; place-items: center; flex-shrink: 0; }
+
+/* picker de produto */
+.pedidos-picker-box { margin: 14px 0 0; padding: 14px; background: oklch(0.74 0.17 155 / 0.05); border: 1px dashed oklch(0.74 0.17 155 / 0.35); border-radius: 10px; }
+.pedidos-picker-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.pedidos-picker-row .field { margin-bottom: 0; }
+@media (max-width: 700px) { .pedidos-picker-row { flex-direction: column; } .pedidos-picker-row .field { width: 100% !important; } }
+
 /* ===== ORDER DETAIL / PDF ===== */
 .order-detail-wrap { display: flex; flex-direction: column; gap: 16px; }
 .order-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
