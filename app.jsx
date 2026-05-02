@@ -16,7 +16,7 @@ const ACCENT_MAP = {
   ambar: 'oklch(0.78 0.16 75)',
 };
 
-const APP_VERSION = '2026-05-02-neon-sync-v31';
+const APP_VERSION = '2026-05-02-neon-sync-v32';
 const DEMO_MODE_KEY = 'carvion_demo_mode';
 const LAST_VERSION_KEY = 'carvion_last_seen_version';
 const SETTINGS_KEY = 'carvion_admin_settings';
@@ -529,18 +529,18 @@ const DashboardPage = ({ onAdd, period, showSecondary = true, data = ZERO_DATA, 
       </div>
 
       {data.secondaryKpis && showSecondary && (
-        <div className="row-3" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+        <div className="secondary-kpi-grid">
           {data.secondaryKpis.map((k) => (
-            <div key={k.id} className="card" style={{ padding: 14, gap: 6 }}>
-              <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>{k.label}</div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, justifyContent: 'space-between' }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 19, fontWeight: 600 }}>{k.value}</span>
+            <div key={k.id} className="card secondary-kpi-card">
+              <div className="secondary-kpi-label">{k.label}</div>
+              <div className="secondary-kpi-value-row">
+                <span className="secondary-kpi-value">{k.value}</span>
                 <span className={'kpi-delta ' + ((k.delta > 0) !== !!k.good ? 'up' : 'down')}>
                   <Icon name={k.delta > 0 ? 'arrow-up' : 'arrow-down'} size={10} />
                   {fmtPct(k.delta)}
                 </span>
               </div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>{k.sub}</div>
+              <div className="secondary-kpi-sub">{k.sub}</div>
             </div>
           ))}
         </div>
