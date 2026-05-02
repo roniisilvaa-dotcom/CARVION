@@ -16,7 +16,7 @@ const ACCENT_MAP = {
   ambar: 'oklch(0.78 0.16 75)',
 };
 
-const APP_VERSION = '2026-05-02-neon-sync-v30';
+const APP_VERSION = '2026-05-02-neon-sync-v31';
 const DEMO_MODE_KEY = 'carvion_demo_mode';
 const LAST_VERSION_KEY = 'carvion_last_seen_version';
 const SETTINGS_KEY = 'carvion_admin_settings';
@@ -383,7 +383,7 @@ const DashboardPage = ({ onAdd, period, showSecondary = true, data = ZERO_DATA, 
       </div>
 
       {data.report && data.transactions.length > 0 && (
-        <div className="card" style={{ marginBottom: 16 }}>
+        <div className="card finance-auto-report" style={{ marginBottom: 16 }}>
           <div className="card-head">
             <div>
               <div className="card-title">Relatório automático do financeiro</div>
@@ -391,25 +391,25 @@ const DashboardPage = ({ onAdd, period, showSecondary = true, data = ZERO_DATA, 
             </div>
             <span className="status-pill status-paid">atualizado pelo Neon</span>
           </div>
-          <div className="row-3" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 12 }}>
+          <div className="finance-report-kpis">
             <div className="mini-card"><span>Recebido</span><strong>{fmtBRL(data.report.receivedRev)}</strong></div>
             <div className="mini-card"><span>A receber</span><strong>{fmtBRL(data.report.totPendIn)}</strong></div>
             <div className="mini-card"><span>Pago</span><strong>{fmtBRL(data.report.paidExp)}</strong></div>
             <div className="mini-card"><span>A pagar</span><strong>{fmtBRL(data.report.totPendOut)}</strong></div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr .8fr', gap: 14 }}>
-            <div style={{ display: 'grid', gap: 8 }}>
+          <div className="finance-report-body">
+            <div className="finance-report-lines">
               {data.report.lines.map((line, idx) => (
-                <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13, color: 'var(--text-dim)' }}>
+                <div key={idx} className="finance-report-line">
                   <Icon name="check" size={13} />
                   <span>{line}</span>
                 </div>
               ))}
             </div>
-            <div style={{ display: 'grid', gap: 8 }}>
-              <strong style={{ fontSize: 12.5 }}>Top clientes</strong>
+            <div className="finance-report-clients">
+              <strong>Top clientes</strong>
               {data.report.topClients.length === 0 ? <span className="muted">Sem receitas por cliente.</span> : data.report.topClients.map((item) => (
-                <div key={item.name} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 12.5 }}>
+                <div key={item.name} className="finance-report-client">
                   <span>{item.name}</span>
                   <span className="mono">{fmtBRL(item.value)}</span>
                 </div>
