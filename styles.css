@@ -1618,12 +1618,24 @@ input, select, textarea { font-family: inherit; }
 .pedidos-items-list-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--border-soft); background: var(--bg-elev); transition: background 0.12s; }
 .pedidos-items-list-row:hover { background: var(--surface); }
 .pedidos-item-idx { width: 20px; height: 20px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); font-size: 11px; font-weight: 700; display: grid; place-items: center; flex-shrink: 0; }
+.pedidos-edit-item-main { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.pedidos-edit-item-fields { min-width: 0; flex: 1; display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(90px, .8fr); gap: 8px; }
+.pedidos-edit-item-fields input { width: 100%; min-width: 0; }
 
 /* picker de produto */
 .pedidos-picker-box { margin: 14px 0 0; padding: 14px; background: oklch(0.74 0.17 155 / 0.05); border: 1px dashed oklch(0.74 0.17 155 / 0.35); border-radius: 10px; }
 .pedidos-picker-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
 .pedidos-picker-row .field { margin-bottom: 0; }
 @media (max-width: 700px) { .pedidos-picker-row { flex-direction: column; } .pedidos-picker-row .field { width: 100% !important; } }
+@media (max-width: 700px) {
+  .pedidos-items-list-head { display: none; }
+  .pedidos-items-list-row { flex-wrap: wrap; align-items: flex-start; }
+  .pedidos-edit-item-main { flex-basis: 100%; }
+  .pedidos-edit-item-fields { grid-template-columns: 1fr; }
+  .pedidos-items-list-row input,
+  .pedidos-items-list-row .pedidos-unit-input { width: calc(50% - 18px) !important; }
+  .pedidos-items-list-row > span[style*="width: 100px"] { width: calc(100% - 44px) !important; text-align: left !important; }
+}
 
 /* ===== ORDER DETAIL / PDF ===== */
 .order-detail-wrap { display: flex; flex-direction: column; gap: 16px; }

@@ -16,7 +16,7 @@ const ACCENT_MAP = {
   ambar: 'oklch(0.78 0.16 75)',
 };
 
-const APP_VERSION = '2026-05-02-neon-sync-v33';
+const APP_VERSION = '2026-05-02-neon-sync-v34';
 const DEMO_MODE_KEY = 'carvion_demo_mode';
 const LAST_VERSION_KEY = 'carvion_last_seen_version';
 const SETTINGS_KEY = 'carvion_admin_settings';
@@ -2136,7 +2136,7 @@ const PedidosPage = ({ clients = [], products = [], settings }) => {
   const fullCatalog = [...regCatalog, ...defaultCatalog.filter((d) => !regCatalog.some((r) => r.id === d.id))];
 
   const makeEmpty = () => ({
-    clientId: '', clientName: '',
+    number: '', clientId: '', clientName: '',
     date: new Date().toISOString().slice(0, 10), due: '',
     payment: 'Pix', status: 'pendente', obs: '', discount: '',
     items: [],
@@ -2146,13 +2146,14 @@ const PedidosPage = ({ clients = [], products = [], settings }) => {
   const [pickerQty, setPickerQty] = useState(1);
   const [pickerPrice, setPickerPrice] = useState(() => Number(fullCatalog[0]?.price) || 0);
   const [pickerName, setPickerName] = useState('');
+  const [pickerCode, setPickerCode] = useState('');
 
   useEffect(() => { localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders)); }, [orders]);
 
   const resolvedItems = form.items.map((row) => {
     const cat = fullCatalog.find((c) => c.id === row.catalogId);
     const qty = Number(row.qty) || 0; const unit = Number(row.unit) || 0;
-    return { ...row, name: cat?.name || row.name || '', code: cat?.code || row.code || '', qty, unit, total: qty * unit };
+    return { ...row, name: row.name || cat?.name || '', code: row.code || cat?.code || '', qty, unit, total: qty * unit };
   });
   const subtotal = resolvedItems.reduce((s, r) => s + r.total, 0);
   const discountAmt = Math.max(0, Math.min(subtotal, Number(String(form.discount || '0').replace(',', '.')) || 0));
@@ -2169,13 +2170,16 @@ const PedidosPage = ({ clients = [], products = [], settings }) => {
   const removeItem = (id) => setForm((c) => ({ ...c, items: c.items.filter((r) => r.id !== id) }));
 
   const addNewItem = () => {
-    const cat = fullCatalog.find((c) => c.id === pickerCatId);
-    const name = cat?.name || pickerName.trim();
+    const isManual = pickerCatId === '__manual__' || fullCatalog.length === 0;
+    const cat = isManual ? null : fullCatalog.find((c) => c.id === pickerCatId);
+    const name = isManual ? pickerName.trim() : (cat?.name || pickerName.trim());
     if (!name) return;
     const qty = Math.max(1, Number(pickerQty) || 1);
     const unit = Number(String(pickerPrice).replace(',', '.').replace(/[^\d.]/g, '')) || 0;
-    setForm((c) => ({ ...c, items: [...c.items, { id: `i-${Date.now()}`, catalogId: cat?.id || `custom-${Date.now()}`, name, code: cat?.code || '', qty, unit }] }));
+    setForm((c) => ({ ...c, items: [...c.items, { id: `i-${Date.now()}`, catalogId: cat?.id || '', name, code: isManual ? pickerCode.trim() : (cat?.code || pickerCode.trim()), qty, unit }] }));
     setPickerQty(1);
+    setPickerName('');
+    setPickerCode('');
   };
 
   const selectedClient = clients.find((c) => c.id === form.clientId) || null;
@@ -2190,11 +2194,11 @@ const PedidosPage = ({ clients = [], products = [], settings }) => {
     const clientObj = selectedClient || { name: form.clientName || 'Cliente', cnpj: '', phone: '', city: '', state: '', email: '' };
     const order = {
       id: editing || `ped-${Date.now()}`,
-      number: editing ? (orders.find((o) => o.id === editing)?.number || nextNumber()) : nextNumber(),
+      number: String(form.number || '').trim() || (editing ? (orders.find((o) => o.id === editing)?.number || nextNumber()) : nextNumber()),
       date: form.date, due: form.due, payment: form.payment, status: form.status, obs: form.obs,
       discount: discountAmt,
       client: { ...clientObj, id: clientObj.id || `cli-tmp-${Date.now()}` },
-      items: resolvedItems.map(({ name, code, qty, unit, total: t }) => ({ name, code, qty, unit, total: t })),
+      items: resolvedItems.map(({ catalogId, name, code, qty, unit, total: t }) => ({ catalogId, name, code, qty, unit, total: t })),
       subtotal, total, issuedAt: new Date().toLocaleDateString('pt-BR'),
     };
     setOrders((c) => editing ? c.map((o) => o.id === editing ? order : o) : [order, ...c]);
@@ -2205,10 +2209,11 @@ const PedidosPage = ({ clients = [], products = [], settings }) => {
     setEditing(order.id);
     setForm({
       clientId: order.client?.id || '', clientName: order.client?.name || '',
+      number: order.number || nextNumber(),
       date: order.date || '', due: order.due || '', payment: order.payment || 'Pix',
       status: order.status || 'pendente', obs: order.obs || '',
       discount: order.discount ? String(order.discount) : '',
-      items: (order.items || []).map((item, i) => ({ id: `ie-${i}-${Date.now()}`, catalogId: `legacy-${i}`, name: item.name, code: item.code || '', qty: item.qty, unit: item.unit })),
+      items: (order.items || []).map((item, i) => ({ id: `ie-${i}-${Date.now()}`, catalogId: item.catalogId || '', name: item.name, code: item.code || '', qty: item.qty, unit: item.unit })),
     });
     setView('form');
   };
@@ -2227,6 +2232,12 @@ const PedidosPage = ({ clients = [], products = [], settings }) => {
   const totalValue = orders.reduce((s, o) => s + (o.total || 0), 0);
   const pendingCount = orders.filter((o) => o.status === 'pendente' || o.status === 'processando').length;
   const deliveredCount = orders.filter((o) => o.status === 'entregue').length;
+  const startNewOrder = () => {
+    setForm({ ...makeEmpty(), number: nextNumber() });
+    setEditing(null);
+    setSelectedOrder(null);
+    setView('form');
+  };
 
   if (view === 'detail' && selectedOrder) {
     return <OrderDetailView order={selectedOrder} company={settings.company} statusConfig={statusConfig} onBack={() => setView('list')} onEdit={() => editOrder(selectedOrder)} />;
@@ -2238,7 +2249,7 @@ const PedidosPage = ({ clients = [], products = [], settings }) => {
       <div className="pedidos-form-wrap">
         <div className="pedidos-form-header">
           <button className="btn" onClick={() => { setView('list'); setEditing(null); }}><Icon name="chevron-right" size={13} style={{ transform: 'rotate(180deg)' }} /> Voltar</button>
-          <div><div className="card-title">{editing ? `Editar Pedido #${editNum}` : 'Novo Pedido de Venda'}</div><div className="card-sub">Preencha os dados e itens — o total é calculado automaticamente</div></div>
+          <div><div className="card-title">{editing ? `Editar Pedido #${form.number || editNum}` : 'Novo Pedido de Venda'}</div><div className="card-sub">Preencha os dados e itens — o total é calculado automaticamente</div></div>
         </div>
         <div className="pedidos-form-grid">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -2279,7 +2290,7 @@ const PedidosPage = ({ clients = [], products = [], settings }) => {
                 {resolvedItems.length > 0 && (
                   <div className="pedidos-items-list">
                     <div className="pedidos-items-list-head">
-                      <span style={{ flex: 1 }}>Produto</span>
+                      <span style={{ flex: 1 }}>Produto / código</span>
                       <span style={{ width: 64, textAlign: 'center' }}>Qtd</span>
                       <span style={{ width: 110, textAlign: 'right' }}>Preço unit.</span>
                       <span style={{ width: 100, textAlign: 'right' }}>Total</span>
@@ -2287,11 +2298,11 @@ const PedidosPage = ({ clients = [], products = [], settings }) => {
                     </div>
                     {resolvedItems.map((row, idx) => (
                       <div className="pedidos-items-list-row" key={row.id}>
-                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                        <div className="pedidos-edit-item-main">
                           <span className="pedidos-item-idx">{idx + 1}</span>
-                          <div style={{ minWidth: 0 }}>
-                            <div style={{ fontWeight: 500, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.name}</div>
-                            {row.code && <div style={{ fontSize: 11, color: 'var(--text-faint)', fontFamily: 'var(--font-mono)' }}>{row.code}</div>}
+                          <div className="pedidos-edit-item-fields">
+                            <input value={row.name} onChange={(e) => updateItem(row.id, 'name', e.target.value)} placeholder="Nome do item" />
+                            <input value={row.code || ''} onChange={(e) => updateItem(row.id, 'code', e.target.value)} placeholder="Código / referência" />
                           </div>
                         </div>
                         <input type="number" min="1" value={row.qty} onChange={(e) => updateItem(row.id, 'qty', e.target.value)} style={{ width: 64, textAlign: 'center' }} />
@@ -2312,22 +2323,36 @@ const PedidosPage = ({ clients = [], products = [], settings }) => {
                     <Icon name="plus" size={11} /> Adicionar produto ao pedido
                   </div>
                   <div className="pedidos-picker-row">
-                    {fullCatalog.length > 0 ? (
-                      <div className="field" style={{ flex: 3, marginBottom: 0 }}>
-                        <label>Produto do catálogo</label>
+                    <div className="field" style={{ flex: 3, marginBottom: 0 }}>
+                      <label>Produto</label>
+                      {fullCatalog.length > 0 ? (
                         <select value={pickerCatId} onChange={(e) => {
                           const cat = fullCatalog.find((c) => c.id === e.target.value);
                           setPickerCatId(e.target.value);
-                          if (cat) setPickerPrice(cat.price);
+                          if (cat) {
+                            setPickerPrice(cat.price);
+                            setPickerName('');
+                            setPickerCode('');
+                          }
                         }}>
+                          <option value="__manual__">+ Item manual sem cadastro</option>
                           {fullCatalog.map((c) => <option key={c.id} value={c.id}>{c.name}{c.code ? ` — ${c.code}` : ''}</option>)}
                         </select>
-                      </div>
-                    ) : (
-                      <div className="field" style={{ flex: 3, marginBottom: 0 }}>
-                        <label>Nome do produto</label>
+                      ) : (
                         <input value={pickerName} onChange={(e) => setPickerName(e.target.value)} placeholder="Ex.: Folha Transfer A4" />
-                      </div>
+                      )}
+                    </div>
+                    {(pickerCatId === '__manual__' || fullCatalog.length === 0) && (
+                      <>
+                        <div className="field" style={{ flex: 2, marginBottom: 0 }}>
+                          <label>Nome do item</label>
+                          <input value={pickerName} onChange={(e) => setPickerName(e.target.value)} placeholder="Ex.: Folha Transfer A4" />
+                        </div>
+                        <div className="field" style={{ width: 120, marginBottom: 0 }}>
+                          <label>Código</label>
+                          <input value={pickerCode} onChange={(e) => setPickerCode(e.target.value)} placeholder="Opcional" />
+                        </div>
+                      </>
                     )}
                     <div className="field" style={{ width: 70, marginBottom: 0 }}>
                       <label>Qtd</label>
@@ -2359,6 +2384,9 @@ const PedidosPage = ({ clients = [], products = [], settings }) => {
             <div className="card">
               <div className="card-head"><div><div className="card-title">Detalhes</div><div className="card-sub">Datas, pagamento e status</div></div></div>
               <div style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div className="field-row">
+                  <div className="field"><label>Número do pedido</label><input value={form.number || ''} onChange={(e) => updateForm('number', e.target.value)} placeholder="000001" /></div>
+                </div>
                 <div className="field-row">
                   <div className="field"><label>Data do pedido</label><input type="date" value={form.date} onChange={(e) => updateForm('date', e.target.value)} /></div>
                   <div className="field"><label>Previsão de entrega</label><input type="date" value={form.due} onChange={(e) => updateForm('due', e.target.value)} /></div>
@@ -2399,7 +2427,7 @@ const PedidosPage = ({ clients = [], products = [], settings }) => {
                 <button key={k} className={filterStatus === k ? 'active' : ''} onClick={() => setFilterStatus(k)}>{l}</button>
               ))}
             </div>
-            <button className="btn btn-primary" onClick={() => { setForm(makeEmpty()); setEditing(null); setView('form'); }}><Icon name="plus" size={13} /> Novo pedido</button>
+            <button className="btn btn-primary" onClick={startNewOrder}><Icon name="plus" size={13} /> Novo pedido</button>
           </div>
         </div>
         {filteredOrders.length === 0 ? (
@@ -2407,7 +2435,7 @@ const PedidosPage = ({ clients = [], products = [], settings }) => {
             <Icon name="clipboard" size={32} />
             <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', marginTop: 4 }}>{orders.length === 0 ? 'Nenhum pedido ainda' : 'Nenhum pedido com este filtro'}</div>
             <div style={{ fontSize: 12.5, maxWidth: 360 }}>{orders.length === 0 ? 'Crie o primeiro pedido — ele ficará registrado aqui com todos os detalhes e poderá ser exportado como PDF.' : 'Mude o filtro de status para ver outros pedidos.'}</div>
-            {orders.length === 0 && <button className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => { setForm(makeEmpty()); setEditing(null); setView('form'); }}><Icon name="plus" size={13} /> Criar primeiro pedido</button>}
+            {orders.length === 0 && <button className="btn btn-primary" style={{ marginTop: 8 }} onClick={startNewOrder}><Icon name="plus" size={13} /> Criar primeiro pedido</button>}
           </div>
         ) : (
           <div className="table-wrap">
