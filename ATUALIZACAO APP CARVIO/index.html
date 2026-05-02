@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CA.RO — Hub do Produto</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="shared.css" />
+<style>
+  body {
+    background:
+      radial-gradient(ellipse 1000px 600px at 20% 0%, oklch(0.74 0.17 155 / 0.06), transparent 60%),
+      radial-gradient(ellipse 800px 600px at 100% 100%, oklch(0.72 0.13 230 / 0.04), transparent 60%),
+      var(--bg);
+    min-height: 100vh;
+  }
+  .hub { max-width: 1200px; margin: 0 auto; padding: 60px 24px 80px; }
+  .hub-head { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+  .hub h1 { font-size: 32px; letter-spacing: -0.02em; font-weight: 600; }
+  .hub-sub { color: var(--text-dim); font-size: 15px; max-width: 640px; margin-bottom: 40px; }
+  .hub-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+  }
+  @media (max-width: 900px) { .hub-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 600px) { .hub-grid { grid-template-columns: 1fr; } }
+
+  .hub-section-title {
+    grid-column: 1 / -1;
+    font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-faint); font-weight: 500;
+    margin: 24px 0 -4px; padding-top: 8px;
+  }
+  .hub-section-title:first-of-type { margin-top: 0; }
+
+  .hub-card {
+    display: flex; flex-direction: column; gap: 12px;
+    padding: 20px; border-radius: var(--r-lg);
+    background: linear-gradient(180deg, var(--surface), var(--bg-elev));
+    border: 1px solid var(--border-soft);
+    transition: all 0.18s ease;
+    cursor: pointer; position: relative; overflow: hidden;
+    min-height: 140px;
+  }
+  .hub-card:hover {
+    border-color: oklch(0.74 0.17 155 / 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px oklch(0 0 0 / 0.3);
+  }
+  .hub-card-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: grid; place-items: center;
+    background: var(--accent-soft); color: var(--accent);
+  }
+  .hub-card-icon.info { background: var(--info-soft); color: var(--info); }
+  .hub-card-icon.purple { background: var(--purple-soft); color: var(--purple); }
+  .hub-card-icon.warn { background: var(--warn-soft); color: var(--warn); }
+  .hub-card-title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .hub-card-desc { font-size: 12.5px; color: var(--text-faint); line-height: 1.5; flex: 1; }
+  .hub-card-arrow { position: absolute; top: 20px; right: 20px; color: var(--text-faint); }
+  .hub-card:hover .hub-card-arrow { color: var(--accent); }
+
+  .hub-foot {
+    margin-top: 50px; padding: 20px; border-radius: var(--r-lg);
+    border: 1px dashed var(--border);
+    color: var(--text-dim); font-size: 13px;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+</style>
+</head>
+<body>
+<div class="hub">
+  <div class="hub-head">
+    <div class="brand-mark">CR</div>
+    <div>
+      <h1>GRUPO CA.RO</h1>
+      <div style="font-size: 12px; letter-spacing: 0.06em; color: var(--text-faint); text-transform: uppercase; margin-top: 2px;">Sistema Financeiro · Hub do Produto</div>
+    </div>
+    <div style="flex: 1"></div>
+    <span class="tag">Protótipo SaaS completo</span>
+  </div>
+  <p class="hub-sub">Todas as telas do produto: marketing, onboarding, sistema, billing e super-admin. Clique em qualquer card para abrir a tela em uma nova aba.</p>
+
+  <div class="hub-grid">
+
+    <div class="hub-section-title">Marketing & Comercial</div>
+
+    <a class="hub-card" href="marketing/landing.html" target="_blank">
+      <div class="hub-card-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>
+      </div>
+      <div class="hub-card-title">Landing Page</div>
+      <div class="hub-card-desc">Hero, features, automações, depoimentos, logos de clientes e CTA.</div>
+      <span class="hub-card-arrow">→</span>
+    </a>
+
+    <a class="hub-card" href="marketing/pricing.html" target="_blank">
+      <div class="hub-card-icon info">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 5 5 19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+      </div>
+      <div class="hub-card-title">Planos & Preços</div>
+      <div class="hub-card-desc">Starter R$79 / Business R$199 / Enterprise R$499 / Prime R$1.299. Toggle mensal/anual.</div>
+      <span class="hub-card-arrow">→</span>
+    </a>
+
+    <a class="hub-card" href="marketing/integrations.html" target="_blank">
+      <div class="hub-card-icon purple">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>
+      </div>
+      <div class="hub-card-title">Integrações</div>
+      <div class="hub-card-desc">Open Finance, NF-e, ERP, Pix, bancos. Catálogo completo.</div>
+      <span class="hub-card-arrow">→</span>
+    </a>
+
+    <a class="hub-card" href="marketing/about.html" target="_blank">
+      <div class="hub-card-icon warn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M21 19c0-2-2-3.5-4-3.5"/></svg>
+      </div>
+      <div class="hub-card-title">Sobre & Equipe</div>
+      <div class="hub-card-desc">Missão, valores, time fundador.</div>
+      <span class="hub-card-arrow">→</span>
+    </a>
+
+    <a class="hub-card" href="marketing/help.html" target="_blank">
+      <div class="hub-card-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4"/><path d="M12 17v.01"/></svg>
+      </div>
+      <div class="hub-card-title">Central de Ajuda</div>
+      <div class="hub-card-desc">FAQ detalhado, busca, categorias e contato com suporte.</div>
+      <span class="hub-card-arrow">→</span>
+    </a>
+
+    <a class="hub-card" href="marketing/privacy.html" target="_blank">
+      <div class="hub-card-icon info">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V6Z"/></svg>
+      </div>
+      <div class="hub-card-title">Privacidade & LGPD</div>
+      <div class="hub-card-desc">Política, termos, dados pessoais e direitos do titular.</div>
+      <span class="hub-card-arrow">→</span>
+    </a>
+
+    <div class="hub-section-title">Acesso & Onboarding</div>
+
+    <a class="hub-card" href="auth/signup.html" target="_blank">
+      <div class="hub-card-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>
+      </div>
+      <div class="hub-card-title">Cadastro</div>
+      <div class="hub-card-desc">Criar conta da empresa. CNPJ, dados, primeiro usuário.</div>
+      <span class="hub-card-arrow">→</span>
+    </a>
+
+    <a class="hub-card" href="auth/login.html" target="_blank">
+      <div class="hub-card-icon info">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>
+      </div>
+      <div class="hub-card-title">Login</div>
+      <div class="hub-card-desc">Entrar na conta + esqueci senha + 2FA.</div>
+      <span class="hub-card-arrow">→</span>
+    </a>
+
+    <a class="hub-card" href="auth/onboarding.html" target="_blank">
+      <div class="hub-card-icon purple">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/></svg>
+      </div>
+      <div class="hub-card-title">Onboarding Wizard</div>
+      <div class="hub-card-desc">5 passos: empresa, conta bancária, equipe, NF-e, primeiro lançamento.</div>
+      <span class="hub-card-arrow">→</span>
+    </a>
+
+    <div class="hub-section-title">Sistema (Cliente)</div>
+
+    <a class="hub-card" href="CA.RO Sistema Financeiro.html" target="_blank">
+      <div class="hub-card-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12 12 4l9 8"/><path d="M5 10v10h14V10"/></svg>
+      </div>
+      <div class="hub-card-title">Sistema Financeiro</div>
+      <div class="hub-card-desc">Dashboard, fluxo de caixa, contas, relatórios. 15 módulos. Com IA e alertas.</div>
+      <span class="hub-card-arrow">→</span>
+    </a>
+
+    <a class="hub-card" href="app/settings.html" target="_blank">
+      <div class="hub-card-icon info">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8 2 2 0 0 1-2.8 2.8 1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5 2 2 0 0 1-4 0 1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3 2 2 0 0 1-2.8-2.8 1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1 2 2 0 0 1 0-4 1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8 2 2 0 0 1 2.8-2.8 1.7 1.7 0 0 0 1.8.3 1.7 1.7 0 0 0 1-1.5 2 2 0 0 1 4 0 1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3 2 2 0 0 1 2.8 2.8 1.7 1.7 0 0 0-.3 1.8 1.7 1.7 0 0 0 1.5 1 2 2 0 0 1 0 4 1.7 1.7 0 0 0-1.5 1Z"/></svg>
+      </div>
+      <div class="hub-card-title">Configurações da Conta</div>
+      <div class="hub-card-desc">Empresa, equipe, permissões customizáveis, billing, notificações.</div>
+      <span class="hub-card-arrow">→</span>
+    </a>
+
+    <a class="hub-card" href="app/billing.html" target="_blank">
+      <div class="hub-card-icon purple">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 11h20"/></svg>
+      </div>
+      <div class="hub-card-title">Plano & Faturamento</div>
+      <div class="hub-card-desc">Plano atual, upgrade, faturas, métodos de pagamento, cancelamento.</div>
+      <span class="hub-card-arrow">→</span>
+    </a>
+
+    <div class="hub-section-title">Super Admin (Você)</div>
+
+    <a class="hub-card" href="admin/super-admin.html" target="_blank">
+      <div class="hub-card-icon warn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 17 6-6 4 4 7-7"/><path d="M14 8h6v6"/></svg>
+      </div>
+      <div class="hub-card-title">Painel Super Admin</div>
+      <div class="hub-card-desc">MRR, ARR, churn, empresas clientes, faturamento, suporte, flags.</div>
+      <span class="hub-card-arrow">→</span>
+    </a>
+
+  </div>
+
+  <div class="hub-foot">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;color:var(--accent)"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16v.01"/></svg>
+    <div>
+      <strong style="color: var(--text)">Sobre este protótipo</strong><br />
+      Mockup de design completo do produto SaaS — todas as telas navegáveis, dados fictícios.
+      Para virar produto real precisa de backend, autenticação, integrações bancárias e infra.
+      Use estas telas para apresentar a investidores, validar com clientes ou orçar com devs.
+    </div>
+  </div>
+</div>
+</body>
+</html>

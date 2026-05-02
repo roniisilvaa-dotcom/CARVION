@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CA.RO — Planos e Preços</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../shared.css" />
+<style>
+  body { background: radial-gradient(ellipse 1200px 700px at 50% -10%, oklch(0.74 0.17 155 / 0.08), transparent 60%), var(--bg); }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+  nav.top { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(20px); background: oklch(0.16 0.012 240 / 0.6); border-bottom: 1px solid var(--border-soft); }
+  .nav-inner { display: flex; align-items: center; gap: 32px; height: 64px; }
+  .nav-brand { display: flex; align-items: center; gap: 10px; }
+  .nav-brand-name { font-weight: 700; font-size: 15px; }
+  .nav-links { display: flex; gap: 6px; flex: 1; }
+  .nav-links a { padding: 7px 12px; border-radius: 8px; font-size: 13.5px; color: var(--text-dim); }
+  .nav-links a.active { color: var(--text); background: var(--surface); }
+  .nav-links a:hover { color: var(--text); background: var(--surface); }
+  @media (max-width: 800px) { .nav-links { display: none; } }
+
+  .hero-p { padding: 70px 0 30px; text-align: center; }
+  .hero-p h1 { font-size: clamp(36px, 5vw, 56px); letter-spacing: -0.02em; font-weight: 700; margin-bottom: 16px; }
+  .hero-p p { color: var(--text-dim); font-size: 17px; max-width: 600px; margin: 0 auto 32px; }
+
+  .billing-toggle {
+    display: inline-flex; padding: 4px; background: var(--surface);
+    border: 1px solid var(--border-soft); border-radius: 12px; gap: 4px;
+  }
+  .billing-toggle button {
+    padding: 8px 16px; border-radius: 8px; font-size: 13.5px;
+    color: var(--text-dim); font-weight: 500; transition: all 0.15s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .billing-toggle button.active { background: var(--bg-elev); color: var(--text); box-shadow: 0 1px 4px oklch(0 0 0 / 0.2); }
+  .save-badge { font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--accent); color: oklch(0.15 0.01 240); font-weight: 600; }
+
+  .plans-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+    max-width: 1100px; margin: 50px auto 0;
+  }
+  @media (max-width: 900px) { .plans-grid { grid-template-columns: 1fr; max-width: 460px; } }
+
+  .plan {
+    padding: 28px; border-radius: var(--r-xl);
+    background: linear-gradient(180deg, var(--surface), var(--bg-elev));
+    border: 1px solid var(--border-soft);
+    display: flex; flex-direction: column; gap: 18px;
+    position: relative;
+  }
+  .plan.featured {
+    border-color: oklch(0.74 0.17 155 / 0.5);
+    background: linear-gradient(180deg, oklch(0.74 0.17 155 / 0.06), var(--bg-elev));
+    box-shadow: 0 0 0 1px oklch(0.74 0.17 155 / 0.3), 0 20px 40px oklch(0.74 0.17 155 / 0.1);
+  }
+  .plan-flag {
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: oklch(0.15 0.01 240); padding: 4px 12px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .plan-name { font-size: 14px; font-weight: 600; color: var(--text-dim); letter-spacing: 0.02em; }
+  .plan-tagline { font-size: 13.5px; color: var(--text-faint); margin-top: -10px; line-height: 1.45; }
+  .plan-price { display: flex; align-items: baseline; gap: 6px; }
+  .plan-price .currency { font-size: 18px; color: var(--text-dim); font-weight: 500; }
+  .plan-price .amount { font-family: var(--font-mono); font-size: 44px; font-weight: 700; letter-spacing: -0.02em; }
+  .plan-price .period { font-size: 13px; color: var(--text-faint); }
+  .plan-price .original { font-family: var(--font-mono); font-size: 14px; color: var(--text-faint); text-decoration: line-through; }
+  .plan ul { list-style: none; display: flex; flex-direction: column; gap: 10px; padding: 16px 0; border-top: 1px solid var(--border-soft); border-bottom: 1px solid var(--border-soft); }
+  .plan ul li { display: flex; gap: 10px; font-size: 13.5px; line-height: 1.5; }
+  .plan ul li .ok { color: var(--accent); flex-shrink: 0; margin-top: 2px; }
+  .plan ul li .ok svg { width: 14px; height: 14px; }
+  .plan-foot { font-size: 12.5px; color: var(--text-faint); text-align: center; }
+
+  .compare {
+    margin: 90px auto; max-width: 1000px;
+  }
+  .compare h2 { font-size: 28px; letter-spacing: -0.02em; font-weight: 700; margin-bottom: 8px; text-align: center; }
+  .compare p { color: var(--text-dim); text-align: center; margin-bottom: 30px; }
+  .compare-table {
+    width: 100%; border-collapse: collapse;
+    background: var(--surface); border: 1px solid var(--border-soft);
+    border-radius: var(--r-lg); overflow: hidden;
+  }
+  .compare-table th, .compare-table td {
+    padding: 14px 18px; border-bottom: 1px solid var(--border-soft);
+    font-size: 13.5px; text-align: center;
+  }
+  .compare-table th:first-child, .compare-table td:first-child { text-align: left; color: var(--text-dim); }
+  .compare-table thead th { background: var(--bg-elev); font-weight: 600; font-size: 13px; }
+  .compare-table .check { color: var(--accent); }
+  .compare-table .x { color: var(--text-faint); }
+  .compare-table .row-section td { background: oklch(0.18 0.014 240 / 0.5); font-weight: 600; color: var(--text); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
+
+  .faq {
+    max-width: 760px; margin: 90px auto;
+  }
+  .faq h2 { font-size: 28px; text-align: center; letter-spacing: -0.02em; font-weight: 700; margin-bottom: 8px; }
+  .faq p.sub { color: var(--text-dim); text-align: center; margin-bottom: 32px; }
+  .faq-item {
+    border-bottom: 1px solid var(--border-soft);
+    padding: 18px 0;
+  }
+  .faq-q { font-size: 15px; font-weight: 500; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+  .faq-a { color: var(--text-dim); font-size: 14px; line-height: 1.6; margin-top: 10px; display: none; }
+  .faq-item.open .faq-a { display: block; }
+  .faq-item.open .faq-q svg { transform: rotate(180deg); }
+
+  .cta-mini {
+    text-align: center; padding: 60px 24px; border-radius: var(--r-xl);
+    background: linear-gradient(135deg, oklch(0.74 0.17 155 / 0.10), oklch(0.72 0.13 230 / 0.05));
+    border: 1px solid var(--border-soft);
+    margin: 60px auto;
+    max-width: 900px;
+  }
+  .cta-mini h3 { font-size: 26px; letter-spacing: -0.02em; font-weight: 700; margin-bottom: 8px; }
+  .cta-mini p { color: var(--text-dim); margin-bottom: 24px; }
+
+  footer { padding: 40px 0; border-top: 1px solid var(--border-soft); text-align: center; color: var(--text-faint); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<nav class="top">
+  <div class="container nav-inner">
+    <a class="nav-brand" href="../index.html">
+      <div class="brand-mark">CR</div>
+      <span class="nav-brand-name">GRUPO CA.RO</span>
+    </a>
+    <div class="nav-links">
+      <a href="landing.html">Produto</a>
+      <a href="pricing.html" class="active">Preços</a>
+      <a href="integrations.html">Integrações</a>
+      <a href="about.html">Sobre</a>
+      <a href="help.html">Ajuda</a>
+    </div>
+    <a class="btn btn-ghost" href="../auth/login.html">Entrar</a>
+    <a class="btn btn-primary" href="../auth/signup.html">Começar grátis</a>
+  </div>
+</nav>
+
+<header class="hero-p">
+  <div class="container">
+    <h1>Planos que crescem com você</h1>
+    <p>Comece grátis por 14 dias, sem cartão de crédito. Mude ou cancele quando quiser.</p>
+    <div class="billing-toggle" id="bt">
+      <button class="active" data-cycle="monthly">Mensal</button>
+      <button data-cycle="annual">Anual <span class="save-badge">−20%</span></button>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <div class="plans-grid">
+    <!-- ESSENCIAL -->
+    <div class="plan">
+      <div>
+        <div class="plan-name">ESSENCIAL</div>
+        <div class="plan-tagline" style="margin-top: 4px;">Para empresas que precisam de ERP, CRM e financeiro com operação profissional desde o primeiro dia.</div>
+      </div>
+      <div>
+        <div class="plan-price">
+          <span class="currency">R$</span>
+          <span class="amount" data-monthly="1.490" data-annual="1.242">1.490</span>
+          <span class="period">/mês</span>
+        </div>
+        <div class="plan-price" style="margin-top: 4px; min-height: 16px;">
+          <span class="original" data-show="annual" style="display:none;text-decoration:line-through;color:var(--text-faint)">R$ 1.490</span>
+          <span class="period" data-show="annual" style="display:none;">cobrado anual: R$ 14.900</span>
+        </div>
+      </div>
+      <ul>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> Até 5 usuários</li>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> Até 3 contas bancárias via Open Finance</li>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> Dashboard, contas a pagar/receber</li>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> Até 2.000 transações/mês</li>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> Suporte prioritário por e-mail</li>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> App mobile iOS e Android</li>
+      </ul>
+      <a class="btn" href="../auth/signup.html?plan=essencial" style="justify-content: center;">Começar grátis</a>
+      <div class="plan-foot">14 dias grátis · sem cartão</div>
+    </div>
+
+    <!-- BUSINESS (featured) -->
+    <div class="plan featured">
+      <span class="plan-flag">MAIS POPULAR</span>
+      <div>
+        <div class="plan-name" style="color: var(--accent)">PRO</div>
+        <div class="plan-tagline" style="margin-top: 4px;">Para empresas em crescimento que precisam de gestão completa.</div>
+      </div>
+      <div>
+        <div class="plan-price">
+          <span class="currency">R$</span>
+          <span class="amount" data-monthly="2.700" data-annual="2.250">2.700</span>
+          <span class="period">/mês</span>
+        </div>
+        <div class="plan-price" style="margin-top: 4px; min-height: 16px;">
+          <span class="original" data-show="annual" style="display:none;text-decoration:line-through;color:var(--text-faint)">R$ 2.700</span>
+          <span class="period" data-show="annual" style="display:none;">cobrado anual: R$ 27.000</span>
+        </div>
+      </div>
+      <ul>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> <strong>Até 10 usuários</strong> com permissões customizadas</li>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> <strong>Bancos ilimitados</strong> via Open Finance</li>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> <strong>Conciliação por IA</strong> + categorização automática</li>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> Emissão de NF-e (até 200/mês)</li>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> Transações ilimitadas</li>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> Relatórios DRE / Balancete / Fluxo</li>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> Alertas inteligentes + sugestões IA</li>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> Suporte por chat (horário comercial)</li>
+      </ul>
+      <a class="btn btn-primary" href="../auth/signup.html?plan=pro" style="justify-content: center;">Começar grátis</a>
+      <div class="plan-foot">14 dias grátis · sem cartão</div>
+    </div>
+
+    <!-- ENTERPRISE -->
+    <div class="plan">
+      <div>
+        <div class="plan-name">ENTERPRISE</div>
+        <div class="plan-tagline" style="margin-top: 4px;">Para grupos empresariais, indústrias e operações multiempresa de alta escala.</div>
+      </div>
+      <div>
+        <div class="plan-price">
+          <span class="currency">R$</span>
+          <span class="amount" data-monthly="6.900" data-annual="5.750">6.900</span>
+          <span class="period">/mês</span>
+        </div>
+        <div class="plan-price" style="margin-top: 4px; min-height: 16px;">
+          <span class="original" data-show="annual" style="display:none;text-decoration:line-through;color:var(--text-faint)">R$ 6.900</span>
+          <span class="period" data-show="annual" style="display:none;">cobrado anual: R$ 69.000</span>
+        </div>
+      </div>
+      <ul>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> <strong>Usuários ilimitados</strong> + SSO/SAML</li>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> <strong>Multi-empresa / multi-CNPJ</strong> consolidado</li>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> <strong>NF-e ilimitada</strong></li>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> Integrações ERP (SAP, Bling, Tiny)</li>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> API + webhooks</li>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> Auditoria completa + logs LGPD</li>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> Onboarding dedicado + treinamento</li>
+        <li><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> Suporte 24/7 + gerente de conta</li>
+      </ul>
+      <a class="btn" href="#" style="justify-content: center;">Falar com vendas</a>
+      <div class="plan-foot">SLA garantido · contrato anual</div>
+    </div>
+  </div>
+
+  <section class="compare">
+    <h2>Compare os planos</h2>
+    <p>Tudo que você ganha em cada nível.</p>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Recurso</th>
+          <th>Essencial</th>
+          <th>Pro</th>
+          <th>Enterprise</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="row-section"><td colspan="4">Plataforma</td></tr>
+        <tr><td>Usuários</td><td>5</td><td>10</td><td>Ilimitado</td></tr>
+        <tr><td>Bancos via Open Finance</td><td>3</td><td>Ilimitado</td><td>Ilimitado</td></tr>
+        <tr><td>Transações por mês</td><td>2.000</td><td>Ilimitadas</td><td>Ilimitadas</td></tr>
+        <tr><td>Multi-empresa (CNPJs)</td><td><span class="x">—</span></td><td>até 3</td><td>Ilimitado</td></tr>
+
+        <tr class="row-section"><td colspan="4">Automação</td></tr>
+        <tr><td>Conciliação por IA</td><td><span class="x">—</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+        <tr><td>Sugestões automáticas</td><td><span class="x">—</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+        <tr><td>Alertas de fluxo de caixa</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+        <tr><td>Previsão de fluxo (90 dias)</td><td><span class="x">—</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+
+        <tr class="row-section"><td colspan="4">Fiscal</td></tr>
+        <tr><td>NF-e</td><td><span class="x">—</span></td><td>200/mês</td><td>Ilimitada</td></tr>
+        <tr><td>Relatórios contábeis (DRE, etc)</td><td>Básico</td><td>Completo</td><td>Completo</td></tr>
+
+        <tr class="row-section"><td colspan="4">Integrações</td></tr>
+        <tr><td>ERP (Bling, Tiny, Omie)</td><td><span class="x">—</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+        <tr><td>API + webhooks</td><td><span class="x">—</span></td><td><span class="x">—</span></td><td><span class="check">✓</span></td></tr>
+        <tr><td>SSO / SAML</td><td><span class="x">—</span></td><td><span class="x">—</span></td><td><span class="check">✓</span></td></tr>
+
+        <tr class="row-section"><td colspan="4">Suporte</td></tr>
+        <tr><td>Canal</td><td>E-mail</td><td>Chat + e-mail</td><td>24/7 + gerente</td></tr>
+        <tr><td>Onboarding</td><td>Self-service</td><td>Assistido</td><td>Dedicado</td></tr>
+        <tr><td>SLA</td><td><span class="x">—</span></td><td><span class="x">—</span></td><td>99,95%</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="faq">
+    <h2>Perguntas frequentes</h2>
+    <p class="sub">Não achou o que procurava? <a href="help.html" style="color: var(--accent)">Fale com a gente</a>.</p>
+
+    <div class="faq-item open">
+      <div class="faq-q">Posso testar sem cartão de crédito?
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+      <div class="faq-a">Sim. 14 dias grátis em qualquer plano, sem precisar cadastrar cartão. Ao fim do trial, escolha o plano ideal ou exporte seus dados.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Como funciona o pagamento?
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+      <div class="faq-a">Aceitamos cartão de crédito (Visa, Master, Amex, Elo) e Pix. Pagamento mensal recorrente ou anual com 20% de desconto.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Posso mudar de plano depois?
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+      <div class="faq-a">Sim, a qualquer momento. Upgrade entra em vigor imediato (cobrança proporcional). Downgrade no próximo ciclo.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Meus dados estão seguros?
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+      <div class="faq-a">Criptografia AES-256 em repouso, TLS 1.3 em trânsito, backup diário, conformidade total com LGPD. Servidores em São Paulo (AWS).</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Como migro do meu sistema atual?
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+      <div class="faq-a">Importamos OFX, CSV e dados de Bling, Conta Azul, Omie e Tiny automaticamente. Para Business e Enterprise oferecemos migração assistida.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Posso cancelar quando quiser?
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+      <div class="faq-a">Cancelamento a qualquer momento, direto no painel. Sem multa, sem fidelidade. Você mantém acesso até o fim do ciclo pago.</div>
+    </div>
+  </section>
+
+  <div class="cta-mini">
+    <h3>Pronto para simplificar seu financeiro?</h3>
+    <p>Crie sua conta em 2 minutos. Cancele quando quiser.</p>
+    <a class="btn btn-primary btn-lg" href="../auth/signup.html">Começar grátis →</a>
+  </div>
+</main>
+
+<footer>
+  <div class="container">© 2026 Grupo CA.RO Tecnologia · <a href="landing.html" style="color: var(--accent)">Voltar para home</a></div>
+</footer>
+
+<script>
+  // billing toggle
+  document.querySelectorAll('#bt button').forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll('#bt button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      const cycle = b.dataset.cycle;
+      document.querySelectorAll('[data-monthly]').forEach(el => {
+        el.textContent = cycle === 'monthly' ? el.dataset.monthly : el.dataset.annual;
+      });
+      document.querySelectorAll('[data-show="annual"]').forEach(el => {
+        el.style.display = cycle === 'annual' ? 'inline' : 'none';
+      });
+    };
+  });
+  // faq
+  document.querySelectorAll('.faq-item').forEach(item => {
+    item.querySelector('.faq-q').onclick = () => item.classList.toggle('open');
+  });
+</script>
+
+</body>
+</html>

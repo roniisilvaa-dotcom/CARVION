@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CA.RO — Privacidade & LGPD</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../shared.css" />
+<style>
+  body { background: var(--bg); }
+  .container { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+  nav.top { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(20px); background: oklch(0.16 0.012 240 / 0.6); border-bottom: 1px solid var(--border-soft); }
+  .nav-inner { display: flex; align-items: center; gap: 32px; height: 64px; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+  .nav-brand { display: flex; align-items: center; gap: 10px; }
+  .nav-brand-name { font-weight: 700; font-size: 15px; }
+  .nav-links { display: flex; gap: 6px; flex: 1; }
+  .nav-links a { padding: 7px 12px; border-radius: 8px; font-size: 13.5px; color: var(--text-dim); }
+  .nav-links a:hover { color: var(--text); background: var(--surface); }
+  @media (max-width: 800px) { .nav-links { display: none; } }
+  .hero { padding: 60px 0 30px; text-align: center; }
+  .hero h1 { font-size: 40px; letter-spacing: -0.02em; font-weight: 700; margin-bottom: 12px; }
+  .hero p { color: var(--text-dim); }
+  .toc { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px; background: var(--surface); border: 1px solid var(--border-soft); border-radius: 12px; margin: 30px 0 50px; }
+  .toc a { padding: 4px 12px; border-radius: 999px; background: var(--bg-elev); font-size: 12.5px; color: var(--text-dim); border: 1px solid var(--border-soft); }
+  .toc a:hover { color: var(--accent); border-color: oklch(0.74 0.17 155 / 0.4); }
+  article { padding-bottom: 80px; }
+  article h2 { font-size: 22px; letter-spacing: -0.01em; font-weight: 600; margin: 40px 0 12px; }
+  article h3 { font-size: 16px; font-weight: 600; margin: 24px 0 8px; color: var(--text); }
+  article p, article li { color: var(--text-dim); font-size: 14.5px; line-height: 1.65; margin-bottom: 12px; }
+  article ul { padding-left: 22px; margin-bottom: 16px; }
+  article strong { color: var(--text); }
+  .callout { padding: 16px 18px; border-radius: 12px; background: oklch(0.74 0.17 155 / 0.06); border: 1px solid oklch(0.74 0.17 155 / 0.25); margin: 20px 0; display: flex; gap: 12px; }
+  .callout-icon { color: var(--accent); flex-shrink: 0; font-size: 20px; }
+  .updated { font-size: 12.5px; color: var(--text-faint); padding: 14px 16px; border: 1px dashed var(--border); border-radius: 10px; margin-bottom: 30px; }
+  .rights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+  @media (max-width: 600px) { .rights-grid { grid-template-columns: 1fr; } }
+  .right-card { padding: 14px; background: var(--surface); border: 1px solid var(--border-soft); border-radius: 10px; }
+  .right-card strong { display: block; margin-bottom: 4px; font-size: 14px; }
+  .right-card span { font-size: 12.5px; color: var(--text-faint); }
+  footer { padding: 40px 0; border-top: 1px solid var(--border-soft); text-align: center; color: var(--text-faint); font-size: 13px; }
+</style>
+</head>
+<body>
+<nav class="top">
+  <div class="nav-inner">
+    <a class="nav-brand" href="../index.html"><div class="brand-mark">CR</div><span class="nav-brand-name">GRUPO CA.RO</span></a>
+    <div class="nav-links">
+      <a href="landing.html">Produto</a><a href="pricing.html">Preços</a>
+      <a href="integrations.html">Integrações</a><a href="about.html">Sobre</a><a href="help.html">Ajuda</a>
+    </div>
+    <a class="btn btn-ghost" href="../auth/login.html">Entrar</a>
+    <a class="btn btn-primary" href="../auth/signup.html">Começar grátis</a>
+  </div>
+</nav>
+
+<header class="hero"><div class="container">
+  <span class="tag tag-dot">Conformidade total com LGPD</span>
+  <h1 style="margin-top:16px">Privacidade & Proteção de Dados</h1>
+  <p>Como coletamos, usamos e protegemos seus dados — em linguagem clara.</p>
+</div></header>
+
+<div class="container">
+  <div class="updated"><strong style="color:var(--text)">Última atualização:</strong> 15 de março de 2026 · <strong style="color:var(--text)">Encarregado (DPO):</strong> dpo@caro.com.br</div>
+
+  <nav class="toc">
+    <a href="#dados">1. Dados que coletamos</a>
+    <a href="#uso">2. Como usamos</a>
+    <a href="#bases">3. Bases legais</a>
+    <a href="#compartilhamento">4. Compartilhamento</a>
+    <a href="#seguranca">5. Segurança</a>
+    <a href="#retencao">6. Retenção</a>
+    <a href="#direitos">7. Seus direitos</a>
+    <a href="#cookies">8. Cookies</a>
+    <a href="#contato">9. Contato</a>
+  </nav>
+
+  <article>
+    <div class="callout">
+      <span class="callout-icon">🔒</span>
+      <div><strong>O essencial em 3 linhas:</strong> CA.RO coleta apenas dados necessários para operar o sistema financeiro. Não vendemos dados. Você pode exportar ou apagar tudo a qualquer momento. Servidores no Brasil, criptografia AES-256, conformidade total com LGPD (Lei nº 13.709/2018).</div>
+    </div>
+
+    <h2 id="dados">1. Dados que coletamos</h2>
+    <h3>Dados de cadastro</h3>
+    <ul>
+      <li>Nome, e-mail, telefone, CPF do usuário responsável</li>
+      <li>CNPJ, razão social, endereço e dados fiscais da empresa</li>
+    </ul>
+    <h3>Dados financeiros (com seu consentimento explícito)</h3>
+    <ul>
+      <li>Saldos e extratos bancários, via Open Finance regulado pelo Banco Central</li>
+      <li>Notas fiscais emitidas e recebidas</li>
+      <li>Lançamentos manuais que você cadastra no sistema</li>
+    </ul>
+    <h3>Dados de uso</h3>
+    <ul>
+      <li>Logs de acesso (IP, navegador, data/hora) para segurança e auditoria</li>
+      <li>Métricas de uso anonimizadas para melhoria do produto</li>
+    </ul>
+
+    <h2 id="uso">2. Como usamos seus dados</h2>
+    <ul>
+      <li><strong>Operar o serviço:</strong> processar lançamentos, gerar relatórios, emitir NF-e, conciliar bancos</li>
+      <li><strong>Suporte:</strong> responder dúvidas e resolver problemas técnicos</li>
+      <li><strong>Cobrança:</strong> processar pagamentos da assinatura</li>
+      <li><strong>Segurança:</strong> detectar fraudes e acessos suspeitos</li>
+      <li><strong>Melhoria:</strong> entender uso agregado e melhorar funcionalidades</li>
+    </ul>
+    <p><strong>O que NÃO fazemos:</strong> vender seus dados, usar para publicidade de terceiros, ou treinar modelos de IA com dados financeiros identificáveis.</p>
+
+    <h2 id="bases">3. Bases legais (Art. 7º LGPD)</h2>
+    <ul>
+      <li><strong>Execução de contrato:</strong> processar dados necessários para entregar o serviço contratado</li>
+      <li><strong>Cumprimento legal:</strong> obrigações fiscais e de retenção (ex: notas fiscais por 5 anos)</li>
+      <li><strong>Consentimento:</strong> conexão com bancos via Open Finance</li>
+      <li><strong>Interesse legítimo:</strong> segurança, prevenção a fraude e melhoria do produto</li>
+    </ul>
+
+    <h2 id="compartilhamento">4. Com quem compartilhamos</h2>
+    <p>Apenas com fornecedores essenciais à operação, sob contratos de confidencialidade e DPA (Data Processing Agreement):</p>
+    <ul>
+      <li><strong>AWS São Paulo:</strong> hospedagem (servidores em território nacional)</li>
+      <li><strong>Stripe / Iugu:</strong> processamento de pagamentos da assinatura</li>
+      <li><strong>SERPRO / Receita Federal:</strong> emissão e validação de NF-e</li>
+      <li><strong>Bancos parceiros:</strong> apenas sob seu consentimento via Open Finance</li>
+      <li><strong>Autoridades:</strong> mediante ordem judicial ou requisição legal válida</li>
+    </ul>
+
+    <h2 id="seguranca">5. Como protegemos</h2>
+    <ul>
+      <li>Criptografia AES-256 em repouso e TLS 1.3 em trânsito</li>
+      <li>Autenticação em 2 fatores disponível para todos os usuários</li>
+      <li>Backups diários criptografados, retenção de 90 dias</li>
+      <li>Auditoria completa de acessos (logs imutáveis)</li>
+      <li>Testes de penetração trimestrais por empresa independente</li>
+      <li>Conformidade SOC 2 Type II (em processo) e ISO 27001</li>
+    </ul>
+
+    <h2 id="retencao">6. Por quanto tempo guardamos</h2>
+    <ul>
+      <li><strong>Conta ativa:</strong> dados mantidos enquanto a assinatura estiver vigente</li>
+      <li><strong>Após cancelamento:</strong> 90 dias para reativação, depois exclusão</li>
+      <li><strong>Notas fiscais:</strong> 5 anos (obrigação fiscal — Lei nº 8.137/1990)</li>
+      <li><strong>Logs de auditoria:</strong> 6 meses</li>
+    </ul>
+
+    <h2 id="direitos">7. Seus direitos (Art. 18 LGPD)</h2>
+    <p>Você pode exercer qualquer um destes direitos a qualquer momento, gratuitamente, em <strong>Configurações → Privacidade</strong> ou enviando e-mail para <strong>dpo@caro.com.br</strong>.</p>
+    <div class="rights-grid">
+      <div class="right-card"><strong>✓ Confirmação</strong><span>Saber se tratamos seus dados</span></div>
+      <div class="right-card"><strong>✓ Acesso</strong><span>Receber cópia dos dados</span></div>
+      <div class="right-card"><strong>✓ Correção</strong><span>Atualizar dados incorretos</span></div>
+      <div class="right-card"><strong>✓ Exclusão</strong><span>Apagar dados (quando permitido por lei)</span></div>
+      <div class="right-card"><strong>✓ Portabilidade</strong><span>Exportar em formato aberto</span></div>
+      <div class="right-card"><strong>✓ Anonimização</strong><span>Bloquear identificação</span></div>
+      <div class="right-card"><strong>✓ Revogar consentimento</strong><span>Desativar Open Finance</span></div>
+      <div class="right-card"><strong>✓ Reclamar à ANPD</strong><span>Caso não resolvamos</span></div>
+    </div>
+
+    <h2 id="cookies">8. Cookies</h2>
+    <p>Usamos cookies essenciais (login, preferências) e analíticos (Google Analytics, anonimizado). Você pode gerenciar em <strong>Configurações → Cookies</strong>. Não usamos cookies de publicidade de terceiros.</p>
+
+    <h2 id="contato">9. Contato do Encarregado (DPO)</h2>
+    <div class="callout">
+      <span class="callout-icon">📧</span>
+      <div>
+        <strong>Beatriz Lima — Encarregada de Proteção de Dados</strong><br>
+        E-mail: <a href="mailto:dpo@caro.com.br" style="color:var(--accent)">dpo@caro.com.br</a><br>
+        Resposta em até 15 dias úteis · Conforme Art. 41 LGPD
+      </div>
+    </div>
+
+    <h2>10. Alterações nesta política</h2>
+    <p>Notificamos por e-mail e no painel quando houver mudanças relevantes. Histórico de versões disponível em <a href="#" style="color:var(--accent)">github.com/caro-tech/legal</a>.</p>
+  </article>
+</div>
+
+<footer><div class="container">© 2026 Grupo CA.RO Tecnologia · <a href="landing.html" style="color:var(--accent)">Voltar</a></div></footer>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CA.RO — Configurações</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../shared.css" />
+<style>
+  body { background: var(--bg); }
+  .layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  aside { border-right: 1px solid var(--border-soft); padding: 24px 14px; background: oklch(0.16 0.012 240 / 0.5); }
+  .back-link { display: flex; align-items: center; gap: 8px; padding: 8px 10px; color: var(--text-dim); font-size: 13px; border-radius: 8px; margin-bottom: 20px; }
+  .back-link:hover { color: var(--text); background: var(--surface); }
+  .nav-title { font-size: 11px; color: var(--text-faint); letter-spacing: 0.06em; text-transform: uppercase; margin: 0 10px 8px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; font-size: 13.5px; color: var(--text-dim); cursor: pointer; margin-bottom: 2px; }
+  .nav-item:hover { background: var(--surface); color: var(--text); }
+  .nav-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+  main { padding: 32px 40px; max-width: 880px; }
+  h1 { font-size: 26px; letter-spacing: -0.02em; font-weight: 600; margin-bottom: 4px; }
+  .page-sub { color: var(--text-dim); font-size: 14px; margin-bottom: 28px; }
+  .section {
+    background: var(--surface); border: 1px solid var(--border-soft);
+    border-radius: var(--r-lg); padding: 24px; margin-bottom: 18px;
+  }
+  .section h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .section .desc { color: var(--text-dim); font-size: 13px; margin-bottom: 18px; }
+  .row-form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .field label { font-size: 12px; color: var(--text-dim); }
+  .field input, .field select, .field textarea { background: var(--bg); border: 1px solid var(--border-soft); color: var(--text); padding: 10px 12px; border-radius: 8px; font-size: 13.5px; outline: none; font-family: inherit; }
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+  .members-table { width: 100%; }
+  .members-table tr { border-bottom: 1px solid var(--border-soft); }
+  .members-table tr:last-child { border-bottom: none; }
+  .members-table td { padding: 12px 0; font-size: 13.5px; vertical-align: middle; }
+  .avatar-sm { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: inline-grid; place-items: center; color: oklch(0.15 0.01 240); font-weight: 600; font-size: 12px; margin-right: 10px; vertical-align: middle; }
+  .role-pill { padding: 2px 8px; border-radius: 999px; font-size: 11px; background: var(--surface-2); color: var(--text-dim); }
+  .role-pill.admin { background: oklch(0.74 0.17 155 / 0.15); color: var(--accent); }
+  .row-flex { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border-soft); }
+  .row-flex:last-child { border-bottom: none; }
+  .toggle { width: 36px; height: 20px; background: var(--surface-2); border-radius: 999px; position: relative; cursor: pointer; transition: background 0.15s; }
+  .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: white; transition: left 0.15s; }
+  .toggle.on { background: var(--accent); }
+  .toggle.on::after { left: 18px; }
+  .danger-zone { border-color: oklch(0.65 0.20 25 / 0.4); }
+  .danger-zone h3 { color: oklch(0.75 0.18 25); }
+  .btn-danger { background: oklch(0.65 0.20 25 / 0.15); color: oklch(0.75 0.18 25); border: 1px solid oklch(0.65 0.20 25 / 0.3); }
+  .btn-danger:hover { background: oklch(0.65 0.20 25 / 0.22); }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <a class="back-link" href="../CA.RO Sistema Financeiro.html">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+      Voltar ao painel
+    </a>
+    <div class="nav-title">Conta</div>
+    <a class="nav-item active" href="settings.html">👤 Perfil</a>
+    <a class="nav-item" href="settings.html#empresa">🏢 Empresa</a>
+    <a class="nav-item" href="settings.html#equipe">👥 Equipe e permissões</a>
+    <a class="nav-item" href="settings.html#seguranca">🔒 Segurança</a>
+    <a class="nav-item" href="settings.html#notif">🔔 Notificações</a>
+    <div class="nav-title" style="margin-top: 18px">Plano</div>
+    <a class="nav-item" href="billing.html">💳 Plano e pagamento</a>
+    <a class="nav-item" href="billing.html#faturas">🧾 Faturas</a>
+    <a class="nav-item" href="../marketing/integrations.html">🔌 Integrações</a>
+  </aside>
+
+  <main>
+    <h1>Configurações</h1>
+    <p class="page-sub">Gerencie sua conta, equipe e preferências.</p>
+
+    <div class="section">
+      <h3>Seu perfil</h3>
+      <p class="desc">Como você aparece para os outros membros da equipe.</p>
+      <div class="row-form">
+        <div class="field"><label>Nome completo</label><input value="Maria Silva" /></div>
+        <div class="field"><label>Cargo</label><input value="Diretora Financeira" /></div>
+        <div class="field"><label>E-mail</label><input value="maria@suaempresa.com.br" disabled /></div>
+        <div class="field"><label>Telefone</label><input value="(11) 99999-1234" /></div>
+      </div>
+      <button class="btn btn-primary">Salvar alterações</button>
+    </div>
+
+    <div class="section" id="empresa">
+      <h3>Dados da empresa</h3>
+      <p class="desc">Informações usadas em notas fiscais, relatórios e cobrança.</p>
+      <div class="row-form">
+        <div class="field"><label>Razão social</label><input value="Sua Empresa Tecnologia Ltda" /></div>
+        <div class="field"><label>Nome fantasia</label><input value="Sua Empresa" /></div>
+        <div class="field"><label>CNPJ</label><input value="12.345.678/0001-99" /></div>
+        <div class="field"><label>Inscrição Estadual</label><input value="123.456.789.000" /></div>
+        <div class="field"><label>CEP</label><input value="01234-567" /></div>
+        <div class="field"><label>Cidade / UF</label><input value="São Paulo / SP" /></div>
+      </div>
+      <button class="btn btn-primary">Salvar alterações</button>
+    </div>
+
+    <div class="section" id="equipe">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <h3 style="margin:0">Equipe</h3>
+        <button class="btn btn-primary">+ Convidar membro</button>
+      </div>
+      <p class="desc">5 de 10 lugares usados no plano Business. <a href="billing.html" style="color:var(--accent)">Ampliar limite →</a></p>
+      <table class="members-table">
+        <tbody>
+          <tr><td><span class="avatar-sm">MS</span> Maria Silva <span class="muted" style="font-size:12px">(você)</span></td><td>maria@suaempresa.com.br</td><td><span class="role-pill admin">Admin</span></td><td style="text-align:right"><span class="muted" style="font-size:12px">—</span></td></tr>
+          <tr><td><span class="avatar-sm" style="background:linear-gradient(135deg,#fbbf24,#f59e0b)">JC</span> João Costa</td><td>joao@suaempresa.com.br</td><td><span class="role-pill">Financeiro</span></td><td style="text-align:right"><a href="#" class="muted" style="font-size:12px">Editar</a></td></tr>
+          <tr><td><span class="avatar-sm" style="background:linear-gradient(135deg,#a78bfa,#7c3aed)">AR</span> Ana Rocha</td><td>ana@suaempresa.com.br</td><td><span class="role-pill">Financeiro</span></td><td style="text-align:right"><a href="#" class="muted" style="font-size:12px">Editar</a></td></tr>
+          <tr><td><span class="avatar-sm" style="background:linear-gradient(135deg,#f87171,#ef4444)">PT</span> Pedro Tavares</td><td>pedro@contadora.com.br</td><td><span class="role-pill">Contador (leitura)</span></td><td style="text-align:right"><a href="#" class="muted" style="font-size:12px">Editar</a></td></tr>
+          <tr><td><span class="avatar-sm" style="background:linear-gradient(135deg,#34d399,#10b981)">LF</span> Lucas Ferreira</td><td>lucas@suaempresa.com.br</td><td><span class="role-pill">Aprovador</span></td><td style="text-align:right"><a href="#" class="muted" style="font-size:12px">Editar</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section" id="seguranca">
+      <h3>Segurança</h3>
+      <p class="desc">Mantenha sua conta protegida.</p>
+      <div class="row-flex">
+        <div><strong style="font-size:14px">Autenticação em 2 fatores</strong><div class="muted" style="font-size:12.5px">Adicione uma camada extra via app autenticador.</div></div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="row-flex">
+        <div><strong style="font-size:14px">Sessões ativas</strong><div class="muted" style="font-size:12.5px">3 dispositivos conectados.</div></div>
+        <button class="btn btn-ghost">Gerenciar</button>
+      </div>
+      <div class="row-flex">
+        <div><strong style="font-size:14px">Alterar senha</strong><div class="muted" style="font-size:12.5px">Última alteração há 47 dias.</div></div>
+        <button class="btn">Alterar</button>
+      </div>
+    </div>
+
+    <div class="section" id="notif">
+      <h3>Notificações</h3>
+      <p class="desc">Escolha quando e como receber alertas.</p>
+      <div class="row-flex">
+        <div><strong style="font-size:14px">Alertas de fluxo de caixa</strong><div class="muted" style="font-size:12.5px">Quando saldo projetado ficar abaixo do mínimo.</div></div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="row-flex">
+        <div><strong style="font-size:14px">Contas vencendo</strong><div class="muted" style="font-size:12.5px">Resumo diário às 9h.</div></div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="row-flex">
+        <div><strong style="font-size:14px">Relatório semanal</strong><div class="muted" style="font-size:12.5px">Resumo financeiro toda segunda.</div></div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="row-flex">
+        <div><strong style="font-size:14px">Novidades CA.RO</strong><div class="muted" style="font-size:12.5px">Novos recursos e dicas mensalmente.</div></div>
+        <div class="toggle" onclick="this.classList.toggle('on')"></div>
+      </div>
+    </div>
+
+    <div class="section danger-zone">
+      <h3>Zona de risco</h3>
+      <p class="desc">Ações irreversíveis. Tenha cuidado.</p>
+      <div class="row-flex">
+        <div><strong style="font-size:14px">Exportar todos os dados</strong><div class="muted" style="font-size:12.5px">Baixe um arquivo .zip com todo seu histórico em CSV/PDF.</div></div>
+        <button class="btn">Exportar</button>
+      </div>
+      <div class="row-flex">
+        <div><strong style="font-size:14px">Cancelar conta</strong><div class="muted" style="font-size:12.5px">Sua empresa e dados serão removidos após 90 dias.</div></div>
+        <button class="btn btn-danger">Cancelar conta</button>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

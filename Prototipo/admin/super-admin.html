@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CA.RO — Super Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../shared.css" />
+<style>
+  body { background: var(--bg); }
+  .layout { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+  aside { border-right: 1px solid var(--border-soft); padding: 20px 12px; background: oklch(0.16 0.012 240 / 0.5); }
+  .admin-brand { display: flex; align-items: center; gap: 10px; padding: 6px 8px; margin-bottom: 18px; }
+  .admin-brand-tag { font-size: 9.5px; padding: 2px 6px; background: oklch(0.65 0.20 25 / 0.2); color: oklch(0.78 0.18 25); border-radius: 4px; font-weight: 700; letter-spacing: 0.05em; }
+  .admin-name { font-weight: 700; font-size: 14px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; font-size: 13.5px; color: var(--text-dim); margin-bottom: 2px; cursor: pointer; }
+  .nav-item:hover { background: var(--surface); color: var(--text); }
+  .nav-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+  main { padding: 28px 32px; }
+  h1 { font-size: 24px; letter-spacing: -0.02em; font-weight: 600; margin-bottom: 4px; }
+  .head-row { display:flex; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; }
+  .page-sub { color: var(--text-dim); font-size: 14px; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+  @media (max-width: 1100px) { .kpi-grid { grid-template-columns: 1fr 1fr; } }
+  .kpi-card { background: var(--surface); border: 1px solid var(--border-soft); border-radius: var(--r-md); padding: 16px 18px; }
+  .kpi-card .label { font-size: 11.5px; color: var(--text-faint); letter-spacing: 0.04em; text-transform: uppercase; }
+  .kpi-card .value { font-family: var(--font-mono); font-size: 26px; font-weight: 600; letter-spacing: -0.01em; margin-top: 6px; }
+  .kpi-card .change { font-size: 12px; margin-top: 4px; }
+  .change.up { color: var(--accent); } .change.down { color: oklch(0.75 0.18 25); }
+
+  .grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; margin-bottom: 22px; }
+  @media (max-width: 1100px) { .grid-2 { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--border-soft); border-radius: var(--r-lg); padding: 20px; }
+  .card h3 { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
+
+  .mini-bars { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; height: 140px; align-items: end; }
+  .mini-bars .bar { background: linear-gradient(180deg, var(--accent), oklch(0.62 0.15 155)); border-radius: 4px 4px 0 0; min-height: 8px; transition: opacity 0.15s; }
+  .mini-bars .bar:hover { opacity: 0.8; }
+  .bar-labels { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; margin-top: 6px; font-size: 10px; color: var(--text-faint); text-align: center; }
+
+  .donut-wrap { display: flex; align-items: center; gap: 20px; }
+  .donut { width: 130px; height: 130px; flex-shrink: 0; }
+  .legend { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+  .legend-num { margin-left: auto; font-family: var(--font-mono); color: var(--text-dim); }
+
+  .clients-table { width: 100%; }
+  .clients-table th { font-size: 11px; color: var(--text-faint); letter-spacing: 0.04em; text-transform: uppercase; text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border-soft); font-weight: 600; }
+  .clients-table td { padding: 12px; font-size: 13.5px; border-bottom: 1px solid var(--border-soft); }
+  .clients-table tr:last-child td { border-bottom: none; }
+  .clients-table tr:hover td { background: oklch(0.18 0.014 240 / 0.5); }
+  .co-avatar { width: 30px; height: 30px; border-radius: 7px; display: inline-grid; place-items: center; color: white; font-weight: 700; font-size: 11px; vertical-align: middle; margin-right: 10px; }
+  .pill { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; }
+  .pill-active { background: oklch(0.74 0.17 155 / 0.15); color: var(--accent); }
+  .pill-trial { background: oklch(0.72 0.13 230 / 0.15); color: oklch(0.78 0.13 230); }
+  .pill-cancel { background: oklch(0.65 0.20 25 / 0.15); color: oklch(0.78 0.18 25); }
+  .pill-due { background: oklch(0.78 0.16 80 / 0.15); color: oklch(0.85 0.14 80); }
+
+  .toolbar { display: flex; gap: 10px; margin-bottom: 14px; align-items: center; }
+  .search { flex: 1; max-width: 360px; padding: 8px 12px 8px 32px; background: var(--bg); border: 1px solid var(--border-soft); border-radius: 8px; color: var(--text); font-size: 13px; outline: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%23949a9d" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>'); background-repeat: no-repeat; background-position: 10px center; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="admin-brand">
+      <div class="brand-mark" style="background:linear-gradient(135deg, oklch(0.65 0.20 25), oklch(0.78 0.18 35))">CR</div>
+      <div><div class="admin-name">CA.RO</div><span class="admin-brand-tag">SUPERADMIN</span></div>
+    </div>
+    <a class="nav-item active">📊 Visão geral</a>
+    <a class="nav-item">🏢 Empresas clientes</a>
+    <a class="nav-item">💵 Faturamento</a>
+    <a class="nav-item">📈 Métricas SaaS</a>
+    <a class="nav-item">🎫 Suporte</a>
+    <a class="nav-item">🚩 Feature flags</a>
+    <a class="nav-item">📝 Logs e auditoria</a>
+    <a class="nav-item">⚙️ Configurações</a>
+    <div style="margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border-soft)">
+      <a class="nav-item" href="../index.html">← Voltar ao hub</a>
+    </div>
+  </aside>
+
+  <main>
+    <div class="head-row">
+      <div>
+        <h1>Visão geral · Operação CA.RO</h1>
+        <p class="page-sub">Dados em tempo real · atualizado há 2min</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <select class="btn" style="background:var(--surface);border:1px solid var(--border-soft);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px">
+          <option>Últimos 30 dias</option><option>Este mês</option><option>Trimestre</option><option>Ano</option>
+        </select>
+        <button class="btn">Exportar</button>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="label">MRR</div>
+        <div class="value" style="color:var(--accent)">R$ 287.450</div>
+        <div class="change up">↑ 12.4% vs mês anterior</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">ARR</div>
+        <div class="value">R$ 3,45M</div>
+        <div class="change up">↑ 47% YoY</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">Clientes ativos</div>
+        <div class="value">1.247</div>
+        <div class="change up">+ 89 este mês</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">Churn mensal</div>
+        <div class="value" style="color: oklch(0.78 0.16 80)">2.8%</div>
+        <div class="change down">↑ 0.4pp vs mês anterior</div>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="label">Trials ativos</div>
+        <div class="value">184</div>
+        <div class="change up">Conversão: 34%</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">LTV / CAC</div>
+        <div class="value">4.2x</div>
+        <div class="change up">↑ saudável (&gt;3x)</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">NPS</div>
+        <div class="value">68</div>
+        <div class="change up">↑ 5 pts vs trim. anterior</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">Tickets abertos</div>
+        <div class="value">23</div>
+        <div class="change">Tempo médio: 1h12min</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>MRR · últimos 12 meses (R$ mil)</h3>
+        <div class="mini-bars">
+          <div class="bar" style="height:35%"></div>
+          <div class="bar" style="height:42%"></div>
+          <div class="bar" style="height:48%"></div>
+          <div class="bar" style="height:51%"></div>
+          <div class="bar" style="height:58%"></div>
+          <div class="bar" style="height:62%"></div>
+          <div class="bar" style="height:68%"></div>
+          <div class="bar" style="height:71%"></div>
+          <div class="bar" style="height:78%"></div>
+          <div class="bar" style="height:82%"></div>
+          <div class="bar" style="height:91%"></div>
+          <div class="bar" style="height:100%"></div>
+        </div>
+        <div class="bar-labels">
+          <div>Mai</div><div>Jun</div><div>Jul</div><div>Ago</div><div>Set</div><div>Out</div><div>Nov</div><div>Dez</div><div>Jan</div><div>Fev</div><div>Mar</div><div>Abr</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Distribuição por plano</h3>
+        <div class="donut-wrap">
+          <svg class="donut" viewBox="0 0 36 36">
+            <circle cx="18" cy="18" r="14" fill="none" stroke="oklch(0.22 0.014 240)" stroke-width="5"/>
+            <circle cx="18" cy="18" r="14" fill="none" stroke="oklch(0.74 0.17 155)" stroke-width="5"
+              stroke-dasharray="48 88" stroke-dashoffset="0" transform="rotate(-90 18 18)" stroke-linecap="round"/>
+            <circle cx="18" cy="18" r="14" fill="none" stroke="oklch(0.72 0.13 230)" stroke-width="5"
+              stroke-dasharray="38 88" stroke-dashoffset="-48" transform="rotate(-90 18 18)" stroke-linecap="round"/>
+            <circle cx="18" cy="18" r="14" fill="none" stroke="oklch(0.78 0.16 80)" stroke-width="5"
+              stroke-dasharray="14 88" stroke-dashoffset="-86" transform="rotate(-90 18 18)" stroke-linecap="round"/>
+            <text x="18" y="19" text-anchor="middle" font-size="6" fill="white" font-weight="600" font-family="JetBrains Mono">1247</text>
+          </svg>
+          <div class="legend">
+            <div class="legend-item"><span class="legend-dot" style="background:oklch(0.74 0.17 155)"></span>Business<span class="legend-num">594</span></div>
+            <div class="legend-item"><span class="legend-dot" style="background:oklch(0.72 0.13 230)"></span>Starter<span class="legend-num">472</span></div>
+            <div class="legend-item"><span class="legend-dot" style="background:oklch(0.78 0.16 80)"></span>Enterprise<span class="legend-num">181</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <h3 style="margin:0">Empresas recentes</h3>
+        <a href="#" style="color:var(--accent);font-size:13px">Ver todas →</a>
+      </div>
+      <div class="toolbar">
+        <input class="search" placeholder="Buscar empresa, CNPJ ou e-mail..." />
+        <button class="btn">Plano: todos</button>
+        <button class="btn">Status: todos</button>
+      </div>
+      <table class="clients-table">
+        <thead><tr><th>Empresa</th><th>CNPJ</th><th>Plano</th><th>MRR</th><th>Status</th><th>Cadastro</th><th></th></tr></thead>
+        <tbody>
+          <tr><td><span class="co-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706)">SE</span> Sua Empresa Ltda</td><td>12.345.678/0001-99</td><td>Business</td><td style="font-family:var(--font-mono)">R$ 149</td><td><span class="pill pill-trial">Trial · 10d</span></td><td>04/04/2026</td><td><a href="#" class="muted" style="color:var(--accent);font-size:12.5px">Ver →</a></td></tr>
+          <tr><td><span class="co-avatar" style="background:linear-gradient(135deg,#a78bfa,#7c3aed)">RM</span> Restaurante Mar</td><td>23.456.789/0001-88</td><td>Starter</td><td style="font-family:var(--font-mono)">R$ 49</td><td><span class="pill pill-active">Ativo</span></td><td>02/04/2026</td><td><a href="#" class="muted" style="color:var(--accent);font-size:12.5px">Ver →</a></td></tr>
+          <tr><td><span class="co-avatar" style="background:linear-gradient(135deg,#34d399,#10b981)">CT</span> Construtora Topo</td><td>34.567.890/0001-77</td><td>Enterprise</td><td style="font-family:var(--font-mono)">R$ 499</td><td><span class="pill pill-active">Ativo</span></td><td>28/03/2026</td><td><a href="#" class="muted" style="color:var(--accent);font-size:12.5px">Ver →</a></td></tr>
+          <tr><td><span class="co-avatar" style="background:linear-gradient(135deg,#f87171,#dc2626)">VS</span> VendaShop</td><td>45.678.901/0001-66</td><td>Business</td><td style="font-family:var(--font-mono)">R$ 149</td><td><span class="pill pill-due">Pagamento atrasado</span></td><td>15/02/2026</td><td><a href="#" class="muted" style="color:var(--accent);font-size:12.5px">Ver →</a></td></tr>
+          <tr><td><span class="co-avatar" style="background:linear-gradient(135deg,#60a5fa,#2563eb)">CL</span> Clínica Vida+</td><td>56.789.012/0001-55</td><td>Business</td><td style="font-family:var(--font-mono)">R$ 149</td><td><span class="pill pill-active">Ativo</span></td><td>10/01/2026</td><td><a href="#" class="muted" style="color:var(--accent);font-size:12.5px">Ver →</a></td></tr>
+          <tr><td><span class="co-avatar" style="background:linear-gradient(135deg,#fbbf24,#f59e0b)">PD</span> Padaria Doce</td><td>67.890.123/0001-44</td><td>Starter</td><td style="font-family:var(--font-mono)">R$ 0</td><td><span class="pill pill-cancel">Cancelado</span></td><td>22/11/2025</td><td><a href="#" class="muted" style="color:var(--accent);font-size:12.5px">Ver →</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+</body>
+</html>

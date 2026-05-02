@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CA.RO — Central de ajuda</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../shared.css" />
+<style>
+  body { background: var(--bg); }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+  nav.top { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(20px); background: oklch(0.16 0.012 240 / 0.6); border-bottom: 1px solid var(--border-soft); }
+  .nav-inner { display: flex; align-items: center; gap: 32px; height: 64px; }
+  .nav-brand { display: flex; align-items: center; gap: 10px; }
+  .nav-brand-name { font-weight: 700; font-size: 15px; }
+  .nav-links { display: flex; gap: 6px; flex: 1; }
+  .nav-links a { padding: 7px 12px; border-radius: 8px; font-size: 13.5px; color: var(--text-dim); }
+  .nav-links a.active { color: var(--text); background: var(--surface); }
+  .nav-links a:hover { color: var(--text); background: var(--surface); }
+  @media (max-width: 800px) { .nav-links { display: none; } }
+
+  .hero-help { padding: 70px 0 40px; text-align: center; }
+  .hero-help h1 { font-size: clamp(32px, 4.5vw, 48px); letter-spacing: -0.02em; font-weight: 700; margin-bottom: 14px; }
+  .hero-help p { color: var(--text-dim); font-size: 16px; margin-bottom: 28px; }
+  .search-help { max-width: 600px; margin: 0 auto; position: relative; }
+  .search-help input { width: 100%; padding: 16px 20px 16px 50px; background: var(--surface); border: 1px solid var(--border-soft); border-radius: 14px; color: var(--text); font-size: 15px; outline: none; }
+  .search-help input:focus { border-color: var(--accent); }
+  .search-help svg { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-dim); }
+
+  .topics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 50px 0; }
+  @media (max-width: 900px) { .topics { grid-template-columns: 1fr 1fr; } }
+  .topic { padding: 24px; background: var(--surface); border: 1px solid var(--border-soft); border-radius: var(--r-lg); cursor: pointer; transition: all 0.15s; }
+  .topic:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .topic .ico { width: 40px; height: 40px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; margin-bottom: 12px; font-size: 20px; }
+  .topic h3 { font-size: 14.5px; font-weight: 600; margin-bottom: 4px; }
+  .topic p { color: var(--text-dim); font-size: 12.5px; }
+  .topic-count { font-size: 11px; color: var(--text-faint); margin-top: 8px; }
+
+  .faq-section { max-width: 760px; margin: 70px auto; }
+  .faq-section h2 { font-size: 26px; letter-spacing: -0.02em; font-weight: 700; margin-bottom: 8px; text-align: center; }
+  .faq-section .sub { text-align: center; color: var(--text-dim); margin-bottom: 32px; font-size: 14px; }
+  .faq-cat { font-size: 12px; color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 30px; margin-bottom: 8px; font-weight: 600; }
+  .faq-item { border-bottom: 1px solid var(--border-soft); padding: 16px 0; }
+  .faq-q { font-size: 14.5px; font-weight: 500; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+  .faq-q svg { transition: transform 0.2s; flex-shrink: 0; }
+  .faq-item.open .faq-q svg { transform: rotate(180deg); }
+  .faq-a { color: var(--text-dim); font-size: 13.5px; line-height: 1.6; margin-top: 10px; display: none; }
+  .faq-item.open .faq-a { display: block; }
+
+  .contact-cta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 50px 0; }
+  @media (max-width: 800px) { .contact-cta { grid-template-columns: 1fr; } }
+  .ccard { padding: 28px; background: linear-gradient(180deg, var(--surface), var(--bg-elev)); border: 1px solid var(--border-soft); border-radius: var(--r-lg); text-align: center; }
+  .ccard h3 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .ccard p { font-size: 13px; color: var(--text-dim); margin-bottom: 14px; }
+  .ccard .ico { width: 48px; height: 48px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; margin: 0 auto 12px; }
+
+  footer { padding: 40px 0; border-top: 1px solid var(--border-soft); text-align: center; color: var(--text-faint); font-size: 13px; }
+</style>
+</head>
+<body>
+<nav class="top">
+  <div class="container nav-inner">
+    <a class="nav-brand" href="../index.html"><div class="brand-mark">CR</div><span class="nav-brand-name">GRUPO CA.RO</span></a>
+    <div class="nav-links">
+      <a href="landing.html">Produto</a>
+      <a href="pricing.html">Preços</a>
+      <a href="integrations.html">Integrações</a>
+      <a href="about.html">Sobre</a>
+      <a href="help.html" class="active">Ajuda</a>
+    </div>
+    <a class="btn btn-ghost" href="../auth/login.html">Entrar</a>
+    <a class="btn btn-primary" href="../auth/signup.html">Começar grátis</a>
+  </div>
+</nav>
+
+<header class="hero-help container">
+  <h1>Como podemos ajudar?</h1>
+  <p>Tutoriais, respostas e suporte humano quando precisar.</p>
+  <div class="search-help">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <input placeholder="Busque por: 'conciliação', 'NF-e', 'Open Finance', 'cancelar'..." />
+  </div>
+</header>
+
+<section class="container">
+  <div class="topics">
+    <div class="topic">
+      <div class="ico">🚀</div>
+      <h3>Primeiros passos</h3>
+      <p>Configurar sua conta, conectar bancos, importar dados.</p>
+      <div class="topic-count">12 artigos</div>
+    </div>
+    <div class="topic">
+      <div class="ico">🔄</div>
+      <h3>Conciliação bancária</h3>
+      <p>Como funciona o match automático e regras de IA.</p>
+      <div class="topic-count">8 artigos</div>
+    </div>
+    <div class="topic">
+      <div class="ico">🧾</div>
+      <h3>Notas fiscais</h3>
+      <p>Emitir NF-e, NFS-e, certificado digital, lotes.</p>
+      <div class="topic-count">15 artigos</div>
+    </div>
+    <div class="topic">
+      <div class="ico">📊</div>
+      <h3>Relatórios</h3>
+      <p>DRE, balancete, fluxo, exportar para contador.</p>
+      <div class="topic-count">9 artigos</div>
+    </div>
+    <div class="topic">
+      <div class="ico">👥</div>
+      <h3>Equipe e permissões</h3>
+      <p>Convidar pessoas, papéis, controle de aprovação.</p>
+      <div class="topic-count">6 artigos</div>
+    </div>
+    <div class="topic">
+      <div class="ico">💳</div>
+      <h3>Plano e cobrança</h3>
+      <p>Mudar plano, faturas, cancelar, dados de pagamento.</p>
+      <div class="topic-count">11 artigos</div>
+    </div>
+    <div class="topic">
+      <div class="ico">🔌</div>
+      <h3>Integrações</h3>
+      <p>ERP, e-commerce, APIs, webhooks, Open Finance.</p>
+      <div class="topic-count">14 artigos</div>
+    </div>
+    <div class="topic">
+      <div class="ico">🔒</div>
+      <h3>Segurança e LGPD</h3>
+      <p>Criptografia, 2FA, exportar/excluir dados, auditoria.</p>
+      <div class="topic-count">7 artigos</div>
+    </div>
+  </div>
+</section>
+
+<section class="container faq-section">
+  <h2>Perguntas mais frequentes</h2>
+  <p class="sub">As dúvidas que aparecem todo dia no nosso suporte.</p>
+
+  <div class="faq-cat">Conta &amp; Plano</div>
+  <div class="faq-item open">
+    <div class="faq-q">Como funciona o trial de 14 dias?<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+    <div class="faq-a">Você tem acesso completo ao plano Business por 14 dias, sem cartão de crédito. Ao fim, escolhe um plano (Starter, Business ou Enterprise) ou exporta seus dados sem custo.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Posso mudar de plano a qualquer momento?<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+    <div class="faq-a">Sim. Upgrade entra em vigor imediato (cobrança proporcional). Downgrade no próximo ciclo de cobrança. Sem multa, sem fidelidade.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Como cancelo minha assinatura?<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+    <div class="faq-a">Direto pelo painel: Configurações → Plano e pagamento → Cancelar. Acesso continua até o fim do ciclo já pago. Seus dados ficam disponíveis pra exportar por 90 dias.</div>
+  </div>
+
+  <div class="faq-cat">Integrações bancárias</div>
+  <div class="faq-item">
+    <div class="faq-q">Quais bancos vocês suportam via Open Finance?<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+    <div class="faq-a">Itaú, Bradesco, Banco do Brasil, Santander, Caixa, Nubank, Inter, C6, BTG, Sicoob, Sicredi, Original, Safra e outros 30+ bancos integrados ao Sistema Financeiro Aberto regulamentado pelo Bacen.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">CA.RO pode movimentar minha conta bancária?<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+    <div class="faq-a">Não. Trabalhamos com escopo de leitura apenas. CA.RO consegue ver seus extratos, mas nunca pode fazer transferências, pagamentos ou Pix em seu nome.</div>
+  </div>
+
+  <div class="faq-cat">Notas fiscais</div>
+  <div class="faq-item">
+    <div class="faq-q">Preciso de certificado digital pra emitir NF-e?<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+    <div class="faq-a">Sim, é exigência da Receita Federal. CA.RO aceita certificados A1 (arquivo) e A3 (token/cartão). Você faz o upload uma vez e ele é usado em todas as emissões.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Quais tipos de nota posso emitir?<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+    <div class="faq-a">NF-e (produto, modelo 55), NFS-e (serviço, modelos municipais), NFC-e (consumidor, modelo 65) e CT-e (transporte). Suportamos as principais prefeituras do Brasil.</div>
+  </div>
+
+  <div class="faq-cat">Segurança</div>
+  <div class="faq-item">
+    <div class="faq-q">Onde meus dados ficam armazenados?<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+    <div class="faq-a">Servidores AWS na região São Paulo (sa-east-1). Seus dados nunca saem do território brasileiro. Backup criptografado diário, retenção de 30 dias.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">CA.RO é compatível com LGPD?<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+    <div class="faq-a">Sim, total conformidade. Temos DPO designado, processamento documentado, e você pode exportar ou excluir todos os seus dados a qualquer momento. <a href="privacy.html" style="color:var(--accent)">Ver política completa →</a></div>
+  </div>
+</section>
+
+<section class="container">
+  <div class="contact-cta">
+    <div class="ccard">
+      <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+      <h3>Chat ao vivo</h3>
+      <p>Seg–sex, 9h às 18h. Resposta em ~2min.</p>
+      <button class="btn btn-primary">Iniciar conversa</button>
+    </div>
+    <div class="ccard">
+      <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg></div>
+      <h3>E-mail</h3>
+      <p>Resposta em até 4 horas úteis.</p>
+      <a class="btn" href="mailto:suporte@caro.com.br">suporte@caro.com.br</a>
+    </div>
+    <div class="ccard">
+      <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
+      <h3>WhatsApp</h3>
+      <p>Apenas Business e Enterprise.</p>
+      <a class="btn">(11) 9 9999-0000</a>
+    </div>
+  </div>
+</section>
+
+<footer><div class="container">© 2026 Grupo CA.RO Tecnologia · <a href="privacy.html" style="color:var(--accent)">Privacidade &amp; LGPD</a></div></footer>
+<script>
+document.querySelectorAll('.faq-item').forEach(item => {
+  item.querySelector('.faq-q').onclick = () => item.classList.toggle('open');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+op_id;nome_op;codigo_produto;produto;status;etapa_atual;quantidade_total;quantidade_interna;quantidade_externa;lote;prazo;obs
+OP-9101;OP SAMBA PRO;10001;SAMBA PRO;Em produção;montagem;1000;700;300;LT-9101;2026-05-08;Lote profissional com produção externa parcial
+OP-9102;OP FUTSAL EXTREME;10002;FUTSAL EXTREME;Em produção;cola-dublagem;650;650;0;LT-9102;2026-05-06;Lote futsal linha pro

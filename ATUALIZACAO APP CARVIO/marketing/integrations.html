@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CA.RO — Integrações</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../shared.css" />
+<style>
+  body { background: var(--bg); }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+  nav.top { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(20px); background: oklch(0.16 0.012 240 / 0.6); border-bottom: 1px solid var(--border-soft); }
+  .nav-inner { display: flex; align-items: center; gap: 32px; height: 64px; }
+  .nav-brand { display: flex; align-items: center; gap: 10px; }
+  .nav-brand-name { font-weight: 700; font-size: 15px; }
+  .nav-links { display: flex; gap: 6px; flex: 1; }
+  .nav-links a { padding: 7px 12px; border-radius: 8px; font-size: 13.5px; color: var(--text-dim); }
+  .nav-links a.active { color: var(--text); background: var(--surface); }
+  .nav-links a:hover { color: var(--text); background: var(--surface); }
+  @media (max-width: 800px) { .nav-links { display: none; } }
+
+  .hero-i { padding: 70px 0 30px; text-align: center; }
+  .hero-i h1 { font-size: clamp(34px, 5vw, 50px); letter-spacing: -0.02em; font-weight: 700; margin-bottom: 14px; }
+  .hero-i p { color: var(--text-dim); font-size: 16px; max-width: 640px; margin: 0 auto; }
+
+  .filter-row { display: flex; gap: 8px; justify-content: center; margin: 32px 0; flex-wrap: wrap; }
+  .filter-pill { padding: 7px 14px; background: var(--surface); border: 1px solid var(--border-soft); border-radius: 999px; font-size: 13px; color: var(--text-dim); cursor: pointer; transition: all 0.15s; }
+  .filter-pill:hover { border-color: var(--border); color: var(--text); }
+  .filter-pill.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+
+  .cat-title { font-size: 14px; color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; margin: 40px 0 14px; }
+  .integ-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 30px; }
+  @media (max-width: 1000px) { .integ-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 600px) { .integ-grid { grid-template-columns: 1fr; } }
+  .integ {
+    padding: 20px; background: var(--surface); border: 1px solid var(--border-soft);
+    border-radius: var(--r-lg); display: flex; flex-direction: column; gap: 12px;
+    transition: all 0.15s; cursor: pointer;
+  }
+  .integ:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 20px oklch(0 0 0 / 0.2); }
+  .integ-head { display: flex; align-items: center; gap: 10px; }
+  .integ-logo { width: 40px; height: 40px; border-radius: 9px; display: grid; place-items: center; color: white; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+  .integ-name { font-size: 14.5px; font-weight: 600; }
+  .integ-cat { font-size: 11px; color: var(--text-faint); }
+  .integ p { font-size: 12.5px; color: var(--text-dim); line-height: 1.5; flex: 1; }
+  .integ-foot { display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid var(--border-soft); }
+  .pill-status { font-size: 10.5px; padding: 2px 7px; border-radius: 999px; background: oklch(0.74 0.17 155 / 0.15); color: var(--accent); font-weight: 500; }
+  .pill-status.beta { background: oklch(0.78 0.16 80 / 0.15); color: oklch(0.85 0.14 80); }
+  .pill-status.soon { background: var(--surface-2); color: var(--text-dim); }
+
+  .api-card { padding: 30px; background: linear-gradient(135deg, oklch(0.74 0.17 155 / 0.08), oklch(0.72 0.13 230 / 0.05)); border: 1px solid var(--border-soft); border-radius: var(--r-xl); margin: 50px 0; display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: center; }
+  @media (max-width: 700px) { .api-card { grid-template-columns: 1fr; } }
+  .api-card h2 { font-size: 22px; letter-spacing: -0.02em; font-weight: 700; margin-bottom: 6px; }
+  .api-card p { color: var(--text-dim); font-size: 14px; }
+
+  footer { padding: 40px 0; border-top: 1px solid var(--border-soft); text-align: center; color: var(--text-faint); font-size: 13px; }
+</style>
+</head>
+<body>
+<nav class="top">
+  <div class="container nav-inner">
+    <a class="nav-brand" href="../index.html"><div class="brand-mark">CR</div><span class="nav-brand-name">GRUPO CA.RO</span></a>
+    <div class="nav-links">
+      <a href="landing.html">Produto</a>
+      <a href="pricing.html">Preços</a>
+      <a href="integrations.html" class="active">Integrações</a>
+      <a href="about.html">Sobre</a>
+      <a href="help.html">Ajuda</a>
+    </div>
+    <a class="btn btn-ghost" href="../auth/login.html">Entrar</a>
+    <a class="btn btn-primary" href="../auth/signup.html">Começar grátis</a>
+  </div>
+</nav>
+
+<header class="hero-i container">
+  <h1>Tudo conectado em um só lugar</h1>
+  <p>Bancos, ERPs, e-commerce, gateways e ferramentas de produtividade. Mais de 60 integrações nativas.</p>
+  <div class="filter-row">
+    <button class="filter-pill active">Tudo</button>
+    <button class="filter-pill">Bancos</button>
+    <button class="filter-pill">ERP</button>
+    <button class="filter-pill">E-commerce</button>
+    <button class="filter-pill">Pagamentos</button>
+    <button class="filter-pill">Contabilidade</button>
+    <button class="filter-pill">Produtividade</button>
+  </div>
+</header>
+
+<main class="container">
+
+  <div class="cat-title">Bancos · Open Finance</div>
+  <div class="integ-grid">
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#EC7000">It</div><div><div class="integ-name">Itaú</div><div class="integ-cat">Banco</div></div></div><p>Extrato e saldo via Open Finance. Conciliação automática.</p><div class="integ-foot"><span class="pill-status">Disponível</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#FFCC00;color:#003C8F">BB</div><div><div class="integ-name">Banco do Brasil</div><div class="integ-cat">Banco</div></div></div><p>Pessoa Física e Jurídica. Atualização em tempo real.</p><div class="integ-foot"><span class="pill-status">Disponível</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#CC092F">Br</div><div><div class="integ-name">Bradesco</div><div class="integ-cat">Banco</div></div></div><p>Contas correntes, poupança e cartão. Multi-empresa.</p><div class="integ-foot"><span class="pill-status">Disponível</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#820AD1">Nu</div><div><div class="integ-name">Nubank PJ</div><div class="integ-cat">Banco</div></div></div><p>Conta PJ, cartão e investimentos.</p><div class="integ-foot"><span class="pill-status">Disponível</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#FF7A00">In</div><div><div class="integ-name">Inter</div><div class="integ-cat">Banco</div></div></div><p>Open Finance + cartão de crédito.</p><div class="integ-foot"><span class="pill-status">Disponível</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#000;border:1px solid #444">C6</div><div><div class="integ-name">C6 Bank</div><div class="integ-cat">Banco</div></div></div><p>Tag, cartão, conta corrente PJ.</p><div class="integ-foot"><span class="pill-status">Disponível</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#003DA5">St</div><div><div class="integ-name">Santander</div><div class="integ-cat">Banco</div></div></div><p>Conta empresarial e cartões.</p><div class="integ-foot"><span class="pill-status">Disponível</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#0070AF">CX</div><div><div class="integ-name">Caixa</div><div class="integ-cat">Banco</div></div></div><p>Conta empresarial via Open Finance.</p><div class="integ-foot"><span class="pill-status">Disponível</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+  </div>
+
+  <div class="cat-title">ERP &amp; Gestão</div>
+  <div class="integ-grid">
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#0066FF">Bl</div><div><div class="integ-name">Bling</div><div class="integ-cat">ERP</div></div></div><p>Pedidos, produtos, NF-e e contas a pagar/receber.</p><div class="integ-foot"><span class="pill-status">Disponível</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#FF6B00">Ti</div><div><div class="integ-name">Tiny</div><div class="integ-cat">ERP</div></div></div><p>Sincroniza vendas, estoque e finanças.</p><div class="integ-foot"><span class="pill-status">Disponível</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#1B5BC1">Om</div><div><div class="integ-name">Omie</div><div class="integ-cat">ERP</div></div></div><p>Importa lançamentos e categorias automaticamente.</p><div class="integ-foot"><span class="pill-status">Disponível</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#003BB5">SA</div><div><div class="integ-name">SAP Business One</div><div class="integ-cat">ERP</div></div></div><p>Empresas grandes. Apenas Enterprise.</p><div class="integ-foot"><span class="pill-status">Enterprise</span><a href="#" style="color:var(--accent);font-size:12px">Falar →</a></div></div>
+  </div>
+
+  <div class="cat-title">E-commerce &amp; Marketplaces</div>
+  <div class="integ-grid">
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#E83E8C">Sh</div><div><div class="integ-name">Shopify</div><div class="integ-cat">E-commerce</div></div></div><p>Vendas, taxas e repasses automáticos.</p><div class="integ-foot"><span class="pill-status">Disponível</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#FFE600;color:#333">ML</div><div><div class="integ-name">Mercado Livre</div><div class="integ-cat">Marketplace</div></div></div><p>Vendas, frete, comissões e antecipações.</p><div class="integ-foot"><span class="pill-status">Disponível</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#EE4D2D">Sh</div><div><div class="integ-name">Shopee</div><div class="integ-cat">Marketplace</div></div></div><p>Pedidos e repasses com taxas separadas.</p><div class="integ-foot"><span class="pill-status">Disponível</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#FF4855">VT</div><div><div class="integ-name">VTEX</div><div class="integ-cat">E-commerce</div></div></div><p>Multi-loja, integração via API.</p><div class="integ-foot"><span class="pill-status beta">Beta</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+  </div>
+
+  <div class="cat-title">Pagamentos &amp; Cobrança</div>
+  <div class="integ-grid">
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#32BCAD">As</div><div><div class="integ-name">Asaas</div><div class="integ-cat">Cobrança</div></div></div><p>Boletos, cartão e Pix com baixa automática.</p><div class="integ-foot"><span class="pill-status">Disponível</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#3CB371">Pa</div><div><div class="integ-name">Pagar.me</div><div class="integ-cat">Gateway</div></div></div><p>Vendas online com conciliação automática.</p><div class="integ-foot"><span class="pill-status">Disponível</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#635BFF">St</div><div><div class="integ-name">Stripe</div><div class="integ-cat">Gateway</div></div></div><p>Pagamentos internacionais.</p><div class="integ-foot"><span class="pill-status">Disponível</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#0577FF">PS</div><div><div class="integ-name">PagSeguro</div><div class="integ-cat">Gateway</div></div></div><p>Maquininhas e link de pagamento.</p><div class="integ-foot"><span class="pill-status beta">Beta</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+  </div>
+
+  <div class="cat-title">Contabilidade &amp; Outros</div>
+  <div class="integ-grid">
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#1E40AF">Co</div><div><div class="integ-name">Conta Azul</div><div class="integ-cat">Contábil</div></div></div><p>Migração de dados em 1 clique.</p><div class="integ-foot"><span class="pill-status">Disponível</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#0EA5E9">Do</div><div><div class="integ-name">Domínio Sistemas</div><div class="integ-cat">Contábil</div></div></div><p>Para escritórios de contabilidade.</p><div class="integ-foot"><span class="pill-status">Disponível</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#25D366">Wh</div><div><div class="integ-name">WhatsApp Business</div><div class="integ-cat">Comunicação</div></div></div><p>Cobranças automáticas e notificações.</p><div class="integ-foot"><span class="pill-status">Disponível</span><a href="#" style="color:var(--accent);font-size:12px">Conectar →</a></div></div>
+    <div class="integ"><div class="integ-head"><div class="integ-logo" style="background:#FF4A00">Za</div><div><div class="integ-name">Zapier</div><div class="integ-cat">Automação</div></div></div><p>Conecte com 5.000+ apps.</p><div class="integ-foot"><span class="pill-status soon">Em breve</span><span class="muted" style="font-size:12px">—</span></div></div>
+  </div>
+
+  <div class="api-card">
+    <div>
+      <h2>Construa suas próprias integrações</h2>
+      <p>API REST completa, webhooks em tempo real, SDKs em Node.js e Python. Disponível no plano Enterprise.</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <a class="btn" href="#">Ver documentação</a>
+      <a class="btn btn-primary" href="#">Falar com vendas</a>
+    </div>
+  </div>
+</main>
+
+<footer><div class="container">© 2026 Grupo CA.RO Tecnologia · <a href="privacy.html" style="color:var(--accent)">Privacidade &amp; LGPD</a></div></footer>
+</body>
+</html>

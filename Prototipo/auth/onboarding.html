@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CA.RO — Configuração inicial</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../shared.css" /><link rel="stylesheet" href="auth.css" />
+<style>
+  body { padding: 40px 16px; align-items: flex-start; }
+  .step { display: none; flex-direction: column; flex: 1; }
+  .step.active { display: flex; }
+</style>
+</head>
+<body>
+<div class="wizard">
+  <div class="wizard-head">
+    <div class="auth-brand"><div class="brand-mark">CR</div><span class="auth-brand-name">GRUPO CA.RO</span></div>
+    <div class="wizard-progress" id="wp">
+      <div class="wizard-step active"></div>
+      <div class="wizard-step"></div>
+      <div class="wizard-step"></div>
+      <div class="wizard-step"></div>
+    </div>
+    <span class="muted" style="font-size:13px" id="wstep">Passo 1 de 4</span>
+  </div>
+
+  <div class="wizard-card">
+    <!-- step 1: empresa -->
+    <div class="step active" data-step="1">
+      <h2>Bem-vindo, Maria! 👋</h2>
+      <p class="sub">Vamos configurar sua conta CA.RO em 2 minutos. Pra começar, conta um pouco sobre sua empresa.</p>
+      <div class="field"><label>Setor de atuação</label>
+        <select><option>Comércio / Varejo</option><option>Serviços</option><option>Indústria</option><option>Construção civil</option><option>Tecnologia</option><option>Saúde</option><option>Outro</option></select>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Faturamento mensal</label>
+          <select><option>Até R$ 50 mil</option><option>R$ 50–250 mil</option><option>R$ 250 mil–1 milhão</option><option>R$ 1–5 milhões</option><option>Acima de R$ 5 milhões</option></select>
+        </div>
+        <div class="field"><label>Funcionários</label>
+          <select><option>1–5</option><option>6–20</option><option>21–50</option><option>51–200</option><option>200+</option></select>
+        </div>
+      </div>
+      <div class="field"><label>Como conheceu o CA.RO?</label>
+        <select><option>Indicação</option><option>Google</option><option>Instagram / Redes sociais</option><option>Contador / Consultor</option><option>Outro</option></select>
+      </div>
+    </div>
+
+    <!-- step 2: objetivo -->
+    <div class="step" data-step="2">
+      <h2>O que você quer resolver primeiro?</h2>
+      <p class="sub">Vamos personalizar sua experiência. Selecione todos os que se aplicam.</p>
+      <div class="choice-grid" id="goals">
+        <button class="choice" data-g="fluxo"><div class="choice-icon">📊</div><div><div class="choice-name">Controle de fluxo de caixa</div><div class="choice-desc">Saber quanto entra e sai</div></div></button>
+        <button class="choice" data-g="conc"><div class="choice-icon">🔄</div><div><div class="choice-name">Conciliação bancária</div><div class="choice-desc">Bater banco com lançamentos</div></div></button>
+        <button class="choice" data-g="cob"><div class="choice-icon">💸</div><div><div class="choice-name">Cobrança automática</div><div class="choice-desc">Reduzir inadimplência</div></div></button>
+        <button class="choice" data-g="nfe"><div class="choice-icon">🧾</div><div><div class="choice-name">Emissão de NF-e</div><div class="choice-desc">Notas fiscais eletrônicas</div></div></button>
+        <button class="choice" data-g="dre"><div class="choice-icon">📈</div><div><div class="choice-name">Relatórios contábeis</div><div class="choice-desc">DRE, balancete, fluxo</div></div></button>
+        <button class="choice" data-g="folha"><div class="choice-icon">👥</div><div><div class="choice-name">Folha de pagamento</div><div class="choice-desc">Salários e benefícios</div></div></button>
+      </div>
+    </div>
+
+    <!-- step 3: bancos -->
+    <div class="step" data-step="3">
+      <h2>Conecte seu primeiro banco</h2>
+      <p class="sub">Via Open Finance — leitura segura, criptografada e regulamentada pelo Banco Central. Você pode adicionar mais depois.</p>
+      <div class="bank-list">
+        <button class="bank-card" data-b="itau"><div class="bank-logo" style="background:#EC7000">It</div><div class="bank-name">Itaú</div></button>
+        <button class="bank-card" data-b="bb"><div class="bank-logo" style="background:#FFCC00;color:#003C8F">BB</div><div class="bank-name">Banco do Brasil</div></button>
+        <button class="bank-card" data-b="bra"><div class="bank-logo" style="background:#CC092F">Br</div><div class="bank-name">Bradesco</div></button>
+        <button class="bank-card" data-b="cef"><div class="bank-logo" style="background:#0070AF">CX</div><div class="bank-name">Caixa</div></button>
+        <button class="bank-card" data-b="san"><div class="bank-logo" style="background:#EC0000">Sa</div><div class="bank-name">Santander</div></button>
+        <button class="bank-card" data-b="nu"><div class="bank-logo" style="background:#820AD1">Nu</div><div class="bank-name">Nubank</div></button>
+        <button class="bank-card" data-b="inter"><div class="bank-logo" style="background:#FF7A00">In</div><div class="bank-name">Inter</div></button>
+        <button class="bank-card" data-b="c6"><div class="bank-logo" style="background:#000;border:1px solid #444">C6</div><div class="bank-name">C6 Bank</div></button>
+        <button class="bank-card" data-b="other"><div class="bank-logo" style="background:var(--surface-2);color:var(--text)">+</div><div class="bank-name">Outro banco</div></button>
+      </div>
+      <p class="muted" style="font-size:12px;margin-top:14px">🔒 Você será redirecionado ao seu banco para autorizar. CA.RO recebe apenas leitura, nunca movimenta sua conta.</p>
+    </div>
+
+    <!-- step 4: pronto -->
+    <div class="step" data-step="4">
+      <div style="text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:18px">
+        <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:grid;place-items:center;color:oklch(0.15 0.01 240)">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>
+        </div>
+        <h2 style="margin:0">Tudo pronto, Maria! 🎉</h2>
+        <p class="sub" style="margin:0;max-width:440px">Sua conta CA.RO está configurada. Você tem <strong>14 dias grátis</strong> pra testar todos os recursos do plano Business.</p>
+        <div style="display:flex;gap:8px;background:var(--surface);padding:12px 16px;border-radius:10px;border:1px solid var(--border-soft);font-size:13px">
+          <span class="muted">Plano em uso:</span><strong style="color:var(--accent)">Business · Trial</strong><span class="muted">·</span><span class="muted">14 dias restantes</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="wizard-foot">
+      <button class="btn" id="back" onclick="go(-1)" style="display:none">← Voltar</button>
+      <div class="spacer"></div>
+      <button class="btn btn-ghost" id="skip" onclick="go(1)">Pular</button>
+      <button class="btn btn-primary" id="next" onclick="go(1)">Continuar →</button>
+      <a class="btn btn-primary" id="finish" href="../CA.RO Sistema Financeiro.html" style="display:none">Acessar meu painel →</a>
+    </div>
+  </div>
+</div>
+
+<script>
+let cur = 1; const total = 4;
+function go(d){
+  cur = Math.max(1, Math.min(total, cur + d));
+  document.querySelectorAll('.step').forEach(s => s.classList.toggle('active', +s.dataset.step === cur));
+  document.querySelectorAll('.wizard-step').forEach((s,i) => {
+    s.classList.toggle('done', i+1 < cur);
+    s.classList.toggle('active', i+1 === cur);
+  });
+  document.getElementById('wstep').textContent = `Passo ${cur} de ${total}`;
+  document.getElementById('back').style.display = cur > 1 ? '' : 'none';
+  document.getElementById('skip').style.display = cur < total ? '' : 'none';
+  document.getElementById('next').style.display = cur < total ? '' : 'none';
+  document.getElementById('finish').style.display = cur === total ? '' : 'none';
+}
+document.querySelectorAll('#goals .choice').forEach(c => c.onclick = () => c.classList.toggle('selected'));
+document.querySelectorAll('.bank-card').forEach(c => c.onclick = () => {
+  document.querySelectorAll('.bank-card').forEach(x => x.classList.remove('selected'));
+  c.classList.add('selected');
+});
+</script>
+</body>
+</html>

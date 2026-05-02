@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>GRUPO CA.RO — Sistema Financeiro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* === LOCK SCREEN === */
+    #lock {
+      position: fixed; inset: 0; z-index: 99999;
+      background: radial-gradient(ellipse at top, oklch(0.22 0.03 240) 0%, oklch(0.12 0.012 240) 70%);
+      display: grid; place-items: center; padding: 24px;
+      font-family: 'Inter', -apple-system, sans-serif; color: oklch(0.95 0.005 240);
+      animation: lockIn 0.4s ease;
+    }
+    #lock.hidden { display: none; }
+    @keyframes lockIn { from { opacity: 0; } to { opacity: 1; } }
+    #lock::before {
+      content: ""; position: absolute; inset: 0;
+      background-image:
+        radial-gradient(circle at 20% 30%, oklch(0.74 0.17 155 / 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, oklch(0.72 0.13 230 / 0.06) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .lock-card {
+      position: relative; width: 100%; max-width: 420px;
+      background: oklch(0.16 0.012 240 / 0.7);
+      backdrop-filter: blur(24px) saturate(140%);
+      border: 1px solid oklch(0.30 0.014 240 / 0.5);
+      border-radius: 20px; padding: 40px 36px;
+      box-shadow: 0 30px 80px oklch(0 0 0 / 0.5);
+    }
+    .lock-brand {
+      display: flex; align-items: center; gap: 12px;
+      justify-content: center; margin-bottom: 28px;
+    }
+    .lock-mark {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: linear-gradient(135deg, oklch(0.74 0.17 155), oklch(0.72 0.13 230));
+      display: grid; place-items: center;
+      color: oklch(0.15 0.012 240); font-weight: 700; font-size: 16px;
+      letter-spacing: -0.02em;
+    }
+    .lock-name {
+      font-size: 13px; font-weight: 600; letter-spacing: 0.18em;
+      color: oklch(0.7 0.01 240);
+    }
+    .lock-title {
+      text-align: center; font-size: 22px; font-weight: 600;
+      letter-spacing: -0.01em; margin-bottom: 6px;
+    }
+    .lock-sub {
+      text-align: center; font-size: 13px;
+      color: oklch(0.62 0.01 240); margin-bottom: 28px;
+    }
+    .lock-field { margin-bottom: 14px; }
+    .lock-label {
+      display: block; font-size: 11.5px; letter-spacing: 0.06em;
+      text-transform: uppercase; font-weight: 500;
+      color: oklch(0.62 0.01 240); margin-bottom: 7px;
+    }
+    .lock-input-wrap { position: relative; }
+    .lock-input {
+      width: 100%; padding: 12px 14px 12px 40px;
+      font-size: 14px; font-family: inherit;
+      background: oklch(0.10 0.012 240 / 0.6);
+      border: 1px solid oklch(0.28 0.014 240);
+      border-radius: 10px; color: oklch(0.95 0.005 240);
+      transition: border 0.15s, box-shadow 0.15s;
+      box-sizing: border-box;
+    }
+    .lock-input:focus {
+      outline: none; border-color: oklch(0.74 0.17 155);
+      box-shadow: 0 0 0 3px oklch(0.74 0.17 155 / 0.15);
+    }
+    .lock-icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      color: oklch(0.55 0.01 240); pointer-events: none;
+    }
+    .lock-toggle {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; padding: 4px;
+      color: oklch(0.55 0.01 240); display: grid; place-items: center;
+      border-radius: 6px;
+    }
+    .lock-toggle:hover { color: oklch(0.95 0.005 240); background: oklch(0.20 0.014 240); }
+    .lock-error {
+      display: none; padding: 10px 12px; margin-bottom: 14px;
+      background: oklch(0.65 0.20 25 / 0.12);
+      border: 1px solid oklch(0.65 0.20 25 / 0.35);
+      border-radius: 8px; color: oklch(0.78 0.18 25);
+      font-size: 12.5px; align-items: center; gap: 8px;
+    }
+    .lock-error.show { display: flex; animation: shake 0.4s; }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); } 75% { transform: translateX(6px); }
+    }
+    .lock-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin: 16px 0 22px; font-size: 12.5px; color: oklch(0.62 0.01 240);
+    }
+    .lock-check { display: flex; align-items: center; gap: 7px; cursor: pointer; user-select: none; }
+    .lock-check input { accent-color: oklch(0.74 0.17 155); }
+    .lock-link { color: oklch(0.74 0.17 155); text-decoration: none; }
+    .lock-link:hover { text-decoration: underline; }
+    .lock-btn {
+      width: 100%; padding: 13px;
+      background: linear-gradient(135deg, oklch(0.74 0.17 155), oklch(0.72 0.16 165));
+      color: oklch(0.15 0.012 240); border: none;
+      border-radius: 10px; font-size: 14px; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      transition: transform 0.1s, box-shadow 0.15s;
+      box-shadow: 0 4px 14px oklch(0.74 0.17 155 / 0.3);
+    }
+    .lock-btn:hover { box-shadow: 0 6px 20px oklch(0.74 0.17 155 / 0.4); }
+    .lock-btn:active { transform: scale(0.98); }
+    .lock-foot {
+      margin-top: 24px; padding-top: 20px;
+      border-top: 1px solid oklch(0.28 0.014 240 / 0.5);
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 11.5px; color: oklch(0.55 0.01 240);
+    }
+    .lock-secure { display: flex; align-items: center; gap: 6px; }
+    .lock-hint {
+      margin-top: 12px; padding: 10px 12px;
+      background: oklch(0.74 0.17 155 / 0.06);
+      border: 1px dashed oklch(0.74 0.17 155 / 0.3);
+      border-radius: 8px; font-size: 11.5px;
+      color: oklch(0.7 0.05 155); text-align: center;
+    }
+    .lock-hint code {
+      font-family: 'JetBrains Mono', monospace;
+      background: oklch(0.20 0.014 240); padding: 1px 6px;
+      border-radius: 4px; color: oklch(0.85 0.05 155);
+    }
+  </style>
+</head>
+<body>
+  <!-- LOCK SCREEN OVERLAY -->
+  <div id="lock">
+    <div class="lock-card">
+      <div class="lock-brand">
+        <div class="lock-mark">CR</div>
+        <span class="lock-name">GRUPO CA.RO</span>
+      </div>
+      <div class="lock-title">Acesso restrito</div>
+      <div class="lock-sub">Faça login para acessar o sistema financeiro</div>
+
+      <div id="lock-err" class="lock-error">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16v.01"/></svg>
+        <span>Login ou senha incorretos. Tente novamente.</span>
+      </div>
+
+      <form id="lock-form" autocomplete="off">
+        <div class="lock-field">
+          <label class="lock-label" for="lock-user">Usuário</label>
+          <div class="lock-input-wrap">
+            <svg class="lock-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+            <input class="lock-input" id="lock-user" type="text" placeholder="seu.usuario" autocomplete="off" autofocus />
+          </div>
+        </div>
+        <div class="lock-field">
+          <label class="lock-label" for="lock-pass">Senha</label>
+          <div class="lock-input-wrap">
+            <svg class="lock-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+            <input class="lock-input" id="lock-pass" type="password" placeholder="••••••••" autocomplete="off" />
+            <button type="button" class="lock-toggle" id="lock-eye" aria-label="Mostrar senha">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="lock-row">
+          <label class="lock-check"><input type="checkbox" id="lock-remember" /> Manter conectado</label>
+          <a href="#" class="lock-link" onclick="alert('Contate suporte@caro.com.br'); return false;">Esqueci a senha</a>
+        </div>
+        <button class="lock-btn" type="submit">Entrar no sistema</button>
+      </form>
+
+      <div class="lock-foot">
+        <div class="lock-secure">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          Conexão segura SSL
+        </div>
+        <span>v2.4.1</span>
+      </div>
+
+      <div class="lock-hint">
+        <strong>DEMO:</strong> usuário <code>admin</code> · senha <code>@CARO26</code>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const VALID_USER = 'admin';
+      const VALID_PASS = '@CARO26';
+      const STORAGE_KEY = 'caro_authed_v1';
+      const lock = document.getElementById('lock');
+      const form = document.getElementById('lock-form');
+      const errBox = document.getElementById('lock-err');
+      const userInput = document.getElementById('lock-user');
+      const passInput = document.getElementById('lock-pass');
+      const eyeBtn = document.getElementById('lock-eye');
+      const remember = document.getElementById('lock-remember');
+
+      // Already authed?
+      if (sessionStorage.getItem(STORAGE_KEY) === '1' || localStorage.getItem(STORAGE_KEY) === '1') {
+        lock.classList.add('hidden');
+      }
+
+      eyeBtn.addEventListener('click', () => {
+        passInput.type = passInput.type === 'password' ? 'text' : 'password';
+      });
+
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const u = userInput.value.trim();
+        const p = passInput.value;
+        if (u === VALID_USER && p === VALID_PASS) {
+          errBox.classList.remove('show');
+          (remember.checked ? localStorage : sessionStorage).setItem(STORAGE_KEY, '1');
+          lock.style.transition = 'opacity 0.3s';
+          lock.style.opacity = '0';
+          setTimeout(() => lock.classList.add('hidden'), 300);
+        } else {
+          errBox.classList.add('show');
+          passInput.value = '';
+          passInput.focus();
+        }
+      });
+
+      // Expose logout for sidebar/header use
+      window.caroLogout = function() {
+        sessionStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
+      };
+    })();
+  </script>
+
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="data.jsx"></script>
+  <script type="text/babel" src="charts.jsx"></script>
+  <script type="text/babel" src="app.jsx"></script>
+</body>
+</html>

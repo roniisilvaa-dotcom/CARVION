@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CA.RO — Plano e Pagamento</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../shared.css" />
+<style>
+  body { background: var(--bg); }
+  .layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  aside { border-right: 1px solid var(--border-soft); padding: 24px 14px; background: oklch(0.16 0.012 240 / 0.5); }
+  .back-link { display: flex; align-items: center; gap: 8px; padding: 8px 10px; color: var(--text-dim); font-size: 13px; border-radius: 8px; margin-bottom: 20px; }
+  .back-link:hover { color: var(--text); background: var(--surface); }
+  .nav-title { font-size: 11px; color: var(--text-faint); letter-spacing: 0.06em; text-transform: uppercase; margin: 0 10px 8px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; font-size: 13.5px; color: var(--text-dim); margin-bottom: 2px; }
+  .nav-item:hover { background: var(--surface); color: var(--text); }
+  .nav-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+  main { padding: 32px 40px; max-width: 1080px; }
+  h1 { font-size: 26px; letter-spacing: -0.02em; font-weight: 600; margin-bottom: 4px; }
+  .page-sub { color: var(--text-dim); font-size: 14px; margin-bottom: 28px; }
+  .section { background: var(--surface); border: 1px solid var(--border-soft); border-radius: var(--r-lg); padding: 24px; margin-bottom: 18px; }
+  .section h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .section .desc { color: var(--text-dim); font-size: 13px; margin-bottom: 18px; }
+  .current-plan { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: center; }
+  .plan-info .pname { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+  .plan-info .ppr { font-family: var(--font-mono); color: var(--text-dim); margin-top: 4px; font-size: 13px; }
+  .trial-banner { background: linear-gradient(135deg, oklch(0.74 0.17 155 / 0.10), oklch(0.72 0.13 230 / 0.05)); border: 1px solid oklch(0.74 0.17 155 / 0.3); border-radius: 10px; padding: 14px 18px; margin-top: 14px; display: flex; align-items: center; gap: 14px; }
+  .trial-bar { width: 100%; height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+  .trial-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); width: 71%; }
+  .usage-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 8px; }
+  .usage { padding: 14px; background: var(--bg); border-radius: 10px; border: 1px solid var(--border-soft); }
+  .usage .label { font-size: 12px; color: var(--text-dim); }
+  .usage .value { font-family: var(--font-mono); font-size: 18px; font-weight: 600; margin-top: 4px; }
+  .usage .progress { width: 100%; height: 4px; background: var(--surface-2); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+  .usage .progress-fill { height: 100%; background: var(--accent); }
+  .usage .progress-fill.warn { background: oklch(0.78 0.16 80); }
+  .pay-method { display: flex; align-items: center; gap: 16px; padding: 14px; border: 1px solid var(--border-soft); border-radius: 10px; background: var(--bg); }
+  .card-brand { width: 48px; height: 32px; border-radius: 6px; background: linear-gradient(135deg,#1a1f2e,#0f172a); display:grid;place-items:center; color:white; font-weight:700; font-size:11px; letter-spacing:0.04em; }
+  .invoices-table { width: 100%; }
+  .invoices-table th { text-align: left; font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.04em; padding: 10px 12px; border-bottom: 1px solid var(--border-soft); font-weight: 600; }
+  .invoices-table td { padding: 12px; font-size: 13.5px; border-bottom: 1px solid var(--border-soft); }
+  .invoices-table tr:last-child td { border-bottom: none; }
+  .pill-paid { background: oklch(0.74 0.17 155 / 0.15); color: var(--accent); padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; }
+  .pill-due { background: oklch(0.78 0.16 80 / 0.15); color: oklch(0.85 0.14 80); padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <a class="back-link" href="../CA.RO Sistema Financeiro.html">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+      Voltar ao painel
+    </a>
+    <div class="nav-title">Conta</div>
+    <a class="nav-item" href="settings.html">👤 Perfil</a>
+    <a class="nav-item" href="settings.html#empresa">🏢 Empresa</a>
+    <a class="nav-item" href="settings.html#equipe">👥 Equipe</a>
+    <a class="nav-item" href="settings.html#seguranca">🔒 Segurança</a>
+    <a class="nav-item" href="settings.html#notif">🔔 Notificações</a>
+    <div class="nav-title" style="margin-top: 18px">Plano</div>
+    <a class="nav-item active" href="billing.html">💳 Plano e pagamento</a>
+    <a class="nav-item" href="billing.html#faturas">🧾 Faturas</a>
+    <a class="nav-item" href="../marketing/integrations.html">🔌 Integrações</a>
+  </aside>
+
+  <main>
+    <h1>Plano e pagamento</h1>
+    <p class="page-sub">Gerencie sua assinatura, forma de pagamento e histórico.</p>
+
+    <div class="section">
+      <div class="current-plan">
+        <div class="plan-info">
+          <div class="pname">Plano Business <span class="role-pill admin" style="margin-left: 6px; padding: 3px 9px; background: oklch(0.74 0.17 155 / 0.15); color: var(--accent); border-radius: 999px; font-size: 11px; font-weight: 600">TRIAL</span></div>
+          <div class="ppr">R$ 199/mês após o trial · próxima cobrança em 04/05/2026</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn">Mudar plano</button>
+          <a class="btn btn-primary" href="../marketing/pricing.html">Assinar agora</a>
+        </div>
+      </div>
+      <div class="trial-banner">
+        <div style="font-size:24px">⏰</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:600">10 dias restantes no trial gratuito</div>
+          <div class="muted" style="font-size:12.5px;margin-top:2px">Assine antes de 04/05 pra manter acesso a todos os recursos.</div>
+          <div class="trial-bar"><div class="trial-bar-fill"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Uso atual</h3>
+      <p class="desc">Limites do seu plano neste ciclo.</p>
+      <div class="usage-grid">
+        <div class="usage">
+          <div class="label">Usuários</div>
+          <div class="value">5 / 10</div>
+          <div class="progress"><div class="progress-fill" style="width:50%"></div></div>
+        </div>
+        <div class="usage">
+          <div class="label">Bancos conectados</div>
+          <div class="value">4 / ∞</div>
+          <div class="progress"><div class="progress-fill" style="width:100%;background:var(--accent)"></div></div>
+        </div>
+        <div class="usage">
+          <div class="label">NF-e emitidas (mês)</div>
+          <div class="value">142 / 200</div>
+          <div class="progress"><div class="progress-fill warn" style="width:71%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Forma de pagamento</h3>
+      <p class="desc">Cartão usado nas cobranças automáticas.</p>
+      <div class="pay-method">
+        <div class="card-brand">VISA</div>
+        <div style="flex:1">
+          <div style="font-weight:500;font-size:14px">•••• •••• •••• 4242</div>
+          <div class="muted" style="font-size:12.5px">Vence em 12/2027 · Maria Silva</div>
+        </div>
+        <button class="btn btn-ghost">Alterar</button>
+      </div>
+      <p class="muted" style="font-size:12px;margin-top:10px">💡 Você também pode pagar via Pix (cobrança recorrente disponível em breve).</p>
+    </div>
+
+    <div class="section" id="faturas">
+      <h3>Histórico de faturas</h3>
+      <p class="desc">Todas as cobranças e recibos da sua assinatura.</p>
+      <table class="invoices-table">
+        <thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>04/04/2026</td><td>Plano Business · 10 usuários</td><td style="font-family:var(--font-mono)">R$ 199,00</td><td><span class="pill-due">Pendente</span></td><td style="text-align:right"><a class="muted" style="font-size:12.5px;color:var(--accent)" href="#">Ver fatura</a></td></tr>
+          <tr><td>04/03/2026</td><td>Plano Business · 8 usuários</td><td style="font-family:var(--font-mono)">R$ 199,00</td><td><span class="pill-paid">Pago</span></td><td style="text-align:right"><a class="muted" style="font-size:12.5px;color:var(--accent)" href="#">Baixar</a></td></tr>
+          <tr><td>04/02/2026</td><td>Plano Business · 6 usuários</td><td style="font-family:var(--font-mono)">R$ 199,00</td><td><span class="pill-paid">Pago</span></td><td style="text-align:right"><a class="muted" style="font-size:12.5px;color:var(--accent)" href="#">Baixar</a></td></tr>
+          <tr><td>04/01/2026</td><td>Plano Starter · 2 usuários</td><td style="font-family:var(--font-mono)">R$ 79,00</td><td><span class="pill-paid">Pago</span></td><td style="text-align:right"><a class="muted" style="font-size:12.5px;color:var(--accent)" href="#">Baixar</a></td></tr>
+          <tr><td>04/12/2025</td><td>Plano Starter · 2 usuários</td><td style="font-family:var(--font-mono)">R$ 79,00</td><td><span class="pill-paid">Pago</span></td><td style="text-align:right"><a class="muted" style="font-size:12.5px;color:var(--accent)" href="#">Baixar</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+</body>
+</html>

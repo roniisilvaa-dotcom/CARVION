@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CA.RO — Sobre</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../shared.css" />
+<style>
+  body { background: var(--bg); }
+  .container { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+  nav.top { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(20px); background: oklch(0.16 0.012 240 / 0.6); border-bottom: 1px solid var(--border-soft); }
+  .nav-inner { display: flex; align-items: center; gap: 32px; height: 64px; }
+  .nav-brand { display: flex; align-items: center; gap: 10px; }
+  .nav-brand-name { font-weight: 700; font-size: 15px; }
+  .nav-links { display: flex; gap: 6px; flex: 1; }
+  .nav-links a { padding: 7px 12px; border-radius: 8px; font-size: 13.5px; color: var(--text-dim); }
+  .nav-links a.active { color: var(--text); background: var(--surface); }
+  .nav-links a:hover { color: var(--text); background: var(--surface); }
+  @media (max-width: 800px) { .nav-links { display: none; } }
+
+  .hero-about { padding: 80px 0 40px; text-align: center; }
+  .hero-about h1 { font-size: clamp(36px, 5vw, 56px); letter-spacing: -0.02em; font-weight: 700; max-width: 800px; margin: 0 auto 18px; }
+  .hero-about .lead { font-size: 18px; color: var(--text-dim); max-width: 640px; margin: 0 auto; line-height: 1.55; }
+
+  .pillars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin: 60px 0; }
+  @media (max-width: 800px) { .pillars { grid-template-columns: 1fr; } }
+  .pillar { padding: 28px; background: var(--surface); border: 1px solid var(--border-soft); border-radius: var(--r-lg); }
+  .pillar .ico { width: 44px; height: 44px; border-radius: 11px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; margin-bottom: 14px; }
+  .pillar h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+  .pillar p { color: var(--text-dim); font-size: 13.5px; line-height: 1.55; }
+
+  .story { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; padding: 60px 0; }
+  @media (max-width: 800px) { .story { grid-template-columns: 1fr; } }
+  .story h2 { font-size: 32px; letter-spacing: -0.02em; font-weight: 700; margin-bottom: 16px; }
+  .story p { color: var(--text-dim); line-height: 1.65; margin-bottom: 14px; }
+  .story-illu { aspect-ratio: 1.2; background: linear-gradient(135deg, oklch(0.74 0.17 155 / 0.12), oklch(0.72 0.13 230 / 0.06)); border-radius: var(--r-xl); border: 1px solid var(--border-soft); display:grid; place-items:center; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 50px 0; padding: 30px 0; border-top: 1px solid var(--border-soft); border-bottom: 1px solid var(--border-soft); }
+  @media (max-width: 800px) { .stats-row { grid-template-columns: 1fr 1fr; } }
+  .stat { text-align: center; }
+  .stat .num { font-family: var(--font-mono); font-size: 32px; font-weight: 700; letter-spacing: -0.02em; color: var(--accent); }
+  .stat .lbl { font-size: 12px; color: var(--text-dim); margin-top: 4px; letter-spacing: 0.04em; text-transform: uppercase; }
+
+  .team { padding: 60px 0; }
+  .team h2 { font-size: 28px; letter-spacing: -0.02em; font-weight: 700; text-align: center; margin-bottom: 8px; }
+  .team .sub { text-align: center; color: var(--text-dim); margin-bottom: 32px; }
+  .team-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  @media (max-width: 900px) { .team-grid { grid-template-columns: 1fr 1fr; } }
+  .person { text-align: center; padding: 20px; background: var(--surface); border: 1px solid var(--border-soft); border-radius: var(--r-lg); }
+  .avatar-lg { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 12px; display: grid; place-items: center; color: white; font-weight: 700; font-size: 24px; }
+  .person h4 { font-size: 14px; font-weight: 600; }
+  .person p { font-size: 12.5px; color: var(--text-dim); margin-top: 2px; }
+
+  .values { padding: 60px 0; }
+  .values h2 { font-size: 28px; letter-spacing: -0.02em; font-weight: 700; margin-bottom: 8px; }
+  .values .sub { color: var(--text-dim); margin-bottom: 32px; }
+  .values-list { display: grid; gap: 16px; }
+  .val-item { display: grid; grid-template-columns: 80px 1fr; gap: 18px; padding: 20px; background: var(--surface); border: 1px solid var(--border-soft); border-radius: var(--r-lg); }
+  .val-num { font-family: var(--font-mono); font-size: 36px; font-weight: 700; color: var(--accent); letter-spacing: -0.02em; }
+  .val-item h4 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .val-item p { color: var(--text-dim); font-size: 13.5px; line-height: 1.55; }
+
+  footer { padding: 40px 0; border-top: 1px solid var(--border-soft); text-align: center; color: var(--text-faint); font-size: 13px; }
+</style>
+</head>
+<body>
+<nav class="top">
+  <div class="container nav-inner">
+    <a class="nav-brand" href="../index.html"><div class="brand-mark">CR</div><span class="nav-brand-name">GRUPO CA.RO</span></a>
+    <div class="nav-links">
+      <a href="landing.html">Produto</a>
+      <a href="pricing.html">Preços</a>
+      <a href="integrations.html">Integrações</a>
+      <a href="about.html" class="active">Sobre</a>
+      <a href="help.html">Ajuda</a>
+    </div>
+    <a class="btn btn-ghost" href="../auth/login.html">Entrar</a>
+    <a class="btn btn-primary" href="../auth/signup.html">Começar grátis</a>
+  </div>
+</nav>
+
+<header class="hero-about container">
+  <h1>Tornar o financeiro <span style="color:var(--accent)">simples e justo</span> para qualquer empresa brasileira.</h1>
+  <p class="lead">Acreditamos que controlar dinheiro não deveria exigir contador, planilha ou software de R$ 2.000/mês. CA.RO é a ferramenta que toda PME precisava — bonita, automática e que cabe no orçamento.</p>
+</header>
+
+<section class="container">
+  <div class="pillars">
+    <div class="pillar">
+      <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div>
+      <h3>Honestidade</h3>
+      <p>Sem letrinha miúda, sem fidelidade abusiva, sem taxa escondida. Você paga o que vê.</p>
+    </div>
+    <div class="pillar">
+      <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+      <h3>Velocidade</h3>
+      <p>Sai do papel pra produtivo em 5 minutos. Conciliação que era 1h vira 30 segundos.</p>
+    </div>
+    <div class="pillar">
+      <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg></div>
+      <h3>Privacidade</h3>
+      <p>Seus dados são seus. Criptografia ponta a ponta, conformidade total com LGPD, dados no Brasil.</p>
+    </div>
+  </div>
+</section>
+
+<section class="container">
+  <div class="story">
+    <div>
+      <h2>Como começou</h2>
+      <p>Em 2024, depois de ver pequenos negócios fecharem por não saber quanto dinheiro tinham na conta, fundamos o CA.RO. A ideia era simples: software financeiro que <strong style="color:var(--text)">qualquer dono de empresa entende</strong>, mesmo sem formação contábil.</p>
+      <p>Hoje somos uma equipe de 12 pessoas em São Paulo e Florianópolis, atendendo mais de 1.200 empresas brasileiras — de padarias de bairro a holdings com 5 CNPJs.</p>
+      <p>Continuamos pequenos de propósito: cada cliente fala direto com quem desenvolve o produto.</p>
+    </div>
+    <div class="story-illu">
+      <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+        <circle cx="60" cy="60" r="50" stroke="oklch(0.74 0.17 155)" stroke-width="2" stroke-dasharray="4 4"/>
+        <path d="M40 70 L55 55 L70 65 L85 45" stroke="oklch(0.74 0.17 155)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <circle cx="40" cy="70" r="3" fill="oklch(0.74 0.17 155)"/>
+        <circle cx="55" cy="55" r="3" fill="oklch(0.74 0.17 155)"/>
+        <circle cx="70" cy="65" r="3" fill="oklch(0.74 0.17 155)"/>
+        <circle cx="85" cy="45" r="3" fill="oklch(0.74 0.17 155)"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section class="container">
+  <div class="stats-row">
+    <div class="stat"><div class="num">1.247</div><div class="lbl">Empresas ativas</div></div>
+    <div class="stat"><div class="num">R$ 4,8B</div><div class="lbl">Movimentado em 2025</div></div>
+    <div class="stat"><div class="num">68</div><div class="lbl">NPS</div></div>
+    <div class="stat"><div class="num">99,98%</div><div class="lbl">Uptime histórico</div></div>
+  </div>
+</section>
+
+<section class="container team">
+  <h2>Quem está construindo</h2>
+  <p class="sub">Pessoas reais. Sem gerente intermediário.</p>
+  <div class="team-grid">
+    <div class="person"><div class="avatar-lg" style="background:linear-gradient(135deg,#34d399,#10b981)">CR</div><h4>Carla Reis</h4><p>CEO &amp; cofundadora</p></div>
+    <div class="person"><div class="avatar-lg" style="background:linear-gradient(135deg,#a78bfa,#7c3aed)">RO</div><h4>Rodrigo Oliveira</h4><p>CTO &amp; cofundador</p></div>
+    <div class="person"><div class="avatar-lg" style="background:linear-gradient(135deg,#fbbf24,#f59e0b)">FM</div><h4>Fernanda Matos</h4><p>Head de Produto</p></div>
+    <div class="person"><div class="avatar-lg" style="background:linear-gradient(135deg,#60a5fa,#2563eb)">DA</div><h4>Daniel Alves</h4><p>Head de Customer Success</p></div>
+  </div>
+</section>
+
+<section class="container values">
+  <h2>Valores que guiam tudo</h2>
+  <p class="sub">O que decidimos quando ninguém está olhando.</p>
+  <div class="values-list">
+    <div class="val-item"><div class="val-num">01</div><div><h4>Cliente paga, cliente manda</h4><p>Toda decisão começa perguntando: isso resolve um problema real do nosso cliente, ou é só legal pra gente?</p></div></div>
+    <div class="val-item"><div class="val-num">02</div><div><h4>Simplicidade radical</h4><p>Se uma feature precisa de tutorial, ela não está pronta. UX é responsabilidade de quem desenvolve.</p></div></div>
+    <div class="val-item"><div class="val-num">03</div><div><h4>Transparência absoluta</h4><p>Preços, roadmap, bugs, incidentes — tudo público. A gente acredita que confiança se constrói com honestidade.</p></div></div>
+    <div class="val-item"><div class="val-num">04</div><div><h4>Pequenos por escolha</h4><p>Crescemos com cuidado pra continuar atendendo bem. Recusamos clientes quando não conseguimos entregar com qualidade.</p></div></div>
+  </div>
+</section>
+
+<footer><div class="container">© 2026 Grupo CA.RO Tecnologia · CNPJ 00.000.000/0001-00 · São Paulo, SP</div></footer>
+</body>
+</html>
