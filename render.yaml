@@ -4,12 +4,15 @@ services:
     runtime: node
     plan: free
     region: oregon
-    buildCommand: npm install
-    startCommand: npm start
-    healthCheckPath: /healthz
+    buildCommand: npm install && npm run build:full
+    preDeployCommand: npm run db:push --prefix backend
+    startCommand: npm run start:full
+    healthCheckPath: /api/sync/financeiro
     envVars:
       - key: NODE_VERSION
         value: 22
+      - key: DATABASE_URL
+        sync: false
 
   - type: web
     name: carvion-api

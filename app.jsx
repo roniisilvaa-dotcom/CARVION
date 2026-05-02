@@ -16,7 +16,7 @@ const ACCENT_MAP = {
   ambar: 'oklch(0.78 0.16 75)',
 };
 
-const APP_VERSION = '2026-05-02-neon-sync-v20';
+const APP_VERSION = '2026-05-02-neon-sync-v22';
 const DEMO_MODE_KEY = 'carvion_demo_mode';
 const LAST_VERSION_KEY = 'carvion_last_seen_version';
 const SETTINGS_KEY = 'carvion_admin_settings';
@@ -29,6 +29,7 @@ const TRANSACTIONS_STORAGE_KEY = 'carvion_transactions';
 const ORDERS_STORAGE_KEY = 'carvion_orders';
 const DATA_BACKUP_KEY = 'carvion_data_backup';
 const SYNC_STATUS_KEY = 'carvion_sync_status';
+const API_URL_CACHE_KEY = 'carvion_api_url';
 const DEFAULT_CLIENTS = [];
 const DEFAULT_SUPPLIERS = [];
 const readDataBackup = () => {
@@ -38,21 +39,74 @@ const readDataBackup = () => {
     return {};
   }
 };
-const apiBaseUrl = () => {
-  if (window.CARVION_API_URL) return window.CARVION_API_URL.replace(/\/$/, '');
+const apiBaseCandidates = () => {
   const { origin, hostname } = window.location;
-  if (hostname === 'localhost' || hostname === '127.0.0.1') return 'http://localhost:4000';
-  if (hostname.includes('carvion-app')) return origin.replace('carvion-app', 'carvion-api');
-  if (hostname.endsWith('onrender.com')) return 'https://carvion-api.onrender.com';
-  return 'https://carvion-api.onrender.com';
+  const candidates = [
+    window.CARVION_API_URL,
+    localStorage.getItem(API_URL_CACHE_KEY),
+  ];
+  if (hostname === 'localhost' || hostname === '127.0.0.1') candidates.push('http://localhost:4000');
+  if (origin && origin !== 'null') candidates.push(origin);
+  if (hostname.includes('carvion-app')) candidates.push(origin.replace('carvion-app', 'carvion-api'));
+  if (hostname.endsWith('onrender.com')) candidates.push('https://carvion-api.onrender.com');
+  candidates.push('https://carvion-api.onrender.com');
+  return [...new Set(candidates.filter(Boolean).map((url) => url.replace(/\/$/, '')))];
+};
+const fetchSyncEndpoint = async (path, options = {}) => {
+  let lastError;
+  for (const base of apiBaseCandidates()) {
+    try {
+      const res = await fetch(`${base}${path}`, options);
+      if (res.ok) {
+        const type = res.headers.get('content-type') || '';
+        if (!type.includes('application/json')) {
+          lastError = new Error('sync-invalid-json-endpoint');
+          continue;
+        }
+        localStorage.setItem(API_URL_CACHE_KEY, base);
+        return res;
+      }
+      lastError = new Error(`sync-http-${res.status}`);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError || new Error('sync-api-unavailable');
+};
+const itemSyncKey = (item, index) => {
+  if (!item || typeof item !== 'object') return `item-${index}`;
+  return item.id
+    || item.email
+    || item.cnpj
+    || item.document
+    || item.phone
+    || item.name
+    || item.title
+    || item.description
+    || item.numero
+    || item.number
+    || item.createdAt
+    || JSON.stringify(item);
 };
 const mergeById = (remote = [], local = []) => {
   const map = new Map();
-  [...remote, ...local].forEach((item) => {
-    if (item && item.id) map.set(item.id, { ...(map.get(item.id) || {}), ...item });
+  [...remote, ...local].forEach((item, index) => {
+    if (item) {
+      const key = itemSyncKey(item, index);
+      map.set(key, { ...(map.get(key) || {}), ...item });
+    }
   });
   return [...map.values()];
 };
+const hasBusinessData = (payload = {}) => (
+  (payload.clients || []).length
+  || (payload.suppliers || []).length
+  || (payload.products || []).length
+  || (payload.fixedExpenses || []).length
+  || (payload.transactions || []).length
+  || (payload.notes || []).length
+  || (payload.orders || []).length
+);
 const CURRENT_USER = {
   name: 'CARVION Admin',
   email: 'caro@carvion.com',
@@ -2324,9 +2378,10 @@ const App = () => {
   });
   const [transactions, setTransactions] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem(TRANSACTIONS_STORAGE_KEY) || '[]');
+      const saved = JSON.parse(localStorage.getItem(TRANSACTIONS_STORAGE_KEY) || '[]');
+      return saved.length ? saved : (readDataBackup().transactions || []);
     } catch (err) {
-      return [];
+      return readDataBackup().transactions || [];
     }
   });
   const [settings, setSettings] = useState(() => {
@@ -2339,6 +2394,7 @@ const App = () => {
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const currentData = useMemo(() => demoMode ? DEMO_DATA : computeRealData(transactions), [demoMode, transactions]);
   const syncDataRef = useRef({ clients, suppliers, products, fixedExpenses, transactions, settings });
+  const syncNowRef = useRef(null);
 
   useEffect(() => {
     window.carvionHideBoot?.();
@@ -2434,23 +2490,22 @@ const App = () => {
       };
     };
     const saveRemote = async (payload) => {
-      const res = await fetch(`${apiBaseUrl()}/api/sync/financeiro`, {
+      const res = await fetchSyncEndpoint('/api/sync/financeiro', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error('sync-save-failed');
       return res.json();
     };
     const syncNow = async () => {
       try {
         setSyncStatus('Sincronizando com Neon...');
         const local = collectLocalData();
-        const res = await fetch(`${apiBaseUrl()}/api/sync/financeiro?t=${Date.now()}`, {
+        const res = await fetchSyncEndpoint(`/api/sync/financeiro?t=${Date.now()}`, {
           cache: 'no-store',
           headers: { 'Cache-Control': 'no-cache' },
         });
-        const remoteJson = res.ok ? await res.json() : {};
+        const remoteJson = await res.json();
         const remote = remoteJson.data || {};
         const merged = {
           version: APP_VERSION,
@@ -2475,9 +2530,13 @@ const App = () => {
         localStorage.setItem(NFE_STORAGE_KEY, JSON.stringify(merged.notes));
         localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(merged.orders));
         localStorage.setItem(DATA_BACKUP_KEY, JSON.stringify(merged));
-        await saveRemote(merged);
+        if (hasBusinessData(merged)) {
+          await saveRemote(merged);
+        }
         if (!cancelled) {
-          const label = `Neon sincronizado ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+          const label = hasBusinessData(merged)
+            ? `Neon sincronizado ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+            : 'Neon conectado - aguardando dados';
           setSyncStatus(label);
           localStorage.setItem(SYNC_STATUS_KEY, label);
         }
@@ -2489,6 +2548,7 @@ const App = () => {
         }
       }
     };
+    syncNowRef.current = syncNow;
     syncNow();
     const timer = setInterval(syncNow, 15000);
     const onVisible = () => {
@@ -2501,8 +2561,16 @@ const App = () => {
       clearInterval(timer);
       window.removeEventListener('online', syncNow);
       document.removeEventListener('visibilitychange', onVisible);
+      syncNowRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      syncNowRef.current?.();
+    }, 900);
+    return () => clearTimeout(timer);
+  }, [clients, suppliers, products, fixedExpenses, transactions, settings]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = tweaks.theme;

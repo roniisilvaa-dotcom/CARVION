@@ -12,8 +12,10 @@ type SyncPayload = {
   suppliers?: unknown[];
   products?: unknown[];
   fixedExpenses?: unknown[];
+  transactions?: unknown[];
   settings?: Record<string, unknown>;
   notes?: unknown[];
+  orders?: unknown[];
 };
 
 @Controller('sync')
