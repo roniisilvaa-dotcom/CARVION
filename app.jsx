@@ -471,11 +471,87 @@ const AddTxModal = ({ onClose }) => {
   );
 };
 
+const InstallAppModal = ({ onClose, onInstall, canPrompt }) => {
+  const platforms = [
+    {
+      icon: 'monitor',
+      title: 'Mac',
+      desc: 'Chrome, Edge ou Safari',
+      steps: ['Abra pelo link online ou localhost', 'Clique em Instalar neste dispositivo', 'O app fica na pasta Aplicativos ou Dock'],
+    },
+    {
+      icon: 'monitor',
+      title: 'Windows',
+      desc: 'Chrome ou Edge',
+      steps: ['Abra pelo link online ou localhost', 'Clique em Instalar neste dispositivo', 'Fixe na barra de tarefas se quiser'],
+    },
+    {
+      icon: 'phone',
+      title: 'iPhone',
+      desc: 'Safari no iOS',
+      steps: ['Abra o sistema no Safari', 'Toque em Compartilhar', 'Escolha Adicionar a Tela de Inicio'],
+    },
+    {
+      icon: 'phone',
+      title: 'Android',
+      desc: 'Chrome ou Edge',
+      steps: ['Abra pelo link online', 'Toque em Instalar neste dispositivo', 'O app aparece na tela inicial'],
+    },
+  ];
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal install-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-head">
+          <div>
+            <div className="modal-title">Baixar app CARVION</div>
+            <div className="modal-sub">Instale no Mac, Windows, iPhone ou Android</div>
+          </div>
+          <div className="spacer" />
+          <button className="icon-btn" style={{ width: 30, height: 30 }} onClick={onClose} aria-label="Fechar"><Icon name="x" size={14} /></button>
+        </div>
+        <div className="modal-body">
+          <div className="install-callout">
+            <Icon name="download" size={18} />
+            <div>
+              <strong>{canPrompt ? 'Instalacao pronta neste navegador' : 'Abra por localhost, HTTPS ou pelo dominio publicado'}</strong>
+              <span>{canPrompt ? 'Clique abaixo para baixar o app como aplicativo.' : 'Em file:// o navegador bloqueia instalacao PWA; use http://localhost ou o site publicado.'}</span>
+            </div>
+          </div>
+          <button className="btn btn-primary install-main-btn" onClick={onInstall}>
+            <Icon name="download" size={15} /> Instalar neste dispositivo
+          </button>
+          <div className="install-grid">
+            {platforms.map((p) => (
+              <div className="install-card" key={p.title}>
+                <div className="install-card-head">
+                  <span className="install-icon"><Icon name={p.icon} size={17} /></span>
+                  <div>
+                    <strong>{p.title}</strong>
+                    <small>{p.desc}</small>
+                  </div>
+                </div>
+                <ol>
+                  {p.steps.map((step) => <li key={step}>{step}</li>)}
+                </ol>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="modal-foot">
+          <button className="btn btn-ghost" onClick={onClose}>Fechar</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /* ===== APP ROOT ===== */
 const App = () => {
   const [active, setActive] = useState('dashboard');
   const [period, setPeriod] = useState('mes');
   const [showModal, setShowModal] = useState(false);
+  const [showInstallModal, setShowInstallModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [installPrompt, setInstallPrompt] = useState(null);
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
@@ -503,7 +579,7 @@ const App = () => {
       setInstallPrompt(null);
       return;
     }
-    alert('Para baixar o app, use o menu do navegador e escolha "Instalar app" ou "Adicionar a tela inicial".');
+    setShowInstallModal(true);
   };
 
   const pageTitles = {
@@ -580,7 +656,7 @@ const App = () => {
             <Icon name={tweaks.theme === 'dark' ? 'sun' : 'moon'} size={15} />
           </button>
           <button className="icon-btn"><Icon name="bell" size={15} /><span className="dot" /></button>
-          <button className="btn" onClick={handleInstallApp} aria-label="Baixar app" title="Baixar app"><Icon name="download" size={13} /><span>Baixar app</span></button>
+          <button className="btn" onClick={() => setShowInstallModal(true)} aria-label="Baixar app" title="Baixar app"><Icon name="download" size={13} /><span>Baixar app</span></button>
           <button className="btn"><Icon name="export" size={13} /><span>Exportar</span></button>
           <button className="btn btn-primary" onClick={() => setShowModal(true)}>
             <Icon name="plus" size={13} /><span>Nova Transação</span>
@@ -628,6 +704,7 @@ const App = () => {
       </main>
 
       {showModal && <AddTxModal onClose={() => setShowModal(false)} />}
+      {showInstallModal && <InstallAppModal onClose={() => setShowInstallModal(false)} onInstall={handleInstallApp} canPrompt={!!installPrompt} />}
 
       <TweaksPanel title="Tweaks">
         <TweakSection label="Tema" />

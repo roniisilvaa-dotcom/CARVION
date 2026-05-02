@@ -196,6 +196,8 @@ const Icon = ({ name, size = 16 }) => {
     'plus': <><path d="M12 5v14" /><path d="M5 12h14" /></>,
     'menu': <><path d="M4 6h16" /><path d="M4 12h16" /><path d="M4 18h16" /></>,
     'download': <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" /></>,
+    'monitor': <><rect x="3" y="4" width="18" height="13" rx="2" /><path d="M8 21h8" /><path d="M12 17v4" /></>,
+    'phone': <><rect x="7" y="2" width="10" height="20" rx="2" /><path d="M11 18h2" /></>,
     'filter': <><path d="M3 5h18l-7 9v6l-4-2v-4Z" /></>,
     'calendar': <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4" /><path d="M16 3v4" /><path d="M3 11h18" /></>,
     'trending-up': <><path d="m3 17 6-6 4 4 7-7" /><path d="M14 8h6v6" /></>,

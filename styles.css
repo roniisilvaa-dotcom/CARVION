@@ -623,6 +623,7 @@ input, select, textarea { font-family: inherit; }
   align-items: center;
 }
 .modal-title { font-size: 15px; font-weight: 600; }
+.modal-sub { font-size: 12px; color: var(--text-faint); margin-top: 3px; }
 .modal-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
 .modal-foot {
   padding: 14px 20px;
@@ -676,6 +677,70 @@ input, select, textarea { font-family: inherit; }
 }
 .type-toggle button.active.income { background: var(--accent-soft); color: var(--accent); }
 .type-toggle button.active.expense { background: var(--danger-soft); color: var(--danger); }
+
+/* ============ INSTALL APP ============ */
+.install-modal { width: 720px; }
+.install-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 14px;
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  border: 1px solid oklch(0.74 0.17 155 / 0.28);
+  color: var(--accent);
+}
+.install-callout strong,
+.install-callout span { display: block; }
+.install-callout span {
+  color: var(--text-dim);
+  font-size: 12.5px;
+  margin-top: 3px;
+}
+.install-main-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 11px 14px;
+}
+.install-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.install-card {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  padding: 14px;
+}
+.install-card-head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.install-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--accent);
+}
+.install-card strong,
+.install-card small { display: block; }
+.install-card small {
+  color: var(--text-faint);
+  font-size: 12px;
+  margin-top: 2px;
+}
+.install-card ol {
+  padding-left: 18px;
+  color: var(--text-dim);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
 
 /* ============ NOTAS FISCAIS ============ */
 .nfe-banner {
@@ -857,6 +922,7 @@ input, select, textarea { font-family: inherit; }
   .row-3 { grid-template-columns: 1fr; }
   .nfe-row-3,
   .nfe-totals { grid-template-columns: 1fr; }
+  .install-grid { grid-template-columns: 1fr; }
   .nfe-items-head,
   .nfe-items-row { grid-template-columns: minmax(180px, 1fr) 52px 86px 86px; }
   .nfe-form-card > .card-head { align-items: flex-start; flex-direction: column; }
