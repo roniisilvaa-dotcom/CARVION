@@ -16,7 +16,7 @@ const ACCENT_MAP = {
   ambar: 'oklch(0.78 0.16 75)',
 };
 
-const APP_VERSION = '2026-05-02-neon-sync-v29';
+const APP_VERSION = '2026-05-02-neon-sync-v30';
 const DEMO_MODE_KEY = 'carvion_demo_mode';
 const LAST_VERSION_KEY = 'carvion_last_seen_version';
 const SETTINGS_KEY = 'carvion_admin_settings';
@@ -164,7 +164,7 @@ const DEMO_DATA = {
   accounts: ACCOUNTS,
 };
 
-const computeRealData = (transactions) => {
+const computeRealData = (transactions, clients = [], suppliers = [], products = [], fixedExpenses = []) => {
   const now = new Date();
 
   const parsePtBR = (str) => {
@@ -173,6 +173,7 @@ const computeRealData = (transactions) => {
     if (p.length === 3) return new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]));
     return null;
   };
+  const daysBetween = (a, b) => Math.ceil((a.setHours(0, 0, 0, 0) - b.setHours(0, 0, 0, 0)) / 86400000);
 
   const effectivePaid = (tx) => {
     if (tx.status === 'paid') return tx.amount || 0;
@@ -190,12 +191,15 @@ const computeRealData = (transactions) => {
   const pendIn  = transactions.filter((t) => t.type === 'in'  && (t.status === 'pending' || t.status === 'partial' || t.status === 'overdue'));
   const pendOut = transactions.filter((t) => t.type === 'out' && (t.status === 'pending' || t.status === 'partial' || t.status === 'overdue'));
 
-  const totalRev  = paidIn.reduce((s, t) => s + effectivePaid(t), 0);
-  const totalExp  = paidOut.reduce((s, t) => s + effectivePaid(t), 0);
+  const totalRev  = transactions.filter((t) => t.type === 'in').reduce((s, t) => s + (t.amount || 0), 0);
+  const totalExp  = transactions.filter((t) => t.type === 'out').reduce((s, t) => s + (t.amount || 0), 0);
+  const receivedRev = paidIn.reduce((s, t) => s + effectivePaid(t), 0);
+  const paidExp = paidOut.reduce((s, t) => s + effectivePaid(t), 0);
   const profit    = totalRev - totalExp;
   const margin    = totalRev > 0 ? (profit / totalRev) * 100 : 0;
   const totPendIn  = pendIn.reduce((s, t) => s + outstanding(t), 0);
   const totPendOut = pendOut.reduce((s, t) => s + outstanding(t), 0);
+  const projectedCash = receivedRev + totPendIn - paidExp - totPendOut;
 
   // Last 12 months buckets
   const months = Array.from({ length: 12 }, (_, i) => {
@@ -211,7 +215,7 @@ const computeRealData = (transactions) => {
     const key = `${d.getMonth() + 1}/${d.getFullYear()}`;
     const m = months.find((mo) => mo.key === key);
     if (!m) return;
-    const amt = effectivePaid(tx);
+    const amt = tx.amount || 0;
     if (tx.type === 'in') m.rev += amt; else m.exp += amt;
   });
 
@@ -228,15 +232,79 @@ const computeRealData = (transactions) => {
 
   // Expense categories from real transactions
   const catMap = {};
-  paidOut.forEach((tx) => { const c = tx.plan || 'Outros'; catMap[c] = (catMap[c] || 0) + effectivePaid(tx); });
+  transactions.filter((tx) => tx.type === 'out').forEach((tx) => { const c = tx.plan || tx.description || 'Outros'; catMap[c] = (catMap[c] || 0) + (tx.amount || 0); });
   const catColors = ['var(--accent)', 'var(--info)', 'var(--purple)', 'var(--warn)', 'oklch(0.65 0.14 340)', 'oklch(0.55 0.02 240)'];
   const expenseCats = Object.entries(catMap).sort((a, b) => b[1] - a[1]).map(([name, value], i) => ({ name, value, color: catColors[i % catColors.length] }));
 
   const fullyPaidIn  = paidIn.filter((t) => t.status === 'paid');
   const avgTicket    = fullyPaidIn.length > 0 ? fullyPaidIn.reduce((s, t) => s + t.amount, 0) / fullyPaidIn.length : 0;
-  const uniqueClients = new Set(transactions.map((t) => t.client).filter(Boolean)).size;
-  const overdueAmt   = transactions.filter((t) => t.status === 'overdue').reduce((s, t) => s + (t.amount || 0), 0);
+  const uniqueClients = new Set([...(clients || []).map((c) => c.name), ...transactions.map((t) => t.client)].filter(Boolean)).size;
+  const overdueTx = transactions.filter((t) => {
+    if (t.status === 'overdue') return true;
+    if (t.status === 'paid') return false;
+    const due = parsePtBR(t.due);
+    return due ? due < new Date(now.getFullYear(), now.getMonth(), now.getDate()) : false;
+  });
+  const overdueAmt = overdueTx.reduce((s, t) => s + outstanding(t), 0);
   const defaultRate  = totalRev > 0 ? (overdueAmt / totalRev * 100) : 0;
+  const fixedMonthly = fixedExpenses.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+  const upcoming7 = transactions.filter((t) => {
+    if (t.status === 'paid') return false;
+    const due = parsePtBR(t.due);
+    if (!due) return false;
+    const d = daysBetween(new Date(due), new Date(now));
+    return d >= 0 && d <= 7;
+  });
+  const topClients = Object.entries(transactions.filter((t) => t.type === 'in').reduce((acc, tx) => {
+    const name = tx.client || 'Sem cliente';
+    acc[name] = (acc[name] || 0) + (tx.amount || 0);
+    return acc;
+  }, {})).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([name, value]) => ({ name, value }));
+  const topProducts = (products || []).slice(0, 4).map((p) => ({ name: p.name, value: Number(p.price) || 0 }));
+  const accounts = [
+    { name: 'Recebido confirmado', branch: `${paidIn.length} lançamentos pagos/parciais`, logo: 'IN', balance: receivedRev, color: 'var(--accent)' },
+    { name: 'Pago confirmado', branch: `${paidOut.length} despesas pagas/parciais`, logo: 'OUT', balance: paidExp, color: 'var(--danger)' },
+    { name: 'Saldo projetado', branch: 'recebido + a receber - pago - a pagar', logo: 'CX', balance: projectedCash, color: 'var(--info)' },
+  ];
+  const planBuckets = months.slice(-6).map((mo) => ({ m: mo.label, enterprise: 0, business: 0, starter: 0 }));
+  const incomeCats = {};
+  transactions.filter((tx) => tx.type === 'in').forEach((tx) => {
+    const d = parsePtBR(tx.date);
+    if (!d) return;
+    const key = `${d.getMonth() + 1}/${d.getFullYear()}`;
+    const idx = months.slice(-6).findIndex((mo) => mo.key === key);
+    if (idx < 0) return;
+    const label = tx.plan || tx.description || 'Outros';
+    incomeCats[label] = (incomeCats[label] || 0) + (tx.amount || 0);
+  });
+  const topIncomeNames = Object.entries(incomeCats).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name]) => name);
+  transactions.filter((tx) => tx.type === 'in').forEach((tx) => {
+    const d = parsePtBR(tx.date);
+    if (!d) return;
+    const idx = months.slice(-6).findIndex((mo) => mo.key === `${d.getMonth() + 1}/${d.getFullYear()}`);
+    if (idx < 0) return;
+    const name = tx.plan || tx.description || 'Outros';
+    const bucket = topIncomeNames.indexOf(name);
+    const key = bucket === 0 ? 'enterprise' : bucket === 1 ? 'business' : 'starter';
+    planBuckets[idx][key] += tx.amount || 0;
+  });
+  const daily = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (13 - i));
+    return { key: d.toLocaleDateString('pt-BR'), value: 0 };
+  });
+  transactions.forEach((tx) => {
+    const d = parsePtBR(tx.date);
+    if (!d) return;
+    const item = daily.find((day) => day.key === d.toLocaleDateString('pt-BR'));
+    if (item) item.value += 1;
+  });
+  const heatmap = Array.from({ length: 7 }, (_, row) => daily.map((day, col) => (row === (col % 7) ? day.value : 0)));
+  const reportLines = [
+    totalRev > totalExp ? `Resultado projetado positivo de ${fmtBRL(profit)}.` : `Resultado projetado negativo de ${fmtBRL(Math.abs(profit))}.`,
+    totPendIn > 0 ? `${fmtBRL(totPendIn)} ainda precisa ser recebido.` : 'Nao ha contas a receber em aberto.',
+    totPendOut > 0 ? `${fmtBRL(totPendOut)} ainda precisa ser pago.` : 'Nao ha contas a pagar em aberto.',
+    upcoming7.length ? `${upcoming7.length} vencimento(s) nos proximos 7 dias.` : 'Sem vencimentos nos proximos 7 dias.',
+  ];
 
   return {
     kpis: [
@@ -249,16 +317,29 @@ const computeRealData = (transactions) => {
       { ...SECONDARY_KPIS[0], value: fmtBRL(avgTicket),   delta: 0, sub: `${fullyPaidIn.length} recebimentos confirmados` },
       { ...SECONDARY_KPIS[1], value: fmtBRL(totPendOut),  delta: 0, sub: `${pendOut.length} títulos a pagar` },
       { ...SECONDARY_KPIS[2], value: fmtBRL(totPendIn),   delta: 0, sub: `${pendIn.length} faturas a receber` },
-      { ...SECONDARY_KPIS[3], value: fmtBRL(profit),      delta: 0, sub: 'receitas pagas − despesas pagas' },
-      { ...SECONDARY_KPIS[4], value: String(uniqueClients), delta: 0, sub: `em ${transactions.length} lançamentos` },
+      { ...SECONDARY_KPIS[3], value: fmtBRL(projectedCash), delta: 0, sub: 'saldo projetado do financeiro' },
+      { ...SECONDARY_KPIS[4], value: String(uniqueClients), delta: 0, sub: `${clients.length} clientes cadastrados · ${suppliers.length} fornecedores` },
       { ...SECONDARY_KPIS[5], value: defaultRate.toFixed(1).replace('.', ',') + '%', delta: 0, sub: fmtBRL(overdueAmt) + ' em atraso', good: true },
     ],
     revExp,
     expenseCats,
-    revByPlan: ZERO_DATA.revByPlan,
-    heatmap: ZERO_DATA.heatmap,
-    transactions,
-    accounts: [],
+    revByPlan: planBuckets,
+    heatmap,
+    transactions: [...transactions].sort((a, b) => (parsePtBR(b.date)?.getTime() || 0) - (parsePtBR(a.date)?.getTime() || 0)),
+    accounts,
+    report: {
+      receivedRev,
+      paidExp,
+      totPendIn,
+      totPendOut,
+      projectedCash,
+      fixedMonthly,
+      overdueAmt,
+      upcoming7,
+      topClients,
+      topProducts,
+      lines: reportLines,
+    },
   };
 };
 
@@ -300,6 +381,43 @@ const DashboardPage = ({ onAdd, period, showSecondary = true, data = ZERO_DATA, 
           </div>
         ))}
       </div>
+
+      {data.report && data.transactions.length > 0 && (
+        <div className="card" style={{ marginBottom: 16 }}>
+          <div className="card-head">
+            <div>
+              <div className="card-title">Relatório automático do financeiro</div>
+              <div className="card-sub">Lido direto dos lançamentos, clientes, fornecedores, produtos e despesas fixas</div>
+            </div>
+            <span className="status-pill status-paid">atualizado pelo Neon</span>
+          </div>
+          <div className="row-3" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 12 }}>
+            <div className="mini-card"><span>Recebido</span><strong>{fmtBRL(data.report.receivedRev)}</strong></div>
+            <div className="mini-card"><span>A receber</span><strong>{fmtBRL(data.report.totPendIn)}</strong></div>
+            <div className="mini-card"><span>Pago</span><strong>{fmtBRL(data.report.paidExp)}</strong></div>
+            <div className="mini-card"><span>A pagar</span><strong>{fmtBRL(data.report.totPendOut)}</strong></div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr .8fr', gap: 14 }}>
+            <div style={{ display: 'grid', gap: 8 }}>
+              {data.report.lines.map((line, idx) => (
+                <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13, color: 'var(--text-dim)' }}>
+                  <Icon name="check" size={13} />
+                  <span>{line}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'grid', gap: 8 }}>
+              <strong style={{ fontSize: 12.5 }}>Top clientes</strong>
+              {data.report.topClients.length === 0 ? <span className="muted">Sem receitas por cliente.</span> : data.report.topClients.map((item) => (
+                <div key={item.name} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 12.5 }}>
+                  <span>{item.name}</span>
+                  <span className="mono">{fmtBRL(item.value)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="row-21">
         <div className="card">
@@ -2392,7 +2510,10 @@ const App = () => {
     }
   });
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
-  const currentData = useMemo(() => demoMode ? DEMO_DATA : computeRealData(transactions), [demoMode, transactions]);
+  const currentData = useMemo(
+    () => demoMode ? DEMO_DATA : computeRealData(transactions, clients, suppliers, products, fixedExpenses),
+    [demoMode, transactions, clients, suppliers, products, fixedExpenses]
+  );
   const syncDataRef = useRef({ clients, suppliers, products, fixedExpenses, transactions, settings });
   const syncNowRef = useRef(null);
 
@@ -2550,16 +2671,19 @@ const App = () => {
     };
     syncNowRef.current = syncNow;
     syncNow();
-    const timer = setInterval(syncNow, 15000);
+    const timer = setInterval(syncNow, 5000);
     const onVisible = () => {
       if (document.visibilityState === 'visible') syncNow();
     };
+    const onFocus = () => syncNow();
     window.addEventListener('online', syncNow);
+    window.addEventListener('focus', onFocus);
     document.addEventListener('visibilitychange', onVisible);
     return () => {
       cancelled = true;
       clearInterval(timer);
       window.removeEventListener('online', syncNow);
+      window.removeEventListener('focus', onFocus);
       document.removeEventListener('visibilitychange', onVisible);
       syncNowRef.current = null;
     };
@@ -2568,7 +2692,7 @@ const App = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       syncNowRef.current?.();
-    }, 900);
+    }, 350);
     return () => clearTimeout(timer);
   }, [clients, suppliers, products, fixedExpenses, transactions, settings]);
 

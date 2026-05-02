@@ -12,7 +12,7 @@ async function bootstrap() {
   const server = app.getHttpAdapter().getInstance();
   server.use((req, res, next) => {
     const pathname = decodeURIComponent(req.path || '');
-    if (pathname === '/CA.RO Sistema Financeiro' || pathname === '/financeiro') {
+    if (pathname === '/' || pathname === '/CA.RO Sistema Financeiro' || pathname === '/financeiro') {
       return res.sendFile(join(publicRoot, 'CA.RO Sistema Financeiro.html'));
     }
     return next();
