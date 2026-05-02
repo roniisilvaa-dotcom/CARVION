@@ -10,15 +10,19 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <meta name="theme-color" content="#f5faf7" />
+  <meta name="color-scheme" content="light" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="CARVION" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=2026-05-02-neon-sync-v32" />
+  <link rel="stylesheet" href="styles.css?v=2026-05-02-neon-sync-v33" />
   <style>
     /* === CARVION BOOT LOADER === */
+    html, body {
+      background: oklch(0.96 0.012 155);
+    }
     #carvion-boot {
       position: fixed; inset: 0; z-index: 99998;
       display: grid; place-items: center; padding: 24px;
@@ -259,7 +263,7 @@
   </div>
 
   <script>
-    window.CARVION_APP_VERSION = '2026-05-02-neon-sync-v32';
+    window.CARVION_APP_VERSION = '2026-05-02-neon-sync-v33';
     window.CARVION_API_URL = window.location.hostname.includes('localhost')
       ? 'http://localhost:4000'
       : window.location.origin;
@@ -404,9 +408,9 @@
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
-  <script type="text/babel" src="tweaks-panel.jsx?v=2026-05-02-neon-sync-v32"></script>
-  <script type="text/babel" src="data.jsx?v=2026-05-02-neon-sync-v32"></script>
-  <script type="text/babel" src="charts.jsx?v=2026-05-02-neon-sync-v32"></script>
-  <script type="text/babel" src="app.jsx?v=2026-05-02-neon-sync-v32"></script>
+  <script type="text/babel" src="tweaks-panel.jsx?v=2026-05-02-neon-sync-v33"></script>
+  <script type="text/babel" src="data.jsx?v=2026-05-02-neon-sync-v33"></script>
+  <script type="text/babel" src="charts.jsx?v=2026-05-02-neon-sync-v33"></script>
+  <script type="text/babel" src="app.jsx?v=2026-05-02-neon-sync-v33"></script>
 </body>
 </html>
