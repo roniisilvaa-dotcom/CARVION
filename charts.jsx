@@ -35,7 +35,7 @@ const RevenueExpenseChart = ({ data, height = 260 }) => {
   const W = 800, H = height, P = { l: 50, r: 16, t: 16, b: 28 };
   const iw = W - P.l - P.r;
   const ih = H - P.t - P.b;
-  const max = Math.max(1, Math.max(...data.map(d => Math.max(d.rev, d.exp))) * 1.1);
+  const max = Math.max(...data.map(d => Math.max(d.rev, d.exp))) * 1.1;
   const min = 0;
 
   const x = (i) => P.l + (i / (data.length - 1)) * iw;
@@ -125,15 +125,15 @@ const DonutChart = ({ data, size = 180 }) => {
   let acc = 0;
   const [hover, setHover] = React.useState(null);
   const segs = data.map((d, i) => {
-    const start = total ? acc / total : 0;
+    const start = acc / total;
     acc += d.value;
-    const end = total ? acc / total : 0;
+    const end = acc / total;
     const a0 = start * Math.PI * 2 - Math.PI / 2;
     const a1 = end * Math.PI * 2 - Math.PI / 2;
     const large = end - start > 0.5 ? 1 : 0;
     const x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0);
     const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
-    return { d: `M${x0} ${y0} A${r} ${r} 0 ${large} 1 ${x1} ${y1}`, color: d.color, value: d.value, name: d.name, pct: (total ? ((d.value / total) * 100) : 0), i };
+    return { d: `M${x0} ${y0} A${r} ${r} 0 ${large} 1 ${x1} ${y1}`, color: d.color, value: d.value, name: d.name, pct: ((d.value / total) * 100), i };
   });
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
@@ -158,7 +158,7 @@ const DonutChart = ({ data, size = 180 }) => {
             onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}>
             <span className="legend-dot" style={{ background: d.color, width: 9, height: 9, borderRadius: 3 }} />
             <span style={{ color: 'var(--text-dim)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{(total ? ((d.value / total) * 100) : 0).toFixed(0)}%</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{((d.value / total) * 100).toFixed(0)}%</span>
           </div>
         ))}
       </div>
@@ -171,7 +171,7 @@ const StackedBars = ({ data, keys, colors, height = 200 }) => {
   const W = 460, H = height, P = { l: 36, r: 8, t: 12, b: 24 };
   const iw = W - P.l - P.r;
   const ih = H - P.t - P.b;
-  const max = Math.max(1, Math.max(...data.map(d => keys.reduce((s, k) => s + d[k], 0))) * 1.1);
+  const max = Math.max(...data.map(d => keys.reduce((s, k) => s + d[k], 0))) * 1.1;
   const bw = iw / data.length * 0.5;
   const [hover, setHover] = React.useState(null);
   return (

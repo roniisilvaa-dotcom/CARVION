@@ -1,4 +1,4 @@
-/* CARVION — mock data + icons */
+/* GRUPO CA.RO — mock data + icons */
 
 const fmtBRL = (n, opts = {}) => {
   const { compact = false, sign = false } = opts;
@@ -24,207 +24,150 @@ const sparkline = (seed, trend = 1) => {
 
 const KPIS = [
   {
-    id: 'daily-production',
-    label: 'Bolas Produzidas',
-    icon: 'box',
-    value: 0,
+    id: 'revenue',
+    label: 'Receita Total',
+    icon: 'trending-up',
+    value: 4_823_400,
     delta: 18.4,
-    period: 'mês atual',
+    period: 'vs. mês anterior',
     color: 'var(--accent)',
     spark: sparkline(1, 2),
   },
   {
-    id: 'unit-cost',
-    label: 'Custo Médio / Bola',
-    icon: 'banknote',
-    value: 0,
-    delta: -4.7,
+    id: 'expenses',
+    label: 'Despesas Totais',
+    icon: 'trending-down',
+    value: 2_148_900,
+    delta: -3.2,
     period: 'vs. mês anterior',
-    color: 'var(--info)',
-    spark: sparkline(2, -0.4),
-    moneyPlain: true,
+    color: 'var(--danger)',
+    spark: sparkline(2, -0.5),
     inverted: true,
   },
   {
-    id: 'lot-profit',
-    label: 'Lucro por Lote',
-    icon: 'trending-up',
-    value: 0,
-    delta: 24.1,
-    period: 'lotes finalizados',
-    color: 'var(--purple)',
-    spark: sparkline(3, 2.2),
+    id: 'profit',
+    label: 'Lucro Líquido',
+    icon: 'banknote',
+    value: 2_674_500,
+    delta: 24.7,
+    period: 'vs. mês anterior',
+    color: 'var(--info)',
+    spark: sparkline(3, 2.5),
   },
   {
-    id: 'efficiency',
-    label: 'Eficiência da Fábrica',
+    id: 'margin',
+    label: 'Margem de Lucro',
     icon: 'percent',
-    value: 0,
+    value: 55.4,
     isPct: true,
-    delta: 6.2,
-    period: 'corte · costura · montagem',
-    color: 'var(--warn)',
-    spark: sparkline(4, 1.1),
+    delta: 4.1,
+    period: 'vs. mês anterior',
+    color: 'var(--purple)',
+    spark: sparkline(4, 1.2),
   },
 ];
 
 const SECONDARY_KPIS = [
-  { id: 'waste', label: 'Perda de Matéria-prima', value: '0%', delta: 0, sub: 'sem perdas registradas', good: true },
-  { id: 'orders', label: 'Pedidos em Aberto', value: '0', delta: 0, sub: 'nenhum pedido cadastrado' },
-  { id: 'reps', label: 'Representantes Ativos', value: '0', delta: 0, sub: 'nenhum representante cadastrado' },
-  { id: 'commission', label: 'Comissões do Mês', value: 'R$ 0', delta: 0, sub: 'sem comissões' },
-  { id: 'stock', label: 'Produto Final', value: '0 un.', delta: 0, sub: 'sem estoque final' },
-  { id: 'materials', label: 'Alertas de Insumo', value: '0', delta: 0, sub: 'sem alertas', good: true },
+  { id: 'ticket', label: 'Ticket Médio', value: 'R$ 2.847', delta: 6.2, sub: '1.694 transações' },
+  { id: 'pay', label: 'Contas a Pagar', value: 'R$ 412.850', delta: -8.1, sub: '23 vencimentos próximos' },
+  { id: 'rec', label: 'Contas a Receber', value: 'R$ 1.284.300', delta: 12.4, sub: '47 faturas em aberto' },
+  { id: 'cash', label: 'Saldo em Conta', value: 'R$ 3.652.180', delta: 9.8, sub: '4 contas bancárias' },
+  { id: 'clients', label: 'Clientes Ativos', value: '1.284', delta: 4.7, sub: '38 novos este mês' },
+  { id: 'default', label: 'Inadimplência', value: '2,4%', delta: -1.1, sub: 'R$ 31.200 em atraso', good: true },
 ];
 
-/* produção vs custo — 12 meses */
+/* receita vs despesa — 12 meses */
 const REV_EXP = [
-  { m: 'Mai/25', rev: 640, exp: 72400 },
-  { m: 'Jun/25', rev: 780, exp: 88400 },
-  { m: 'Jul/25', rev: 920, exp: 101200 },
-  { m: 'Ago/25', rev: 1180, exp: 132600 },
-  { m: 'Set/25', rev: 1360, exp: 151800 },
-  { m: 'Out/25', rev: 1540, exp: 169400 },
-  { m: 'Nov/25', rev: 1780, exp: 194000 },
-  { m: 'Dez/25', rev: 1650, exp: 184500 },
-  { m: 'Jan/26', rev: 1420, exp: 163800 },
-  { m: 'Fev/26', rev: 1960, exp: 218600 },
-  { m: 'Mar/26', rev: 2240, exp: 249800 },
-  { m: 'Abr/26', rev: 2760, exp: 309600 }
+  { m: 'Mai/25', rev: 2_840_000, exp: 1_650_000 },
+  { m: 'Jun/25', rev: 3_120_000, exp: 1_720_000 },
+  { m: 'Jul/25', rev: 2_980_000, exp: 1_810_000 },
+  { m: 'Ago/25', rev: 3_450_000, exp: 1_780_000 },
+  { m: 'Set/25', rev: 3_280_000, exp: 1_920_000 },
+  { m: 'Out/25', rev: 3_710_000, exp: 1_890_000 },
+  { m: 'Nov/25', rev: 3_920_000, exp: 2_050_000 },
+  { m: 'Dez/25', rev: 4_280_000, exp: 2_180_000 },
+  { m: 'Jan/26', rev: 3_890_000, exp: 2_010_000 },
+  { m: 'Fev/26', rev: 4_120_000, exp: 2_080_000 },
+  { m: 'Mar/26', rev: 4_410_000, exp: 2_140_000 },
+  { m: 'Abr/26', rev: 4_823_400, exp: 2_148_900 },
 ];
 
-/* consumo de matéria-prima */
+/* despesas por categoria */
 const EXPENSE_CATS = [
-  { name: 'PU premium', value: 128000, color: 'var(--accent)' },
-  { name: 'Câmara / borracha', value: 62000, color: 'var(--info)' },
-  { name: 'Linha reforçada', value: 28500, color: 'var(--purple)' },
-  { name: 'Válvulas', value: 21000, color: 'var(--warn)' },
-  { name: 'Mão de obra', value: 70200, color: 'oklch(0.65 0.14 340)' },
-  { name: 'Perdas', value: 9900, color: 'oklch(0.55 0.02 240)' }
+  { name: 'Folha & RH', value: 842_000, color: 'var(--accent)' },
+  { name: 'Infra & Cloud', value: 412_000, color: 'var(--info)' },
+  { name: 'Marketing', value: 386_000, color: 'var(--purple)' },
+  { name: 'Operacional', value: 248_000, color: 'var(--warn)' },
+  { name: 'Impostos', value: 184_000, color: 'oklch(0.65 0.14 340)' },
+  { name: 'Outros', value: 76_900, color: 'oklch(0.55 0.02 240)' },
 ];
 
-/* produção por tipo de bola */
+/* receita por produto/plano (área empilhada simulada com barras) */
 const REV_BY_PLAN = [
-  { m: 'Nov', enterprise: 940, business: 620, starter: 0 },
-  { m: 'Dez', enterprise: 870, business: 580, starter: 0 },
-  { m: 'Jan', enterprise: 760, business: 510, starter: 0 },
-  { m: 'Fev', enterprise: 1080, business: 690, starter: 0 },
-  { m: 'Mar', enterprise: 1260, business: 820, starter: 0 },
-  { m: 'Abr', enterprise: 1640, business: 1120, starter: 0 }
+  { m: 'Nov', enterprise: 1_820, business: 1_240, starter: 860 },
+  { m: 'Dez', enterprise: 2_080, business: 1_320, starter: 880 },
+  { m: 'Jan', enterprise: 1_910, business: 1_240, starter: 740 },
+  { m: 'Fev', enterprise: 2_060, business: 1_310, starter: 750 },
+  { m: 'Mar', enterprise: 2_220, business: 1_380, starter: 810 },
+  { m: 'Abr', enterprise: 2_480, business: 1_490, starter: 853 },
 ];
 
 const TRANSACTIONS = [
-  { id: 'PED-9001', date: '29 Abr', client: 'Rede Campo Forte', plan: 'SAMBA PRO', amount: 192000, type: 'in', status: 'pending', method: 'Rep. Ana · Lojista' },
-  { id: 'PED-9002', date: '29 Abr', client: 'Arena Futsal Center', plan: 'FUTSAL EXTREME', amount: 86700, type: 'in', status: 'paid', method: 'Rep. Bruno · Parceiro' },
-  { id: 'PED-9003', date: '28 Abr', client: 'Distribuidora Bola Cheia', plan: 'SAMBA PRO', amount: 128000, type: 'in', status: 'paid', method: 'Rep. Ana · Final' },
-  { id: 'MP-4101', date: '28 Abr', client: 'TexBall PU Premium', plan: 'Matéria-prima', amount: 68400, type: 'out', status: 'pending', method: 'NF-e XML' },
-  { id: 'MP-4102', date: '27 Abr', client: 'KGV Borrachas', plan: 'Câmara / borracha', amount: 39200, type: 'out', status: 'paid', method: 'NF-e XML' },
-  { id: 'MOB-2105', date: '27 Abr', client: 'Célula costura e montagem', plan: 'Mão de obra', amount: 41800, type: 'out', status: 'paid', method: 'Rateio por lote' }
+  { id: 'TX-2841', date: '28 Abr', client: 'Aurora Tech Ltda', plan: 'Enterprise', amount: 84_000, type: 'in', status: 'paid', method: 'Pix' },
+  { id: 'TX-2840', date: '28 Abr', client: 'Helix Digital', plan: 'Business', amount: 18_400, type: 'in', status: 'paid', method: 'Boleto' },
+  { id: 'TX-2839', date: '28 Abr', client: 'AWS Brasil', plan: 'Cloud', amount: 41_280, type: 'out', status: 'paid', method: 'Cartão' },
+  { id: 'TX-2838', date: '27 Abr', client: 'Studio Nova', plan: 'Business', amount: 22_100, type: 'in', status: 'pending', method: 'Boleto' },
+  { id: 'TX-2837', date: '27 Abr', client: 'Receita Federal', plan: 'IRPJ', amount: 184_000, type: 'out', status: 'pending', method: 'Pix' },
+  { id: 'TX-2836', date: '26 Abr', client: 'Vetor Comércio', plan: 'Enterprise', amount: 76_500, type: 'in', status: 'paid', method: 'Pix' },
+  { id: 'TX-2835', date: '26 Abr', client: 'Lumen Mídia', plan: 'Starter', amount: 4_900, type: 'in', status: 'overdue', method: 'Boleto' },
+  { id: 'TX-2834', date: '25 Abr', client: 'Folha de Pagamento', plan: 'RH', amount: 842_000, type: 'out', status: 'paid', method: 'TED' },
+  { id: 'TX-2833', date: '25 Abr', client: 'Pólen Agência', plan: 'Business', amount: 18_400, type: 'in', status: 'paid', method: 'Pix' },
 ];
 
 const ACCOUNTS = [
-  { name: 'SAMBA PRO', branch: 'Topper · Linha Pro · Campo · 120 un. estoque', balance: 121200, color: 'oklch(0.78 0.16 75)', logo: 'SP' },
-  { name: 'FUTSAL EXTREME', branch: 'Kagiva · Linha Pro · Futsal · 80 un. estoque', balance: 70400, color: 'oklch(0.72 0.13 230)', logo: 'FE' },
-  { name: 'Pedidos em aberto', branch: '2 pedidos aguardando faturamento', balance: 278700, color: 'oklch(0.70 0.15 295)', logo: 'PV' }
-];
-
-const MATERIALS = [
-  { sku: 'MAT-PU-PRO', name: 'PU premium campo', unit: 'm²', stock: 860, min: 300, cost: 48.5, status: 'paid' },
-  { sku: 'MAT-CAM-BUT', name: 'Câmara butílica', unit: 'un.', stock: 1480, min: 500, cost: 18.2, status: 'paid' },
-  { sku: 'MAT-LIN-REF', name: 'Linha reforçada', unit: 'rolo', stock: 96, min: 60, cost: 74.9, status: 'paid' },
-  { sku: 'MAT-VAL-CAM', name: 'Válvula campo/futsal', unit: 'un.', stock: 2100, min: 700, cost: 2.8, status: 'paid' }
-];
-
-const PRODUCTION_ORDERS = [
-  { id: 'OP-9101', product: 'SAMBA PRO', qty: 1640, status: 'Finalizado', stage: 'Acabamento', estimated: 193520, real: 188760, margin: 63.1 },
-  { id: 'OP-9102', product: 'FUTSAL EXTREME', qty: 1120, status: 'Em produção', stage: 'Montagem', estimated: 116480, real: 120840, margin: 64.0 },
-  { id: 'OP-9103', product: 'SAMBA PRO', qty: 600, status: 'Planejado', stage: 'Corte', estimated: 70800, real: 0, margin: 63.1 }
-];
-
-const REPRESENTATIVES = [
-  { id: 'REP-ANA', name: 'Ana Ribeiro', region: 'Sudeste', sales: 320000, goal: 380000, commission: 12800, orders: 2, status: 'pending' },
-  { id: 'REP-BRU', name: 'Bruno Lima', region: 'Sul', sales: 86700, goal: 160000, commission: 3468, orders: 1, status: 'paid' }
-];
-
-const PRODUCTS = [
-  {
-    name: 'SAMBA PRO',
-    brand: 'Topper',
-    line: 'Pro',
-    modality: 'Campo',
-    type: 'Campo',
-    image: 'uploads/WhatsApp Image 2026-04-28 at 17.18.38.jpeg',
-    cost: 118.00,
-    dealerPrice: 214.00,
-    partnerPrice: 188.00,
-    price: 320.00,
-    stock: 120,
-    margin: 63.13,
-    bom: 'PU premium, câmara butílica, linha reforçada, válvula campo',
-  },
-  {
-    name: 'FUTSAL EXTREME',
-    brand: 'Kagiva',
-    line: 'Pro',
-    modality: 'Futsal',
-    type: 'Futsal',
-    image: 'uploads/WhatsApp Image 2026-04-28 at 17.18.39.jpeg',
-    cost: 104.00,
-    dealerPrice: 196.00,
-    partnerPrice: 174.00,
-    price: 289.00,
-    stock: 80,
-    margin: 64.01,
-    bom: 'PU soft, câmara futsal, camada de amortecimento, válvula futsal',
-  },
-];
-
-const CLIENTS = [
-  { name: 'Rede Campo Forte', city: 'São Paulo/SP', segment: 'Lojista', revenue: 192000, rep: 'Ana Ribeiro' },
-  { name: 'Arena Futsal Center', city: 'Curitiba/PR', segment: 'Parceiro', revenue: 86700, rep: 'Bruno Lima' },
-  { name: 'Distribuidora Bola Cheia', city: 'Belo Horizonte/MG', segment: 'Distribuidor', revenue: 128000, rep: 'Ana Ribeiro' }
+  { name: 'Itaú Empresas', branch: 'CC 12.847-3', balance: 1_284_500, color: 'oklch(0.78 0.16 75)', logo: 'IT' },
+  { name: 'Bradesco PJ', branch: 'CC 04.291-7', balance: 982_400, color: 'oklch(0.65 0.20 25)', logo: 'BR' },
+  { name: 'BTG Pactual', branch: 'CC 88.412-1', balance: 1_120_300, color: 'oklch(0.30 0.02 240)', logo: 'BT' },
+  { name: 'Mercado Pago', balance: 264_980, branch: 'CC 03.841-9', color: 'oklch(0.72 0.13 230)', logo: 'MP' },
 ];
 
 /* heatmap fluxo de caixa — 7 colunas (semanas), 7 linhas (dias) */
-const HEATMAP = [
-  [0.55,0.62,0.68,0.71,0.73,0.59,0.44,0.61,0.67,0.76,0.80,0.72,0.66,0.58],
-  [0.48,0.57,0.63,0.66,0.70,0.52,0.41,0.56,0.62,0.69,0.74,0.67,0.60,0.52],
-  [0.62,0.69,0.72,0.78,0.82,0.64,0.50,0.70,0.75,0.84,0.88,0.79,0.71,0.63],
-  [0.44,0.50,0.58,0.61,0.65,0.47,0.36,0.53,0.58,0.63,0.68,0.60,0.54,0.46],
-  [0.67,0.72,0.78,0.83,0.86,0.70,0.55,0.76,0.81,0.89,0.92,0.84,0.77,0.69],
-  [0.35,0.42,0.46,0.50,0.53,0.40,0.30,0.45,0.48,0.55,0.58,0.52,0.47,0.39],
-  [0.28,0.34,0.38,0.42,0.45,0.32,0.24,0.37,0.41,0.46,0.50,0.43,0.38,0.31]
-];
+const HEATMAP = (() => {
+  const grid = [];
+  for (let r = 0; r < 7; r++) {
+    const row = [];
+    for (let c = 0; c < 14; c++) {
+      const v = Math.sin(r * 0.6 + c * 0.4) * 0.5 + 0.5 + (Math.random() * 0.3);
+      row.push(Math.max(0, Math.min(1, v)));
+    }
+    grid.push(row);
+  }
+  return grid;
+})();
 
 const NAV = [
-  { group: 'INDÚSTRIA', items: [
-    { id: 'dashboard', label: 'Dashboard Industrial', icon: 'home' },
-    { id: 'production', label: 'Ordens de Produção', icon: 'activity', badge: '3' },
-    { id: 'materials', label: 'Matéria-prima', icon: 'box', badge: '4' },
-    { id: 'costing', label: 'Custo por Bola', icon: 'percent' },
-  ]},
-  { group: 'COMERCIAL', items: [
-    { id: 'sales', label: 'Vendas & Pedidos', icon: 'arrow-down-left', badge: '3' },
-    { id: 'representatives', label: 'Representantes', icon: 'users', badge: '2' },
-    { id: 'clients', label: 'Clientes', icon: 'briefcase' },
-    { id: 'commissions', label: 'Comissões', icon: 'banknote' },
-  ]},
-  { group: 'ESTOQUE & PRODUTO', items: [
-    { id: 'products', label: 'Produtos com Imagem', icon: 'box' },
-    { id: 'finished-stock', label: 'Produto Final', icon: 'inbox' },
-    { id: 'suppliers', label: 'Fornecedores', icon: 'truck' },
-  ]},
-  { group: 'FINANCEIRO & IA', items: [
+  { group: 'GERAL', items: [
+    { id: 'dashboard', label: 'Dashboard', icon: 'home' },
     { id: 'cashflow', label: 'Fluxo de Caixa', icon: 'activity' },
-    { id: 'payables', label: 'Contas a Pagar', icon: 'send', badge: '1' },
-    { id: 'receivables', label: 'Contas a Receber', icon: 'inbox', badge: '2' },
-    { id: 'analytics', label: 'Analytics Industrial', icon: 'pie' },
+    { id: 'reconcile', label: 'Conciliação Bancária', icon: 'shuffle' },
+  ]},
+  { group: 'FINANCEIRO', items: [
+    { id: 'revenue', label: 'Receitas', icon: 'arrow-down-left', badge: '47' },
+    { id: 'expenses', label: 'Despesas', icon: 'arrow-up-right' },
+    { id: 'receivables', label: 'Contas a Receber', icon: 'inbox', badge: '47' },
+    { id: 'payables', label: 'Contas a Pagar', icon: 'send', badge: '23' },
+    { id: 'taxes', label: 'Impostos', icon: 'landmark' },
+    { id: 'investments', label: 'Investimentos', icon: 'pie' },
+  ]},
+  { group: 'GESTÃO', items: [
+    { id: 'clients', label: 'Clientes', icon: 'users' },
+    { id: 'suppliers', label: 'Fornecedores', icon: 'truck' },
+    { id: 'products', label: 'Produtos', icon: 'box' },
+    { id: 'payroll', label: 'Funcionários & Folha', icon: 'briefcase' },
     { id: 'reports', label: 'Relatórios', icon: 'file' },
-    { id: 'settings', label: 'Multiempresa', icon: 'settings' },
-    { id: 'users-admin', label: 'Usuários', icon: 'users' },
-    { id: 'sessions-admin', label: 'Sessões', icon: 'shuffle' },
-    { id: 'orders-admin', label: 'Pedidos Admin', icon: 'file' },
-    { id: 'audit-admin', label: 'Auditoria', icon: 'landmark' },
+  ]},
+  { group: 'SISTEMA', items: [
+    { id: 'settings', label: 'Configurações', icon: 'settings' },
   ]},
 ];
 
@@ -285,10 +228,5 @@ window.EXPENSE_CATS = EXPENSE_CATS;
 window.REV_BY_PLAN = REV_BY_PLAN;
 window.TRANSACTIONS = TRANSACTIONS;
 window.ACCOUNTS = ACCOUNTS;
-window.MATERIALS = MATERIALS;
-window.PRODUCTION_ORDERS = PRODUCTION_ORDERS;
-window.REPRESENTATIVES = REPRESENTATIVES;
-window.PRODUCTS = PRODUCTS;
-window.CLIENTS = CLIENTS;
 window.HEATMAP = HEATMAP;
 window.NAV = NAV;
