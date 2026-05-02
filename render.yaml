@@ -6,7 +6,7 @@ services:
     region: oregon
     buildCommand: npm install && npm install --prefix backend && npm run db:generate --prefix backend && npm run build --prefix backend
     startCommand: npm run start:full
-    healthCheckPath: /healthz
+    healthCheckPath: /api/healthz
     envVars:
       - key: NODE_VERSION
         value: 22

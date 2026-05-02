@@ -11,7 +11,12 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.enableCors({ origin: true, credentials: true });
   app.use(helmet());
-  app.useStaticAssets(join(process.cwd(), '..'), { index: false });
+  const publicRoot = join(process.cwd(), '..');
+  app.useStaticAssets(publicRoot, { index: false });
+  const server = app.getHttpAdapter().getInstance();
+  server.get(['/CA.RO Sistema Financeiro', '/financeiro'], (_req, res) => {
+    res.sendFile(join(publicRoot, 'CA.RO Sistema Financeiro.html'));
+  });
   await app.listen(config.get('PORT', 4000));
 }
 

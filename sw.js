@@ -1,4 +1,4 @@
-const CACHE_NAME = 'carvion-financeiro-2026-05-02-neon-sync-v26';
+const CACHE_NAME = 'carvion-financeiro-2026-05-02-neon-sync-v27';
 const CORE_ASSETS = [
   './',
   './index.html',
