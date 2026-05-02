@@ -225,6 +225,7 @@ const Icon = ({ name, size = 16 }) => {
     'chevron-down': <path d="m6 9 6 6 6-6" />,
     'chevron-right': <path d="m9 6 6 6-6 6" />,
     'clipboard': <><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" /><rect x="9" y="3" width="6" height="4" rx="1" /><path d="M9 12h6M9 16h4" /></>,
+    'pencil': <><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></>,
   };
   return <svg {...props}>{paths[name] || null}</svg>;
 };

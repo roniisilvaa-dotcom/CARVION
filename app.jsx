@@ -263,56 +263,292 @@ const DashboardPage = ({ onAdd, period, showSecondary = true, data = ZERO_DATA, 
   );
 };
 
-const TransactionsTable = ({ rows }) => {
+const PartialPaymentModal = ({ tx, onClose, onSave }) => {
+  const [payNow, setPayNow] = useState('');
+  const alreadyPaid = tx.amountPaid || 0;
+  const total = tx.amount || 0;
+  const remaining = total - alreadyPaid;
+  const parsed = Number(String(payNow).replace(',', '.').replace(/[^\d.]/g, '')) || 0;
+  const afterPayment = remaining - parsed;
+  const isIn = tx.type === 'in';
+  const handleSave = () => {
+    if (parsed <= 0 || parsed > remaining) return;
+    const newPaid = alreadyPaid + parsed;
+    if (newPaid >= total) {
+      onSave(tx.id, { status: 'paid', amountPaid: total, amountRemaining: 0 });
+    } else {
+      onSave(tx.id, { status: 'partial', amountPaid: newPaid, amountRemaining: total - newPaid });
+    }
+  };
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-head">
+          <div className="modal-title">{isIn ? 'Registrar Recebimento' : 'Registrar Pagamento'}</div>
+          <div className="spacer" />
+          <button className="icon-btn" style={{ width: 30, height: 30 }} onClick={onClose}><Icon name="x" size={14} /></button>
+        </div>
+        <div className="modal-body">
+          <div style={{ background: 'var(--surface)', borderRadius: 10, padding: '12px 14px', marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{tx.client}</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+              <span style={{ color: 'var(--text-faint)' }}>Valor original</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{fmtBRL(total)}</span>
+            </div>
+            {alreadyPaid > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                <span style={{ color: 'var(--text-faint)' }}>Já {isIn ? 'recebido' : 'pago'}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>{fmtBRL(alreadyPaid)}</span>
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, borderTop: '1px solid var(--border-soft)', paddingTop: 8 }}>
+              <span style={{ color: 'var(--text-faint)' }}>Saldo em aberto</span>
+              <span style={{ fontFamily: 'var(--font-mono)', color: 'oklch(0.78 0.16 75)', fontWeight: 600 }}>{fmtBRL(remaining)}</span>
+            </div>
+          </div>
+          <div className="field">
+            <label>Quanto {isIn ? 'recebeu' : 'pagou'} agora? (R$)</label>
+            <input value={payNow} onChange={(e) => setPayNow(e.target.value)} placeholder="0,00" autoFocus />
+          </div>
+          {parsed > 0 && (
+            <div style={{ marginTop: 12, padding: 12, borderRadius: 10, background: 'var(--bg-elev)', border: '1px solid var(--border-soft)', fontSize: 13, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-faint)' }}>{isIn ? 'Recebendo agora' : 'Pagando agora'}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)', fontWeight: 600 }}>{fmtBRL(parsed)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
+                <span style={{ color: 'var(--text-faint)' }}>{afterPayment <= 0 ? 'Situação' : 'Fica pendente'}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', color: afterPayment <= 0 ? 'var(--accent)' : 'oklch(0.78 0.16 75)' }}>
+                  {afterPayment <= 0 ? 'Quitado ✓' : fmtBRL(afterPayment)}
+                </span>
+              </div>
+            </div>
+          )}
+          {parsed > remaining && (
+            <div style={{ marginTop: 8, fontSize: 12, color: 'var(--danger)', padding: '6px 10px', background: 'var(--danger-soft)', borderRadius: 8 }}>
+              Valor maior que o saldo em aberto ({fmtBRL(remaining)})
+            </div>
+          )}
+        </div>
+        <div className="modal-foot">
+          <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+          <button className="btn btn-primary" disabled={parsed <= 0 || parsed > remaining} onClick={handleSave}>
+            <Icon name="check" size={13} /> Registrar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const EditTxModal = ({ tx, clients = [], suppliers = [], onClose, onSave }) => {
+  const [amount, setAmount] = useState(String(tx.amount || ''));
+  const [description, setDescription] = useState(tx.description || tx.client || '');
+  const [category, setCategory] = useState(tx.plan || 'Receita recorrente');
+  const [method, setMethod] = useState(tx.method || 'Pix');
+  const [txDate, setTxDate] = useState(() => {
+    if (!tx.date) return new Date().toISOString().slice(0, 10);
+    const [d, m, y] = tx.date.split('/');
+    return `${y}-${m}-${d}`;
+  });
+  const [txDue, setTxDue] = useState(() => {
+    if (!tx.due) return '';
+    const [d, m, y] = tx.due.split('/');
+    return `${y}-${m}-${d}`;
+  });
+  const [status, setStatus] = useState(tx.status || 'pending');
+  const handleSave = () => {
+    const parsedAmount = Number(String(amount).replace(',', '.').replace(/[^\d.]/g, '')) || tx.amount;
+    const updates = {
+      amount: parsedAmount,
+      plan: category,
+      method,
+      description: description.trim(),
+      client: description.trim() || tx.client,
+      status,
+      date: txDate ? new Date(txDate + 'T12:00').toLocaleDateString('pt-BR') : tx.date,
+      due: txDue ? new Date(txDue + 'T12:00').toLocaleDateString('pt-BR') : '',
+    };
+    if (status !== 'partial') {
+      updates.amountPaid = status === 'paid' ? parsedAmount : (tx.amountPaid || 0);
+      updates.amountRemaining = status === 'paid' ? 0 : (parsedAmount - (tx.amountPaid || 0));
+    }
+    onSave(tx.id, updates);
+    onClose();
+  };
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-head">
+          <div className="modal-title">Editar Lançamento</div>
+          <div className="spacer" />
+          <button className="icon-btn" style={{ width: 30, height: 30 }} onClick={onClose}><Icon name="x" size={14} /></button>
+        </div>
+        <div className="modal-body">
+          <div className="field">
+            <label>Valor (R$)</label>
+            <input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" />
+          </div>
+          <div className="field-row">
+            <div className="field">
+              <label>Data</label>
+              <input type="date" value={txDate} onChange={(e) => setTxDate(e.target.value)} />
+            </div>
+            <div className="field">
+              <label>Vencimento</label>
+              <input type="date" value={txDue} onChange={(e) => setTxDue(e.target.value)} />
+            </div>
+          </div>
+          <div className="field-row">
+            <div className="field">
+              <label>Categoria</label>
+              <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                <option>Receita recorrente</option>
+                <option>Receita única</option>
+                <option>Aluguel</option>
+                <option>Energia</option>
+                <option>Internet</option>
+                <option>Contabilidade</option>
+                <option>Folha & RH</option>
+                <option>Marketing</option>
+                <option>Infra & Cloud</option>
+              </select>
+            </div>
+            <div className="field">
+              <label>Método</label>
+              <select value={method} onChange={(e) => setMethod(e.target.value)}>
+                <option>Pix</option><option>Boleto</option><option>Cartão</option><option>TED</option>
+              </select>
+            </div>
+          </div>
+          <div className="field">
+            <label>Status</label>
+            <select value={status} onChange={(e) => setStatus(e.target.value)}>
+              <option value="pending">Pendente</option>
+              <option value="partial">Parcial</option>
+              <option value="paid">Pago / Recebido</option>
+              <option value="overdue">Atrasado</option>
+            </select>
+          </div>
+          <div className="field">
+            <label>Descrição / Cliente</label>
+            <textarea rows="2" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Nome do cliente ou descrição..." />
+          </div>
+        </div>
+        <div className="modal-foot">
+          <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+          <button className="btn btn-primary" onClick={handleSave}><Icon name="check" size={13} /> Salvar alterações</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const TX_STATUS_LABELS = { paid: 'Pago', pending: 'Pendente', overdue: 'Atrasado', draft: 'Rascunho', partial: 'Parcial' };
+
+const TransactionsTable = ({ rows, onUpdateTx, clients, suppliers }) => {
+  const [partialTx, setPartialTx] = useState(null);
+  const [editTx, setEditTx] = useState(null);
   const colors = ['oklch(0.65 0.18 25)', 'oklch(0.70 0.15 295)', 'oklch(0.72 0.13 230)', 'oklch(0.74 0.17 155)', 'oklch(0.78 0.16 75)'];
   const initials = (s) => s.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  const hasActions = !!onUpdateTx;
+  const colCount = hasActions ? 8 : 7;
   return (
-    <div className="table-wrap">
-      <table className="table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Cliente / Origem</th>
-            <th>Categoria</th>
-            <th>Método</th>
-            <th>Status</th>
-            <th>Data</th>
-            <th className="text-right">Valor</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.length === 0 && (
+    <>
+      <div className="table-wrap">
+        <table className="table">
+          <thead>
             <tr>
-              <td colSpan="7" className="muted" style={{ textAlign: 'center', padding: 28 }}>
-                Nenhuma transacao cadastrada. Use Nova Transacao para iniciar ou acesse DEMO para ver dados ficticios.
-              </td>
+              <th>ID</th>
+              <th>Cliente / Origem</th>
+              <th>Categoria</th>
+              <th>Método</th>
+              <th>Status</th>
+              <th>Data</th>
+              <th className="text-right">Valor</th>
+              {hasActions && <th style={{ width: 120 }}></th>}
             </tr>
-          )}
-          {rows.map((r, i) => (
-            <tr key={r.id}>
-              <td className="muted mono" style={{ fontSize: 11.5 }}>{r.id}</td>
-              <td>
-                <div className="client-cell">
-                  <div className="client-avatar" style={{ background: colors[i % colors.length] }}>{initials(r.client)}</div>
-                  <span>{r.client}</span>
-                </div>
-              </td>
-              <td><span className="tag">{r.plan}</span></td>
-              <td className="muted">{r.method}</td>
-              <td>
-                <span className={'status-pill status-' + r.status}>
-                  {{ paid: 'Pago', pending: 'Pendente', overdue: 'Atrasado', draft: 'Rascunho' }[r.status]}
-                </span>
-              </td>
-              <td className="muted">{r.date}</td>
-              <td className={'num ' + (r.type === 'in' ? 'up' : 'down')}>
-                {r.type === 'in' ? '+' : '−'} {fmtBRL(r.amount).replace('R$', '').trim()}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan={colCount} className="muted" style={{ textAlign: 'center', padding: 28 }}>
+                  Nenhuma transacao cadastrada. Use Nova Transacao para iniciar ou acesse DEMO para ver dados ficticios.
+                </td>
+              </tr>
+            )}
+            {rows.map((r, i) => (
+              <tr key={r.id}>
+                <td className="muted mono" style={{ fontSize: 11.5 }}>{r.id}</td>
+                <td>
+                  <div className="client-cell">
+                    <div className="client-avatar" style={{ background: colors[i % colors.length] }}>{initials(r.client)}</div>
+                    <span>{r.client}</span>
+                  </div>
+                </td>
+                <td><span className="tag">{r.plan}</span></td>
+                <td className="muted">{r.method}</td>
+                <td>
+                  <span className={'status-pill status-' + r.status}>
+                    {TX_STATUS_LABELS[r.status] || r.status}
+                  </span>
+                </td>
+                <td className="muted">{r.date}</td>
+                <td className={'num ' + (r.type === 'in' ? 'up' : 'down')}>
+                  {r.status === 'partial' ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-faint)', textDecoration: 'line-through' }}>{fmtBRL(r.amount)}</span>
+                      <span style={{ color: 'var(--accent)' }}>+ {fmtBRL(r.amountPaid || 0).replace('R$', '').trim()}</span>
+                      <span style={{ fontSize: 11, color: 'oklch(0.78 0.16 75)', fontFamily: 'var(--font-mono)' }}>Restam {fmtBRL(r.amountRemaining || 0).replace('R$', '').trim()}</span>
+                    </div>
+                  ) : (
+                    <>{r.type === 'in' ? '+' : '−'} {fmtBRL(r.amount).replace('R$', '').trim()}</>
+                  )}
+                </td>
+                {hasActions && (
+                  <td>
+                    <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                      {(r.status === 'pending' || r.status === 'partial') && (
+                        <button
+                          className="btn btn-primary"
+                          style={{ fontSize: 11.5, padding: '4px 10px', whiteSpace: 'nowrap' }}
+                          onClick={() => setPartialTx(r)}
+                        >
+                          {r.type === 'in' ? 'Receber' : 'Pagar'}
+                        </button>
+                      )}
+                      <button
+                        className="icon-btn"
+                        title="Editar"
+                        onClick={() => setEditTx(r)}
+                      >
+                        <Icon name="pencil" size={13} />
+                      </button>
+                    </div>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {partialTx && (
+        <PartialPaymentModal
+          tx={partialTx}
+          onClose={() => setPartialTx(null)}
+          onSave={(id, updates) => { onUpdateTx(id, updates); setPartialTx(null); }}
+        />
+      )}
+      {editTx && (
+        <EditTxModal
+          tx={editTx}
+          clients={clients}
+          suppliers={suppliers}
+          onClose={() => setEditTx(null)}
+          onSave={(id, updates) => { onUpdateTx(id, updates); setEditTx(null); }}
+        />
+      )}
+    </>
   );
 };
 
@@ -2227,7 +2463,7 @@ const App = () => {
                   </button>
                 </div>
               </div>
-              <PlaceholderForSection id={active} data={currentData} demoMode={demoMode} fixedExpenses={fixedExpenses} clients={clients} suppliers={suppliers} products={products} onEditRecord={openEditRecord} onDeleteFixedExpense={(id) => setFixedExpenses((c) => c.filter((e) => e.id !== id))} />
+              <PlaceholderForSection id={active} data={currentData} demoMode={demoMode} fixedExpenses={fixedExpenses} clients={clients} suppliers={suppliers} products={products} onEditRecord={openEditRecord} onDeleteFixedExpense={(id) => setFixedExpenses((c) => c.filter((e) => e.id !== id))} onUpdateTx={(txId, updates) => setTransactions((c) => c.map((t) => t.id === txId ? { ...t, ...updates } : t))} />
             </div>
           )}
         </div>
@@ -2260,14 +2496,15 @@ const App = () => {
 };
 
 /* contextual content for each section */
-const PlaceholderForSection = ({ id, data = ZERO_DATA, demoMode = false, fixedExpenses = [], clients = [], suppliers = [], products = [], onEditRecord, onDeleteFixedExpense }) => {
+const PlaceholderForSection = ({ id, data = ZERO_DATA, demoMode = false, fixedExpenses = [], clients = [], suppliers = [], products = [], onEditRecord, onDeleteFixedExpense, onUpdateTx }) => {
+  const txUpdater = demoMode ? undefined : onUpdateTx;
   if (id === 'cashflow' || id === 'revenue' || id === 'expenses') {
     return (
       <>
         {id === 'expenses' && <FixedExpensesPanel expenses={fixedExpenses} onDelete={onDeleteFixedExpense} />}
         <RevenueExpenseChart data={data.revExp} height={300} />
         <div style={{ marginTop: 16 }}>
-          <TransactionsTable rows={data.transactions.filter((t) => id === 'cashflow' || (id === 'revenue' ? t.type === 'in' : t.type === 'out'))} />
+          <TransactionsTable rows={data.transactions.filter((t) => id === 'cashflow' || (id === 'revenue' ? t.type === 'in' : t.type === 'out'))} onUpdateTx={txUpdater} clients={clients} suppliers={suppliers} />
         </div>
       </>
     );
@@ -2275,6 +2512,7 @@ const PlaceholderForSection = ({ id, data = ZERO_DATA, demoMode = false, fixedEx
   if (id === 'payables' || id === 'receivables') {
     const rows = data.transactions.filter((t) => id === 'receivables' ? t.type === 'in' : t.type === 'out');
     const today = new Date();
+    const outstanding = (r) => r.status === 'partial' ? (r.amountRemaining || 0) : (r.amount || 0);
     const dueSoon = (days) => rows.filter((r) => {
       if (!r.due) return false;
       const parts = r.due.split('/');
@@ -2290,11 +2528,11 @@ const PlaceholderForSection = ({ id, data = ZERO_DATA, demoMode = false, fixedEx
             <div key={days} className="venc-card" style={{ borderTopColor: color }}>
               <div className="venc-label">Vence em {days} dias</div>
               <div className="venc-count" style={{ color }}>{dueSoon(days).length}</div>
-              <div className="venc-amt">{fmtBRL(dueSoon(days).reduce((s, r) => s + (r.amount || 0), 0))}</div>
+              <div className="venc-amt">{fmtBRL(dueSoon(days).reduce((s, r) => s + outstanding(r), 0))}</div>
             </div>
           ))}
         </div>
-        <TransactionsTable rows={rows} />
+        <TransactionsTable rows={rows} onUpdateTx={txUpdater} clients={clients} suppliers={suppliers} />
       </>
     );
   }

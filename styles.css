@@ -573,6 +573,7 @@ input, select, textarea { font-family: inherit; }
 .status-pending { background: var(--warn-soft); color: var(--warn); }
 .status-overdue { background: var(--danger-soft); color: var(--danger); }
 .status-draft { background: var(--info-soft); color: var(--info); }
+.status-partial { background: oklch(0.70 0.15 295 / 0.15); color: oklch(0.70 0.15 295); }
 
 .tag {
   display: inline-block;
