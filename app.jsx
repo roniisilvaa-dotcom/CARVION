@@ -239,6 +239,144 @@ const PlaceholderPage = ({ title, desc, kpis, children }) => (
   </>
 );
 
+const FiscalDocsPage = () => {
+  const [docType, setDocType] = useState('nfe');
+  const types = [
+    ['nfe', 'NF-e', 'produto'],
+    ['nfse', 'NFS-e', 'servico'],
+    ['nfce', 'NFC-e', 'consumidor'],
+  ];
+  const docs = [
+    ['000142', 'Construtora Topo', 'R$ 12.480,00', 'paid', 'autorizada'],
+    ['000141', 'Padaria Doce ME', 'R$ 2.350,00', 'paid', 'autorizada'],
+    ['000140', 'Restaurante Mar', 'R$ 4.890,00', 'pending', 'processando'],
+    ['000139', 'Clinica Vida+', 'R$ 8.200,00', 'overdue', 'rejeitada'],
+    ['000138', 'VendaShop Ltda', 'R$ 33.300,00', 'paid', 'autorizada'],
+  ];
+
+  return (
+    <>
+      <div className="nfe-banner">
+        <Icon name="receipt" size={16} />
+        <span><strong>Fiscal integrado ao financeiro.</strong> Emita NF-e, NFS-e e NFC-e a partir de receitas, contas a receber e vendas.</span>
+      </div>
+
+      <div className="kpi-grid nfe-kpis">
+        <div className="kpi"><div className="kpi-head"><span>Emitidas no mês</span></div><div className="kpi-value">142</div><div className="kpi-foot"><span className="kpi-delta up">+18,0%</span><span className="kpi-period">vs. abril</span></div></div>
+        <div className="kpi"><div className="kpi-head"><span>Faturamento fiscal</span></div><div className="kpi-value"><span className="currency">R$</span>487<span className="currency">k</span></div><div className="kpi-foot"><span className="kpi-delta up">R$ 3.430</span><span className="kpi-period">media/nota</span></div></div>
+        <div className="kpi"><div className="kpi-head"><span>Aguardando SEFAZ</span></div><div className="kpi-value">3</div><div className="kpi-foot"><span className="kpi-delta down">2,4s</span><span className="kpi-period">tempo medio</span></div></div>
+        <div className="kpi"><div className="kpi-head"><span>Rejeitadas</span></div><div className="kpi-value">2</div><div className="kpi-foot"><span className="kpi-delta down">CFOP</span><span className="kpi-period">corrigir dados</span></div></div>
+      </div>
+
+      <div className="nfe-layout">
+        <div className="card nfe-form-card">
+          <div className="card-head">
+            <div>
+              <div className="card-title">Nova Nota Fiscal</div>
+              <div className="card-sub">Documento vinculado ao fluxo financeiro</div>
+            </div>
+            <div className="segmented">
+              {types.map(([key, label, sub]) => (
+                <button key={key} className={docType === key ? 'active' : ''} onClick={() => setDocType(key)}>
+                  {label} <span className="nfe-seg-sub">{sub}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="nfe-form-grid">
+            <div className="field-row nfe-row-3">
+              <div className="field"><label>Natureza da operacao</label><input defaultValue={docType === 'nfse' ? 'Prestacao de servico' : 'Venda de mercadoria'} /></div>
+              <div className="field"><label>{docType === 'nfse' ? 'Codigo servico' : 'CFOP'}</label><input defaultValue={docType === 'nfse' ? '1.05' : '5102'} /></div>
+              <div className="field"><label>Serie / Numero</label><input defaultValue="1 / 000143" /></div>
+            </div>
+
+            <div className="field">
+              <label>Cliente / Tomador</label>
+              <select defaultValue="VendaShop Ltda">
+                <option>VendaShop Ltda</option>
+                <option>Padaria Doce ME</option>
+                <option>Construtora Topo</option>
+                <option>+ Cadastrar novo cliente</option>
+              </select>
+            </div>
+
+            <div className="nfe-items">
+              <div className="nfe-items-head"><span>Descricao</span><span>Qtd</span><span>Vlr unit</span><span>Total</span></div>
+              {[
+                ['Sistema CA.RO PRO · Plano anual', 'NCM 8523.49.10 · CST 00', '1', 'R$ 27.000,00', 'R$ 27.000,00'],
+                ['Onboarding personalizado', docType === 'nfse' ? 'Servico 1.05 · ISS 5%' : 'NCM 8523.49.10 · CST 00', '1', 'R$ 4.500,00', 'R$ 4.500,00'],
+                ['Treinamento equipe (8h)', docType === 'nfse' ? 'Servico 8.02 · ISS 5%' : 'NCM 8523.49.10 · CST 00', '1', 'R$ 1.800,00', 'R$ 1.800,00'],
+              ].map((item) => (
+                <div className="nfe-items-row" key={item[0]}>
+                  <div><strong>{item[0]}</strong><small>{item[1]}</small></div>
+                  <span>{item[2]}</span>
+                  <span>{item[3]}</span>
+                  <span>{item[4]}</span>
+                </div>
+              ))}
+              <button className="nfe-add-item"><Icon name="plus" size={13} /> Adicionar item</button>
+            </div>
+
+            <div className="field-row">
+              <div className="field"><label>Forma de pagamento</label><select defaultValue="Boleto bancario"><option>Boleto bancario</option><option>Pix</option><option>Cartao de credito</option><option>Transferencia</option></select></div>
+              <div className="field"><label>Vencimento</label><input type="date" defaultValue="2026-06-01" /></div>
+            </div>
+
+            <div className="field"><label>Informacoes complementares</label><textarea rows="2" defaultValue="Documento emitido por ME ou EPP optante pelo Simples Nacional." /></div>
+          </div>
+
+          <div className="nfe-totals">
+            <div><span>Base</span><strong>R$ 33.300,00</strong></div>
+            <div><span>ISS 5%</span><strong>R$ 1.665,00</strong></div>
+            <div><span>Desconto</span><strong>R$ 0,00</strong></div>
+            <div><span>Total da nota</span><strong>R$ 33.300,00</strong></div>
+          </div>
+
+          <div className="nfe-actions">
+            <button className="btn"><Icon name="check" size={13} /> Salvar rascunho</button>
+            <div className="spacer" />
+            <button className="btn">Pre-visualizar</button>
+            <button className="btn btn-primary"><Icon name="send" size={13} /> Transmitir</button>
+          </div>
+        </div>
+
+        <div className="nfe-side">
+          <div className="card">
+            <div className="card-head"><div><div className="card-title">Pre-visualizacao</div><div className="card-sub">DANFE / documento fiscal</div></div><span className="status-pill status-pending">previa</span></div>
+            <div className="nfe-preview">
+              <div className="nfe-preview-head"><div className="brand-mark">CR</div><div><strong>CA.RO TECNOLOGIA LTDA</strong><span>CNPJ 12.345.678/0001-99</span></div><div><b>No 000143</b><span>Serie 1</span></div></div>
+              <div className="nfe-preview-section"><span>Destinatario</span><strong>VendaShop Ltda</strong><small>CNPJ 23.456.789/0001-88 · Sao Paulo/SP</small></div>
+              <div className="nfe-preview-section"><span>Produtos / Servicos</span><strong>Sistema CA.RO PRO, onboarding e treinamento</strong><small>Total dos itens: R$ 33.300,00</small></div>
+              <div className="nfe-preview-total"><span>Valor total</span><strong>R$ 33.300,00</strong></div>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="card-head"><div><div className="card-title">Ultimas emitidas</div><div className="card-sub">XML e PDF em um clique</div></div></div>
+            <div className="table-wrap">
+              <table className="table">
+                <thead><tr><th>No</th><th>Cliente</th><th>Status</th><th className="text-right">Valor</th><th></th></tr></thead>
+                <tbody>
+                  {docs.map(([num, client, amount, status, label]) => (
+                    <tr key={num}>
+                      <td className="mono muted">{num}</td>
+                      <td>{client}</td>
+                      <td><span className={'status-pill status-' + status}>{label}</span></td>
+                      <td className="num">{amount}</td>
+                      <td><button className="icon-btn" title="Baixar XML/PDF"><Icon name="download" size={13} /></button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
 /* ===== MOBILE BOTTOM NAV ===== */
 const MobileTab = ({ active, onChange, onAdd }) => (
   <nav className="mobile-tab">
@@ -339,6 +477,7 @@ const App = () => {
   const [period, setPeriod] = useState('mes');
   const [showModal, setShowModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState(null);
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
 
   useEffect(() => {
@@ -348,6 +487,25 @@ const App = () => {
     document.documentElement.style.setProperty('--accent-soft', `color-mix(in oklch, ${ACCENT_MAP[tweaks.accent] || ACCENT_MAP.verde} 14%, transparent)`);
   }, [tweaks.theme, tweaks.accent, tweaks.density]);
 
+  useEffect(() => {
+    const onBeforeInstallPrompt = (event) => {
+      event.preventDefault();
+      setInstallPrompt(event);
+    };
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (installPrompt) {
+      installPrompt.prompt();
+      await installPrompt.userChoice.catch(() => undefined);
+      setInstallPrompt(null);
+      return;
+    }
+    alert('Para baixar o app, use o menu do navegador e escolha "Instalar app" ou "Adicionar a tela inicial".');
+  };
+
   const pageTitles = {
     dashboard: ['Dashboard', 'Visão geral · Abril 2026'],
     revenue: ['Receitas', 'Entradas e faturamento'],
@@ -355,6 +513,7 @@ const App = () => {
     cashflow: ['Fluxo de Caixa', 'Movimentação financeira diária'],
     payables: ['Contas a Pagar', '23 vencimentos próximos'],
     receivables: ['Contas a Receber', '47 faturas em aberto'],
+    nfe: ['Notas Fiscais', 'NF-e, NFS-e e NFC-e integradas ao financeiro'],
     taxes: ['Impostos', 'DAS, IRPJ, CSLL, ICMS'],
     investments: ['Investimentos', 'Aplicações e rentabilidade'],
     clients: ['Clientes', '1.284 ativos'],
@@ -421,6 +580,7 @@ const App = () => {
             <Icon name={tweaks.theme === 'dark' ? 'sun' : 'moon'} size={15} />
           </button>
           <button className="icon-btn"><Icon name="bell" size={15} /><span className="dot" /></button>
+          <button className="btn" onClick={handleInstallApp} aria-label="Baixar app" title="Baixar app"><Icon name="download" size={13} /><span>Baixar app</span></button>
           <button className="btn"><Icon name="export" size={13} /><span>Exportar</span></button>
           <button className="btn btn-primary" onClick={() => setShowModal(true)}>
             <Icon name="plus" size={13} /><span>Nova Transação</span>
@@ -443,7 +603,9 @@ const App = () => {
           </div>
 
           {active === 'dashboard' && <DashboardPage onAdd={() => setShowModal(true)} period={period} showSecondary={tweaks.showSecondaryKpis} />}
+          {active === 'nfe' && <FiscalDocsPage />}
           {active !== 'dashboard' && (
+            active !== 'nfe' &&
             <div className="card" style={{ minHeight: 400, padding: 32 }}>
               <div className="card-head">
                 <div>

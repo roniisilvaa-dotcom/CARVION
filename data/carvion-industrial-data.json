@@ -1,0 +1,90 @@
+{
+  "app": "CARVION Industrial",
+  "version": "2026-04-30-external-material-control-v1",
+  "updatedAt": "2026-04-30T00:00:00-04:00",
+  "products": [
+    {
+      "code": "10001",
+      "model": "SAMBA PRO",
+      "name": "SAMBA PRO",
+      "brand": "Topper",
+      "line": "Pro",
+      "modality": "Campo",
+      "cost": 118,
+      "dealerPrice": 214,
+      "partnerPrice": 188,
+      "price": 320,
+      "stock": 120,
+      "bom": "PU premium, câmara butílica, linha reforçada, válvula campo"
+    },
+    {
+      "code": "10002",
+      "model": "FUTSAL EXTREME",
+      "name": "FUTSAL EXTREME",
+      "brand": "Kagiva",
+      "line": "Pro",
+      "modality": "Futsal",
+      "cost": 104,
+      "dealerPrice": 196,
+      "partnerPrice": 174,
+      "price": 289,
+      "stock": 80,
+      "bom": "PU soft, câmara futsal, camada de amortecimento, válvula futsal"
+    }
+  ],
+  "productionOrders": [
+    {
+      "id": "OP-9101",
+      "name": "OP SAMBA PRO",
+      "productCode": "10001",
+      "product": "SAMBA PRO",
+      "status": "Em produção",
+      "currentStep": "montagem",
+      "totalQty": 1000,
+      "internalQty": 700,
+      "externalQty": 300,
+      "lot": "LT-9101",
+      "dueDate": "2026-05-08",
+      "notes": "Lote profissional com produção externa parcial"
+    },
+    {
+      "id": "OP-9102",
+      "name": "OP FUTSAL EXTREME",
+      "productCode": "10002",
+      "product": "FUTSAL EXTREME",
+      "status": "Em produção",
+      "currentStep": "cola-dublagem",
+      "totalQty": 650,
+      "internalQty": 650,
+      "externalQty": 0,
+      "lot": "LT-9102",
+      "dueDate": "2026-05-06",
+      "notes": "Lote futsal linha pro"
+    }
+  ],
+  "externalProduction": [
+    {
+      "lotId": "LT-9101-B",
+      "opId": "OP-9101",
+      "destination": "Presídio Industrial MS",
+      "sentQty": 300,
+      "returnedQty": 0,
+      "pendingQty": 300,
+      "status": "Aguardando retorno",
+      "materials": "300 kits de montagem; 300 carcaças; 300 válvulas; linha reforçada; romaneio de envio"
+    }
+  ],
+  "sectors": [
+    { "id": "SET-GES", "name": "Gestão", "leader": "PCP Industrial", "goal": 18, "rate": 1.5, "bonusCap": 300 },
+    { "id": "SET-ENR", "name": "Enrolagem", "leader": "João Pereira", "goal": 500, "rate": 0.18, "bonusCap": 420 },
+    { "id": "SET-COL", "name": "Cola", "leader": "Equipe Cola A", "goal": 520, "rate": 0.17, "bonusCap": 410 },
+    { "id": "SET-SER", "name": "Serigrafia", "leader": "Marta Souza", "goal": 620, "rate": 0.22, "bonusCap": 520 },
+    { "id": "SET-DUB", "name": "Dublagem", "leader": "Equipe Dublagem", "goal": 540, "rate": 0.2, "bonusCap": 470 },
+    { "id": "SET-SEL", "name": "Selador", "leader": "Rafael Costa", "goal": 500, "rate": 0.21, "bonusCap": 500 },
+    { "id": "SET-TER", "name": "Terceiros", "leader": "Controle Externo", "goal": 350, "rate": 0.12, "bonusCap": 300 },
+    { "id": "SET-MON", "name": "Montagem", "leader": "Carlos Lima", "goal": 500, "rate": 0.25, "bonusCap": 650 },
+    { "id": "SET-FOR", "name": "Formas", "leader": "Ana Paula", "goal": 480, "rate": 0.19, "bonusCap": 420 },
+    { "id": "SET-QUA", "name": "Qualidade", "leader": "Bianca Alves", "goal": 520, "rate": 0.2, "bonusCap": 380 },
+    { "id": "SET-EXP", "name": "Expedição", "leader": "Lucas Rocha", "goal": 450, "rate": 0.16, "bonusCap": 360 }
+  ]
+}

@@ -146,7 +146,7 @@
     <p>Comece grátis por 14 dias, sem cartão de crédito. Mude ou cancele quando quiser.</p>
     <div class="billing-toggle" id="bt">
       <button class="active" data-cycle="monthly">Mensal</button>
-      <button data-cycle="annual">Anual <span class="save-badge">melhor valor</span></button>
+      <button data-cycle="annual">Anual <span class="save-badge">−20%</span></button>
     </div>
   </div>
 </header>
@@ -162,11 +162,11 @@
       <div>
         <div class="plan-price">
           <span class="currency">R$</span>
-          <span class="amount" data-monthly="1490" data-annual="1242">1.490</span>
+          <span class="amount" data-monthly="1.490" data-annual="1.242">1.490</span>
           <span class="period">/mês</span>
         </div>
         <div class="plan-price" style="margin-top: 4px; min-height: 16px;">
-          <span class="original" data-show="annual" style="display:none;">R$ 1.490</span>
+          <span class="original" data-show="annual" style="display:none;text-decoration:line-through;color:var(--text-faint)">R$ 1.490</span>
           <span class="period" data-show="annual" style="display:none;">cobrado anual: R$ 14.900</span>
         </div>
       </div>
@@ -182,7 +182,7 @@
       <div class="plan-foot">14 dias grátis · sem cartão</div>
     </div>
 
-    <!-- PRO (featured) -->
+    <!-- BUSINESS (featured) -->
     <div class="plan featured">
       <span class="plan-flag">MAIS POPULAR</span>
       <div>
@@ -192,11 +192,11 @@
       <div>
         <div class="plan-price">
           <span class="currency">R$</span>
-          <span class="amount" data-monthly="2700" data-annual="2250">2.700</span>
+          <span class="amount" data-monthly="2.700" data-annual="2.250">2.700</span>
           <span class="period">/mês</span>
         </div>
         <div class="plan-price" style="margin-top: 4px; min-height: 16px;">
-          <span class="original" data-show="annual" style="display:none;">R$ 2.700</span>
+          <span class="original" data-show="annual" style="display:none;text-decoration:line-through;color:var(--text-faint)">R$ 2.700</span>
           <span class="period" data-show="annual" style="display:none;">cobrado anual: R$ 27.000</span>
         </div>
       </div>
@@ -223,11 +223,11 @@
       <div>
         <div class="plan-price">
           <span class="currency">R$</span>
-          <span class="amount" data-monthly="6900" data-annual="5750">6.900</span>
+          <span class="amount" data-monthly="6.900" data-annual="5.750">6.900</span>
           <span class="period">/mês</span>
         </div>
         <div class="plan-price" style="margin-top: 4px; min-height: 16px;">
-          <span class="original" data-show="annual" style="display:none;">R$ 6.900</span>
+          <span class="original" data-show="annual" style="display:none;text-decoration:line-through;color:var(--text-faint)">R$ 6.900</span>
           <span class="period" data-show="annual" style="display:none;">cobrado anual: R$ 69.000</span>
         </div>
       </div>
@@ -303,7 +303,7 @@
       <div class="faq-q">Como funciona o pagamento?
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
       </div>
-      <div class="faq-a">Aceitamos cartão de crédito, Pix e boleto empresarial. Você pode contratar mensal ou anual. No anual, cobramos 10 meses: Essencial R$ 14.900, Pro R$ 27.000 e Enterprise R$ 69.000.</div>
+      <div class="faq-a">Aceitamos cartão de crédito (Visa, Master, Amex, Elo) e Pix. Pagamento mensal recorrente ou anual com 20% de desconto.</div>
     </div>
 
     <div class="faq-item">
@@ -324,7 +324,7 @@
       <div class="faq-q">Como migro do meu sistema atual?
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
       </div>
-      <div class="faq-a">Importamos OFX, CSV e dados de Bling, Conta Azul, Omie e Tiny automaticamente. Para Pro e Enterprise oferecemos migração assistida.</div>
+      <div class="faq-a">Importamos OFX, CSV e dados de Bling, Conta Azul, Omie e Tiny automaticamente. Para Business e Enterprise oferecemos migração assistida.</div>
     </div>
 
     <div class="faq-item">
@@ -336,8 +336,8 @@
   </section>
 
   <div class="cta-mini">
-    <h3>Pronto para operar uma gestão empresarial de alto nível?</h3>
-    <p>Comece com 14 dias grátis e evolua para o plano ideal da sua operação.</p>
+    <h3>Pronto para simplificar seu financeiro?</h3>
+    <p>Crie sua conta em 2 minutos. Cancele quando quiser.</p>
     <a class="btn btn-primary btn-lg" href="../auth/signup.html">Começar grátis →</a>
   </div>
 </main>
@@ -354,7 +354,7 @@
       b.classList.add('active');
       const cycle = b.dataset.cycle;
       document.querySelectorAll('[data-monthly]').forEach(el => {
-        el.textContent = Number(cycle === 'monthly' ? el.dataset.monthly : el.dataset.annual).toLocaleString('pt-BR');
+        el.textContent = cycle === 'monthly' ? el.dataset.monthly : el.dataset.annual;
       });
       document.querySelectorAll('[data-show="annual"]').forEach(el => {
         el.style.display = cycle === 'annual' ? 'inline' : 'none';
@@ -367,6 +367,5 @@
   });
 </script>
 
-  <script src="../updater.js" defer></script>
 </body>
 </html>
