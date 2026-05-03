@@ -16,7 +16,7 @@ const ACCENT_MAP = {
   ambar: 'oklch(0.78 0.16 75)',
 };
 
-const APP_VERSION = '2026-05-02-neon-sync-v35';
+const APP_VERSION = '2026-05-03-render-loader-v36';
 const DEMO_MODE_KEY = 'carvion_demo_mode';
 const LAST_VERSION_KEY = 'carvion_last_seen_version';
 const SETTINGS_KEY = 'carvion_admin_settings';

@@ -15,5 +15,8 @@ jobs:
     steps:
       - name: Ping CARVION app
         run: |
-          curl --fail --silent --show-error --max-time 60 --retry 2 --retry-delay 10 https://carvion.onrender.com/api/healthz
-          curl --fail --silent --show-error --max-time 60 --retry 2 --retry-delay 10 https://carvion.onrender.com/version.json
+          curl --fail --silent --show-error --max-time 60 --retry 3 --retry-delay 8 https://carvion.onrender.com/api/healthz
+          curl --fail --silent --show-error --max-time 60 --retry 3 --retry-delay 8 https://carvion.onrender.com/
+          curl --fail --silent --show-error --max-time 60 --retry 3 --retry-delay 8 https://carvion.onrender.com/CA.RO%20Sistema%20Financeiro.html
+          curl --fail --silent --show-error --max-time 60 --retry 3 --retry-delay 8 https://carvion.onrender.com/version.json
+          curl --fail --silent --show-error --max-time 60 --retry 3 --retry-delay 8 https://carvion-api.onrender.com/api/healthz || true
